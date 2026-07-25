@@ -1,0 +1,12 @@
+# Source: https://www.rabbitmq.com/kubernetes/operator/using-topology-operator#queues-policies
+apiVersion: rabbitmq.com/v1beta1
+kind: Queue
+metadata:
+  name: rabbit-mq-queue-local-density-data
+spec:
+  name: rabbit-mq-queue-local-density-data
+  type: quorum
+  durable: true
+  autoDelete: false
+  rabbitmqClusterReference:
+    name: rabbit-mq-cluster
