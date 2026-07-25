@@ -1,0 +1,11 @@
+# Source: https://www.rabbitmq.com/kubernetes/operator/using-topology-operator#exchanges-bindings
+apiVersion: rabbitmq.com/v1beta1
+kind: Binding
+metadata:
+  name: rabbit-mq-binding-local-density-data
+spec:
+  source: rabbit-mq-exchange-local-density-data
+  destination: rabbit-mq-queue-local-density-data
+  destinationType: queue
+  rabbitmqClusterReference:
+    name: rabbit-mq-cluster
