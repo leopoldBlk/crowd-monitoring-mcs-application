@@ -1,0 +1,12 @@
+# Source: https://www.rabbitmq.com/kubernetes/operator/using-topology-operator#exchanges-bindings
+apiVersion: rabbitmq.com/v1beta1
+kind: Exchange
+metadata:
+  name: rabbit-mq-exchange-local-density-data
+spec:
+  name: rabbit-mq-exchange-local-density-data
+  type: direct
+  durable: true
+  autoDelete: false
+  rabbitmqClusterReference:
+    name: rabbit-mq-cluster
