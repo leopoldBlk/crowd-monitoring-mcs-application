@@ -1,0 +1,9 @@
+# Source: https://www.rabbitmq.com/kubernetes/operator/using-operator#create
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  name: rabbit-mq-cluster
+  labels:
+    app: rabbit-mq-cluster
+spec:
+  replicas: 3
