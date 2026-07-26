@@ -50,6 +50,8 @@ java {
     }
 }
 
+version = "0.1"
+
 // Source: https://docs.gradle.org/current/userguide/publishing_setup.html#sec:basic_publishing
 publishing {
     publications {
