@@ -1,0 +1,1 @@
+// Necessary for running H3 Library on Android, Source: https://github.com/isaacbrodsky/h3-android-sample.git
