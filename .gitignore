@@ -28,3 +28,6 @@ replay_pid*
 
 # Exclude IDE folder from VC
 .idea
+
+# Include jar for gradle wrapper in VC
+!*/gradle/wrapper/gradle-wrapper.jar
