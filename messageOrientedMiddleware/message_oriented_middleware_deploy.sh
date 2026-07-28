@@ -1,15 +1,4 @@
-# Deployment of RabbitMQ cluster operator
-# ---------------------------------------
-# Install cluster operator for running RabbitMQ cluster in Kubernetes
-# Source: https://www.rabbitmq.com/kubernetes/operator/install-operator
-kubectl apply -f "https://github.com/rabbitmq/cluster-operator/releases/latest/download/cluster-operator.yml"
-
-# Wait till cluster operator is deployed
-# Source: https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/kubectl_rollout_status/
-kubectl rollout status deployment/rabbitmq-cluster-operator -n rabbitmq-system
-
-
-# Deployment of cert-manager and RabbitMQ topology operator
+# Deployment of cert-manager
 # ---------------------------------------------------------
 # Install cert-manager
 # Source: https://www.rabbitmq.com/kubernetes/operator/install-topology-operator
@@ -21,6 +10,20 @@ kubectl rollout status deployment/cert-manager -n cert-manager
 kubectl rollout status deployment/cert-manager-cainjector -n cert-manager
 kubectl rollout status deployment/cert-manager-webhook -n cert-manager
 
+
+# Deployment of RabbitMQ cluster operator
+# ---------------------------------------
+# Install cluster operator for running RabbitMQ cluster in Kubernetes
+# Source: https://www.rabbitmq.com/kubernetes/operator/install-operator
+kubectl apply -f "https://github.com/rabbitmq/cluster-operator/releases/latest/download/cluster-operator.yml"
+
+# Wait till cluster operator is deployed
+# Source: https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/kubectl_rollout_status/
+kubectl rollout status deployment/rabbitmq-cluster-operator -n rabbitmq-system
+
+
+# Deployment of RabbitMQ topology operator
+# ---------------------------------------------------------
 # Install topology operator for configuration of RabbitMQ cluster in Kubernetes
 # Source: https://www.rabbitmq.com/kubernetes/operator/install-topology-operator
 kubectl apply -f https://github.com/rabbitmq/messaging-topology-operator/releases/latest/download/messaging-topology-operator-with-certmanager.yaml
