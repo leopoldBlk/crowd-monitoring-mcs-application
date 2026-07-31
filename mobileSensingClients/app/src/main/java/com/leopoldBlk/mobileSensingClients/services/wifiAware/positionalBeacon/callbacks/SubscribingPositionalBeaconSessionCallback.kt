@@ -10,9 +10,17 @@ import com.leopoldBlk.mobileSensingClients.util.LogController
 import com.leopoldBlk.mobileSensingClients.util.PositionalBeaconConverter
 import com.leopoldBlk.mobileSensingClients.util.TransmissionDecisionController
 import crowdDensityLibrary.dataClasses.PositionalBeacon
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class SubscribingPositionalBeaconSessionCallback : DiscoverySessionCallback() {
     private val className: String = "SubscribingPositionalBeaconSessionCallback"
+
+    // CoroutineScope for handling received positional beacon
+    private val coroutineScopeHandleReceivedPositionalBeacon: CoroutineScope =
+        CoroutineScope(Dispatchers.IO)
+
 //    For testing purpose:
 //    private var discoveredServicesCounter: Float = 0.0F
 //    private var discoveredServicesPerSecond: Float = 0.0F
@@ -42,27 +50,30 @@ class SubscribingPositionalBeaconSessionCallback : DiscoverySessionCallback() {
     }
 
     override fun onServiceDiscovered(info: ServiceDiscoveryInfo) {
-        super.onServiceDiscovered(info)
+        // Launch coroutine for handling received positional beacon within the corresponding CoroutineScope
+        coroutineScopeHandleReceivedPositionalBeacon.launch {
+            super.onServiceDiscovered(info)
 //        For testing purpose:
 //        calculateDiscoveredServicesPerSecond()
 
-        if (info.serviceSpecificInfo != null) {
-            val receivedPositionalBeaconTO: PositionalBeaconTO =
-                PositionalBeaconConverter.convertByteArrayToPositionalBeaconTO(info.serviceSpecificInfo as ByteArray)
-            val receivedPositionalBeacon: PositionalBeacon =
-                PositionalBeaconConverter.convertPositionalBeaconToToPositionalBeacon(
-                    receivedPositionalBeaconTO
-                )
+            if (info.serviceSpecificInfo != null) {
+                val receivedPositionalBeaconTO: PositionalBeaconTO =
+                    PositionalBeaconConverter.convertByteArrayToPositionalBeaconTO(info.serviceSpecificInfo as ByteArray)
+                val receivedPositionalBeacon: PositionalBeacon =
+                    PositionalBeaconConverter.convertPositionalBeaconToToPositionalBeacon(
+                        receivedPositionalBeaconTO
+                    )
 
-            DataStore.measurementManager.handleReceivedPositionalBeacon(receivedPositionalBeacon)
+                DataStore.measurementManager.handleReceivedPositionalBeacon(receivedPositionalBeacon)
 
-            // Recalculate transmission decision (check if sensing client has the largest transmission benefit of nearby clients)
-            // This might have been changed since a positional beacon containing a larger value
-            // for transmission benefit could have been arrived in the previous step
-            TransmissionDecisionController.updateTransmissionDecision()
+                // Recalculate transmission decision (check if sensing client has the largest transmission benefit of nearby clients)
+                // This might have been changed since a positional beacon containing a larger value
+                // for transmission benefit could have been arrived in the previous step
+                TransmissionDecisionController.updateTransmissionDecision()
+            }
+
+            LogController.log(Log.INFO, className, "Service discovered!")
         }
-
-        LogController.log(Log.INFO, className, "Service discovered!")
     }
 
 //    For testing purpose:
