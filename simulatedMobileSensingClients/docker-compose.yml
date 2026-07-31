@@ -1,0 +1,23 @@
+# Sources:
+# https://docs.docker.com/reference/compose-file/
+
+services:
+  simulated_mobile_sensing_client:
+    # Pull docker image from the GitHub repository
+    image: ghcr.io/leopoldblk/simulated_mobile_sensing_client:latest
+    environment:
+      # Specify parameters to connect to the RabbitMQ cluster
+      RABBIT_MQ_HOST:
+      RABBIT_MQ_PORT:
+      RABBIT_MQ_USERNAME:
+      RABBIT_MQ_PASSWORD:
+    # Specify port mapping for the container(s)
+    ports:
+      -
+    # Run 5 simulated mobile sensing clients in parallel
+    deploy:
+      mode: replicated
+      replicas: 5
+      # Restart the sensing client if it fails
+      restart_policy:
+        condition: on-failure
