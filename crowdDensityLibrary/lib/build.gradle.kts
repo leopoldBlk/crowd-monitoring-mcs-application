@@ -28,6 +28,10 @@ dependencies {
     // Source: https://kotlinlang.org/docs/serialization.html#lgazpg_85
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 
+    // Enables the use of mutex
+    // Source: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
+
     // Use the Kotlin Test integration.
     testImplementation("org.jetbrains.kotlin:kotlin-test")
 
