@@ -53,4 +53,12 @@ class LocalMeasurementMap : MeasurementMap() {
             measurements[cellId] = currentMeasurement
         }
     }
+
+    fun override(newMeasurements: List<Measurement>){
+        measurements.clear()
+
+        for (newMeasurement in newMeasurements){
+            measurements.put(newMeasurement.cellId, newMeasurement)
+        }
+    }
 }
