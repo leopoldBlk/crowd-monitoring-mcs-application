@@ -22,6 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.time.Duration.Companion.seconds
@@ -42,6 +43,10 @@ class MessagingService : LifecycleService() {
     private val localDensityDataExchange: String = "rabbit-mq-exchange-local-density-data"
 
     private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+
+    // CoroutineScope for handling received global density data
+    private val coroutineScopeHandleReceivedMessages: CoroutineScope =
+        CoroutineScope(Dispatchers.IO)
 
     // Observer for the transmission benefit of the client
     private val clientHasLargestTransmissionBenefitOfNearbyClientsObserver: Observer<Boolean?> =
@@ -64,8 +69,13 @@ class MessagingService : LifecycleService() {
                 // If the client has not the largest value for transmission benefit, but was an edge
                 // client previously, the client has to disconnect to the RabbitMQ cluster
                 else if (value != null && !value && isClientConnectedToRabbitMqCluster) {
-                    disconnectFromGlobalDensityDataExchange()
-                    disconnectFromRabbitMqCluster()
+                    // TODO: Maybe find a more elegant solution
+                    runBlocking {
+                        coroutineScope.launch {
+                            disconnectFromGlobalDensityDataExchange()
+                            disconnectFromRabbitMqCluster()
+                        }
+                    }
                 }
             }
         }
@@ -118,9 +128,13 @@ class MessagingService : LifecycleService() {
 
     override fun onDestroy() {
         super.onDestroy()
-
-        disconnectFromGlobalDensityDataExchange()
-        disconnectFromRabbitMqCluster()
+        // TODO: Maybe find a more elegant solution
+        runBlocking {
+            coroutineScope.launch {
+                disconnectFromGlobalDensityDataExchange()
+                disconnectFromRabbitMqCluster()
+            }
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -181,8 +195,6 @@ class MessagingService : LifecycleService() {
             // Retry establishing connection to RabbitMQ Cluster every 5 seconds
             delay(5.seconds)
         }
-
-        //channel.basicPublish(localDensityDataExchange, "", null, "Hallo vom Client :)".toByteArray())
     }
 
     private fun connectToGlobalDensityDataExchange() {
@@ -191,7 +203,10 @@ class MessagingService : LifecycleService() {
             true,
             false,
             false,
-            mapOf<String, String>(Pair<String, String>("x-queue-type", "quorum"))
+            mapOf<String, Any>(
+                Pair<String, String>("x-queue-type", "quorum"),
+                Pair<String, Int>("x-expires", 5000)
+            )
         )
         LogController.log(
             Log.INFO,
@@ -222,34 +237,37 @@ class MessagingService : LifecycleService() {
                 properties: AMQP.BasicProperties?,
                 body: ByteArray?
             ) {
-                super.handleDelivery(consumerTag, envelope, properties, body)
+                // Launch coroutine for handling received global density data within the corresponding CoroutineScope
+                coroutineScopeHandleReceivedMessages.launch {
+                    super.handleDelivery(consumerTag, envelope, properties, body)
 
-                if (body != null) {
-                    val messageBodyAsString: String = body.decodeToString()
+                    if (body != null) {
+                        val messageBodyAsString: String = body.decodeToString()
 
-                    LogController.log(
-                        Log.INFO,
-                        "MessagingService",
-                        "Received global density data: $messageBodyAsString"
-                    )
-
-                    // Split up received message as this is pair of the id of the server who sent the message and the updated LAMM of that server
-                    val splitReceivedMessage: List<String> =
-                        messageBodyAsString.removeSurrounding("(", ")").split(", ")
-                    val serverIdMessageReceivedFrom: String = splitReceivedMessage[0]
-                    val receivedMeasurementMapAsJson: String = splitReceivedMessage[1]
-
-                    // Deserialize the received measurement map as this is in JSON format
-                    val deserializedMeasurementMapFromJson: MeasurementMap =
-                        MeasurementMapSerializer.deserializeJsonToMeasurementMap(
-                            receivedMeasurementMapAsJson
+                        LogController.log(
+                            Log.INFO,
+                            "MessagingService",
+                            "Received global density data: $messageBodyAsString"
                         )
 
-                    // Handover the servers identifier and the received density data to the measurement manager for further processing
-                    DataStore.measurementManager.handleReceivedFamm(
-                        serverIdMessageReceivedFrom,
-                        deserializedMeasurementMapFromJson as ForeignAggregatedMeasurementMap
-                    )
+                        // Split up received message as this is pair of the id of the server who sent the message and the updated LAMM of that server
+                        val splitReceivedMessage: List<String> =
+                            messageBodyAsString.removeSurrounding("(", ")").split(", ")
+                        val serverIdMessageReceivedFrom: String = splitReceivedMessage[0]
+                        val receivedMeasurementMapAsJson: String = splitReceivedMessage[1]
+
+                        // Deserialize the received measurement map as this is in JSON format
+                        val deserializedMeasurementMapFromJson: MeasurementMap =
+                            MeasurementMapSerializer.deserializeJsonToMeasurementMap(
+                                receivedMeasurementMapAsJson
+                            )
+
+                        // Handover the servers identifier and the received density data to the measurement manager for further processing
+                        DataStore.measurementManager.handleReceivedFamm(
+                            serverIdMessageReceivedFrom,
+                            deserializedMeasurementMapFromJson as ForeignAggregatedMeasurementMap
+                        )
+                    }
                 }
             }
         }

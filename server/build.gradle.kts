@@ -29,6 +29,9 @@ dependencies {
     // https://docs.spring.io/spring-boot/reference/messaging/amqp.html#messaging.amqp
     // https://www.svix.com/guides/rabbitmq/rabbitmq-springboot-tutorial/
     implementation("org.springframework.boot:spring-boot-starter-amqp")
+    // Enables the use of coroutines
+    // Source: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

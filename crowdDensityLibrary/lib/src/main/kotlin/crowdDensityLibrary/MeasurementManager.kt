@@ -2,6 +2,8 @@ package crowdDensityLibrary
 
 import crowdDensityLibrary.dataClasses.Measurement
 import crowdDensityLibrary.dataClasses.PositionalBeacon
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class MeasurementManager(
     private val clientId: String,
@@ -12,6 +14,9 @@ class MeasurementManager(
     private val foreignAggregatedMeasurementMaps: MutableMap<String, ForeignAggregatedMeasurementMap> =
         mutableMapOf<String, ForeignAggregatedMeasurementMap>()
     private var orderForMeasurementTransmission: MutableList<String> = mutableListOf<String>()
+
+    // Mutex for ensuring exclusive access to and modification of density data to prevent unwanted effects due to concurrent modification
+    private val operatingOnDensityDataMutex: Mutex = Mutex()
 
     private lateinit var localAggregatedMeasurementMap: LocalAggregatedMeasurementMap
 
@@ -169,48 +174,33 @@ class MeasurementManager(
         }
     }
 
-    public fun handleReceivedPositionalBeacon(receivedPositionalBeacon: PositionalBeacon): Unit {
-        updateNtAndLmm(receivedPositionalBeacon)
+    public suspend fun handleReceivedPositionalBeacon(receivedPositionalBeacon: PositionalBeacon): Unit {
+        // Lock mutex for exclusive access to and modification of the NT and LMM
+        operatingOnDensityDataMutex.withLock {
+            updateNtAndLmm(receivedPositionalBeacon)
+        }
     }
 
-    public fun handleReceivedFamm(senderClientId: String, receivedFamm: ForeignAggregatedMeasurementMap): Unit {
-        updateFamm(senderClientId, receivedFamm)
+    public suspend fun handleReceivedFamm(senderClientId: String, receivedFamm: ForeignAggregatedMeasurementMap): Unit {
+        // Lock mutex for exclusive access to and modification of the corresponding FAMM
+        operatingOnDensityDataMutex.withLock {
+            updateFamm(senderClientId, receivedFamm)
+        }
     }
 
-    public fun updateLammAndOrderForTransmission(): Pair<LocalAggregatedMeasurementMap, List<String>> {
-        updateLamm()
-        updateOrderForMeasurementTransmission()
+    public suspend fun updateLammAndOrderForTransmission(): Pair<LocalAggregatedMeasurementMap, List<String>> {
+        // Lock mutex for exclusive access to and modification of the LAMM and the order for transmission of the measurements
+        operatingOnDensityDataMutex.withLock {
+            updateLamm()
+            updateOrderForMeasurementTransmission()
+        }
 
+        // Return the updated LAMM and order for transmission of the measurements
         return Pair<LocalAggregatedMeasurementMap, List<String>>(
             localAggregatedMeasurementMap,
             orderForMeasurementTransmission
         )
     }
-
-//    public fun handleReceivedPositionalBeaconOld(receivedPositionalBeacon: PositionalBeacon): Pair<LocalAggregatedMeasurementMap, List<String>> {
-//        updateNtAndLmm(receivedPositionalBeacon)
-//        updateLamm()
-//        updateOrderForMeasurementTransmission()
-//
-//        return Pair<LocalAggregatedMeasurementMap, List<String>>(
-//            localAggregatedMeasurementMap,
-//            orderForMeasurementTransmission
-//        )
-//    }
-
-//    public fun handleReceivedFammOld(
-//        senderClientId: String,
-//        receivedFamm: ForeignAggregatedMeasurementMap
-//    ): Pair<LocalAggregatedMeasurementMap, List<String>> {
-//        updateFamm(senderClientId, receivedFamm)
-//        updateLamm()
-//        updateOrderForMeasurementTransmission()
-//
-//        return Pair<LocalAggregatedMeasurementMap, List<String>>(
-//            localAggregatedMeasurementMap,
-//            orderForMeasurementTransmission
-//        )
-//    }
 
     public fun getPositionalBeaconFromNtWithLargestTransmissionBenefit(): PositionalBeacon? {
         if (neighborhoodTable.getAllNtEntries().isNotEmpty()) {
@@ -220,13 +210,23 @@ class MeasurementManager(
     }
 
     // For self updating the NT, LMM and FAMMs (removing entries exceeded the specified TTL)
-    public fun cleanUp(): Unit {
-        neighborhoodTable.removeExceededNtEntries(timeToLiveInSeconds)
+    public suspend fun cleanUp(): Unit {
+        // Lock mutex for exclusive access to and modification of the NT, the LMM and all the FAMMs
+        operatingOnDensityDataMutex.withLock {
+            neighborhoodTable.removeExceededNtEntries(timeToLiveInSeconds)
 
-        localMeasurementMap.removeExceededMmEntries(timeToLiveInSeconds)
+            localMeasurementMap.removeExceededMmEntries(timeToLiveInSeconds)
 
-        foreignAggregatedMeasurementMaps.forEach { (clientId, map) ->
-            map.removeExceededMmEntries(timeToLiveInSeconds)
+            foreignAggregatedMeasurementMaps.forEach { (clientId, map) ->
+                map.removeExceededMmEntries(timeToLiveInSeconds)
+            }
+        }
+    }
+
+    public suspend fun overrideLmm(newMeasurements: List<Measurement>) {
+        // Lock mutex for exclusive access to and modification of the LMM
+        operatingOnDensityDataMutex.withLock {
+            localMeasurementMap.override(newMeasurements)
         }
     }
 
