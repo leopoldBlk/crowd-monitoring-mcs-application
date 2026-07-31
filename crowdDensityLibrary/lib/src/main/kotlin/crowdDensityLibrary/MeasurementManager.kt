@@ -230,6 +230,10 @@ class MeasurementManager(
         }
     }
 
+    public fun overrideLmm(newMeasurements: List<Measurement>) {
+        localMeasurementMap.override(newMeasurements)
+    }
+
     // For server, if clients request current lamm
     public fun getCurrentLammAndOrderForTransmission(): Pair<LocalAggregatedMeasurementMap, List<String>> {
         return Pair<LocalAggregatedMeasurementMap, List<String>>(
