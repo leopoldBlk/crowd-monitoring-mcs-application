@@ -9,9 +9,16 @@ import com.leopoldBlk.mobileSensingClients.util.DataStore
 import com.leopoldBlk.mobileSensingClients.util.DensityDataConverter
 import com.leopoldBlk.mobileSensingClients.util.LogController
 import crowdDensityLibrary.ForeignAggregatedMeasurementMap
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class SubscribingDensityDataSessionCallback : DiscoverySessionCallback() {
     private val className: String = "SubscribingDensityDataSessionCallback"
+
+    // CoroutineScope for handling received local density data
+    private val coroutineScopeHandleReceivedDensityData: CoroutineScope =
+        CoroutineScope(Dispatchers.IO)
 
     // Track ongoing transmission (clientId, TransmissionId, DensityDataTOs of the transmission)
     private lateinit var ongoingTransmission: Triple<String, String, MutableList<DensityDataTO>>
@@ -37,54 +44,57 @@ class SubscribingDensityDataSessionCallback : DiscoverySessionCallback() {
     }
 
     override fun onServiceDiscovered(info: ServiceDiscoveryInfo) {
-        super.onServiceDiscovered(info)
+        // Launch coroutine for handling received density data within the corresponding CoroutineScope
+        coroutineScopeHandleReceivedDensityData.launch {
+            super.onServiceDiscovered(info)
 
-        if (info.serviceSpecificInfo != null) {
-            // Convert received byte array to DensityDataTO
-            val densityDataTO: DensityDataTO =
-                DensityDataConverter.convertByteArrayToDensityDataTO(info.serviceSpecificInfo as ByteArray)
+            if (info.serviceSpecificInfo != null) {
+                // Convert received byte array to DensityDataTO
+                val densityDataTO: DensityDataTO =
+                    DensityDataConverter.convertByteArrayToDensityDataTO(info.serviceSpecificInfo as ByteArray)
 
-            val transmissionIdAsHexString: String = densityDataTO.getTransmissionIdAsHexString()
-            val clientIdAsHexString: String = densityDataTO.getClientIdAsHexString()
+                val transmissionIdAsHexString: String = densityDataTO.getTransmissionIdAsHexString()
+                val clientIdAsHexString: String = densityDataTO.getClientIdAsHexString()
 
-            // If the DensityDataTO belongs to a new transmission and there was no previous ongoing transmission
-            if (!::ongoingTransmission.isInitialized) {
-                ongoingTransmission =
-                    Triple(
-                        clientIdAsHexString,
-                        transmissionIdAsHexString,
-                        mutableListOf(densityDataTO)
+                // If the DensityDataTO belongs to a new transmission and there was no previous ongoing transmission
+                if (!::ongoingTransmission.isInitialized) {
+                    ongoingTransmission =
+                        Triple(
+                            clientIdAsHexString,
+                            transmissionIdAsHexString,
+                            mutableListOf(densityDataTO)
+                        )
+                }
+                // If the DensityDataTO belongs to an already ongoing transmission
+                else if (ongoingTransmission.second == transmissionIdAsHexString) {
+                    ongoingTransmission.third.add(densityDataTO)
+                }
+                // If the DensityDataTO belongs to a new transmission and there was a previous ongoing transmission
+                // --> Process the buffered DensityDataTOs of the previous ongoing transmission
+                // --> Store the DensityDataTO of the new transmission
+                else {
+                    val foreignAggregatedMeasurementMap: ForeignAggregatedMeasurementMap =
+                        DensityDataConverter.convertDensityDataTOsToDensityData(ongoingTransmission.third)
+
+                    DataStore.measurementManager.handleReceivedFamm(
+                        ongoingTransmission.first,
+                        foreignAggregatedMeasurementMap
                     )
-            }
-            // If the DensityDataTO belongs to an already ongoing transmission
-            else if (ongoingTransmission.second == transmissionIdAsHexString) {
-                ongoingTransmission.third.add(densityDataTO)
-            }
-            // If the DensityDataTO belongs to a new transmission and there was a previous ongoing transmission
-            // --> Process the buffered DensityDataTOs of the previous ongoing transmission
-            // --> Store the DensityDataTO of the new transmission
-            else {
-                val foreignAggregatedMeasurementMap: ForeignAggregatedMeasurementMap =
-                    DensityDataConverter.convertDensityDataTOsToDensityData(ongoingTransmission.third)
 
-                DataStore.measurementManager.handleReceivedFamm(
-                    ongoingTransmission.first,
-                    foreignAggregatedMeasurementMap
+                    ongoingTransmission =
+                        Triple(
+                            clientIdAsHexString,
+                            transmissionIdAsHexString,
+                            mutableListOf(densityDataTO)
+                        )
+                }
+
+                LogController.log(
+                    Log.INFO,
+                    className,
+                    "Received density data from client $clientIdAsHexString"
                 )
-
-                ongoingTransmission =
-                    Triple(
-                        clientIdAsHexString,
-                        transmissionIdAsHexString,
-                        mutableListOf(densityDataTO)
-                    )
             }
-
-            LogController.log(
-                Log.INFO,
-                className,
-                "Received density data from client $clientIdAsHexString"
-            )
         }
     }
 }

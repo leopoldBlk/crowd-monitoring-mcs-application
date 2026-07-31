@@ -19,7 +19,7 @@ class RabbitMQConfiguration {
     // Quorum queue enables replication of the queue across the nodes of the RabbitMQ cluster
     @Bean
     fun globalDensityDataQueue(): Queue {
-        return QueueBuilder.durable(queueName).quorum().build()
+        return QueueBuilder.durable(queueName).quorum().expires(5000).build()
     }
 
     // Bind queue for receiving global density data updates to corresponding exchange
