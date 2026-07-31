@@ -33,6 +33,9 @@ dependencies {
     // Uber H3 library for Java
     // Source: https://github.com/uber/h3-java
     implementation("com.uber:h3:4.4.0")
+    // Enables the use of coroutines
+    // Source: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
