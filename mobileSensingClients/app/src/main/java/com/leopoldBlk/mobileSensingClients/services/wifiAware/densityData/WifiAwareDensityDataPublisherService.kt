@@ -13,8 +13,9 @@ import androidx.core.app.ActivityCompat
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.WifiAwareService
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData.callbacks.PublishingDensityDataSessionCallback
 import com.leopoldBlk.mobileSensingClients.util.DataStore
-import com.leopoldBlk.mobileSensingClients.util.DensityDataConverter
-import com.leopoldBlk.mobileSensingClients.util.TransmissionDecisionController
+import com.leopoldBlk.mobileSensingClients.util.converter.DensityDataConverter
+import com.leopoldBlk.mobileSensingClients.util.controller.TransmissionDecisionController
+import crowdDensityLibrary.LocalAggregatedMeasurementMap
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpRedirect

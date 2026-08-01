@@ -6,7 +6,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.leopoldBlk.mobileSensingClients.util.CellConverter
+import com.leopoldBlk.mobileSensingClients.util.converter.CellConverter
 import com.leopoldBlk.mobileSensingClients.util.DataStore
 import crowdDensityLibrary.LocalAggregatedMeasurementMap
 import crowdDensityLibrary.MeasurementMap

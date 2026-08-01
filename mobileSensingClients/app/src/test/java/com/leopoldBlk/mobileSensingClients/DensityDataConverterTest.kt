@@ -1,7 +1,7 @@
 package com.leopoldBlk.mobileSensingClients
 
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData.DensityDataTO
-import com.leopoldBlk.mobileSensingClients.util.DensityDataConverter
+import com.leopoldBlk.mobileSensingClients.util.converter.DensityDataConverter
 import crowdDensityLibrary.ForeignAggregatedMeasurementMap
 import crowdDensityLibrary.LocalAggregatedMeasurementMap
 import crowdDensityLibrary.MeasurementMap

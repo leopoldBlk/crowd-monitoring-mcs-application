@@ -17,8 +17,8 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.ActivityCompat
 import com.leopoldBlk.mobileSensingClients.util.DataStore
-import com.leopoldBlk.mobileSensingClients.util.LogController
-import com.leopoldBlk.mobileSensingClients.util.TransmissionDecisionController
+import com.leopoldBlk.mobileSensingClients.util.controller.LogController
+import com.leopoldBlk.mobileSensingClients.util.controller.TransmissionDecisionController
 
 class TransmissionBenefitService : Service() {
     private val className: String = "TransmissionBenefitService"

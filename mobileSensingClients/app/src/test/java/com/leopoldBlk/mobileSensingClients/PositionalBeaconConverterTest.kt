@@ -1,7 +1,7 @@
 package com.leopoldBlk.mobileSensingClients
 
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.positionalBeacon.PositionalBeaconTO
-import com.leopoldBlk.mobileSensingClients.util.PositionalBeaconConverter
+import com.leopoldBlk.mobileSensingClients.util.converter.PositionalBeaconConverter
 import crowdDensityLibrary.dataClasses.Coordinates
 import crowdDensityLibrary.dataClasses.Position
 import crowdDensityLibrary.dataClasses.PositionalBeacon
