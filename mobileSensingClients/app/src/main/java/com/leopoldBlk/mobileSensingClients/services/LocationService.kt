@@ -45,26 +45,29 @@ class LocationService : Service() {
 
             // TODO: Choose proper threshold for location accuracy
             if (p0.accuracy < 20.0) {
-//                For testing purpose:
-//                var updatedClientPositionCellId: String = h3Core.latLngToCellAddress(
-//                    48.159728,
-//                    11.541551,
-//                    13
-//                )
-
+//              For testing purpose (location is the center of the Marienplatz in Munich):
                 var updatedClientPositionCellId: String = h3Core.latLngToCellAddress(
-                    p0.latitude,
-                    p0.longitude,
+                    48.137371, 11.575328,
                     13
                 )
+
+//                var updatedClientPositionCellId: String = h3Core.latLngToCellAddress(
+//                    p0.latitude,
+//                    p0.longitude,
+//                    13
+//                )
 
                 // Adding leading zeros to h3 cell id so .hexToByteArray() can be used to convert the string to byte array
                 while (updatedClientPositionCellId.length < 16) {
                     updatedClientPositionCellId = "0" + updatedClientPositionCellId
                 }
 
+//              For testing purpose (location is the center of the Marienplatz in Munich):
                 val updatedClientPosition: Position =
-                    Position(Coordinates(p0.latitude, p0.longitude), updatedClientPositionCellId)
+                    Position(Coordinates(48.137371, 11.575328), updatedClientPositionCellId)
+
+//                val updatedClientPosition: Position =
+//                    Position(Coordinates(p0.latitude, p0.longitude), updatedClientPositionCellId)
 
                 DataStore.clientPosition.postValue(updatedClientPosition)
 
