@@ -14,7 +14,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.leopoldBlk.mobileSensingClients.util.DataStore
-import com.leopoldBlk.mobileSensingClients.util.LogController
+import com.leopoldBlk.mobileSensingClients.util.controller.LogController
 import com.uber.h3core.H3Core
 import crowdDensityLibrary.dataClasses.Coordinates
 import crowdDensityLibrary.dataClasses.Position

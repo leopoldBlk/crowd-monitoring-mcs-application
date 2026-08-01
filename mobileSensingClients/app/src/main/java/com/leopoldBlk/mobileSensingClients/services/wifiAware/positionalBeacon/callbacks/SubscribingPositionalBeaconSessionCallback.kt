@@ -6,9 +6,9 @@ import android.net.wifi.aware.SubscribeDiscoverySession
 import android.util.Log
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.positionalBeacon.PositionalBeaconTO
 import com.leopoldBlk.mobileSensingClients.util.DataStore
-import com.leopoldBlk.mobileSensingClients.util.LogController
-import com.leopoldBlk.mobileSensingClients.util.PositionalBeaconConverter
-import com.leopoldBlk.mobileSensingClients.util.TransmissionDecisionController
+import com.leopoldBlk.mobileSensingClients.util.controller.LogController
+import com.leopoldBlk.mobileSensingClients.util.converter.PositionalBeaconConverter
+import com.leopoldBlk.mobileSensingClients.util.controller.TransmissionDecisionController
 import crowdDensityLibrary.dataClasses.PositionalBeacon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
