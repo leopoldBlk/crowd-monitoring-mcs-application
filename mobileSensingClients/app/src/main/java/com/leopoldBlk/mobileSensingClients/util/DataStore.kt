@@ -15,7 +15,14 @@ object DataStore {
     val timeToLiveInMinutes: ULong = 2u
     val timeToLiveInSeconds: ULong = 60u
 
-    val publishLammIntervalInMilliseconds: ULong = 3000u
+    val publishLammIntervalInMilliseconds: ULong = 5000u
+
+    // Uber H3 cell levels used for discretizing nearby area, discretizing distant area and to determine the nearby
+    // area of the client
+    public val nearbyAreaDiscretizationLevel: UShort = 12U
+    public val distantAreaDiscretizationLevel: UShort = 10U
+    public val levelToDetermineNearbyArea: UShort = 11U
+
 
     val measurementManager: MeasurementManager =
         MeasurementManager(clientIdHexString, timeToLiveInSeconds)
