@@ -6,8 +6,9 @@ import android.net.wifi.aware.SubscribeDiscoverySession
 import android.util.Log
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData.DensityDataTO
 import com.leopoldBlk.mobileSensingClients.util.DataStore
-import com.leopoldBlk.mobileSensingClients.util.converter.DensityDataConverter
+import com.leopoldBlk.mobileSensingClients.util.controller.DiscretizationController
 import com.leopoldBlk.mobileSensingClients.util.controller.LogController
+import com.leopoldBlk.mobileSensingClients.util.converter.DensityDataConverter
 import crowdDensityLibrary.ForeignAggregatedMeasurementMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -76,9 +77,14 @@ class SubscribingDensityDataSessionCallback : DiscoverySessionCallback() {
                     val foreignAggregatedMeasurementMap: ForeignAggregatedMeasurementMap =
                         DensityDataConverter.convertDensityDataTOsToDensityData(ongoingTransmission.third)
 
+                    val discretizedMeasurementMap: ForeignAggregatedMeasurementMap =
+                        DiscretizationController.adaptionOfDiscretizationLevel(
+                            foreignAggregatedMeasurementMap
+                        )
+
                     DataStore.measurementManager.handleReceivedFamm(
                         ongoingTransmission.first,
-                        foreignAggregatedMeasurementMap
+                        discretizedMeasurementMap
                     )
 
                     ongoingTransmission =

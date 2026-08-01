@@ -13,9 +13,11 @@ import androidx.core.app.ActivityCompat
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.WifiAwareService
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData.callbacks.PublishingDensityDataSessionCallback
 import com.leopoldBlk.mobileSensingClients.util.DataStore
-import com.leopoldBlk.mobileSensingClients.util.converter.DensityDataConverter
+import com.leopoldBlk.mobileSensingClients.util.controller.DiscretizationController
 import com.leopoldBlk.mobileSensingClients.util.controller.TransmissionDecisionController
+import com.leopoldBlk.mobileSensingClients.util.converter.DensityDataConverter
 import crowdDensityLibrary.LocalAggregatedMeasurementMap
+import crowdDensityLibrary.MeasurementMap
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpRedirect
@@ -24,7 +26,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import crowdDensityLibrary.MeasurementMap
 
 class WifiAwareDensityDataPublisherService : WifiAwareService() {
     private var isWifiAwareSessionInitialized: Boolean = false
@@ -113,14 +114,20 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
         val currentLammAndOrderForTransmission: Pair<MeasurementMap, List<String>> =
             DataStore.measurementManager.updateLammAndOrderForTransmission()
 
+        val lamWithPrioritizedMeasurements: LocalAggregatedMeasurementMap =
+            DiscretizationController.measurementPrioritization(currentLammAndOrderForTransmission.first as LocalAggregatedMeasurementMap)
+
+        val prioritizedLammAndOrderForTransmission =
+            Pair(lamWithPrioritizedMeasurements, currentLammAndOrderForTransmission.second)
+
         // Post generated/updated lamm so map can update the displayed data
         DataStore.lammAndOrderForMeasurementTransmission.postValue(
-            currentLammAndOrderForTransmission
+            prioritizedLammAndOrderForTransmission
         )
 
-        if (currentLammAndOrderForTransmission != null) {
+        if (prioritizedLammAndOrderForTransmission != null) {
             // Generating the publish configs according to the generated and updated lamm and order of transmission
-            updatePublishConfig(currentLammAndOrderForTransmission)
+            updatePublishConfig(prioritizedLammAndOrderForTransmission)
 
             if (isWifiAwareSessionInitialized && publishConfigs.isNotEmpty()) {
                 // Split the defined transmission interval for a lamm evenly across the DensityDataTOs to send
