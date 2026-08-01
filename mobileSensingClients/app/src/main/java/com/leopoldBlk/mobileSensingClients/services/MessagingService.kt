@@ -7,6 +7,7 @@ import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.Observer
 import com.leopoldBlk.mobileSensingClients.BuildConfig
 import com.leopoldBlk.mobileSensingClients.util.DataStore
+import com.leopoldBlk.mobileSensingClients.util.controller.DiscretizationController
 import com.leopoldBlk.mobileSensingClients.util.controller.LogController
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
@@ -262,10 +263,15 @@ class MessagingService : LifecycleService() {
                                 receivedMeasurementMapAsJson
                             )
 
+                        val discretizedMeasurementMap: ForeignAggregatedMeasurementMap =
+                            DiscretizationController.adaptionOfDiscretizationLevel(
+                                deserializedMeasurementMapFromJson as ForeignAggregatedMeasurementMap
+                            )
+
                         // Handover the servers identifier and the received density data to the measurement manager for further processing
                         DataStore.measurementManager.handleReceivedFamm(
                             serverIdMessageReceivedFrom,
-                            deserializedMeasurementMapFromJson as ForeignAggregatedMeasurementMap
+                            discretizedMeasurementMap
                         )
                     }
                 }
