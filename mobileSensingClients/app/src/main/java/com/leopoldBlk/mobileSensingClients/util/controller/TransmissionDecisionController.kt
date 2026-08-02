@@ -1,5 +1,6 @@
-package com.leopoldBlk.mobileSensingClients.util
+package com.leopoldBlk.mobileSensingClients.util.controller
 
+import com.leopoldBlk.mobileSensingClients.util.DataStore
 import crowdDensityLibrary.dataClasses.PositionalBeacon
 
 object TransmissionDecisionController {
