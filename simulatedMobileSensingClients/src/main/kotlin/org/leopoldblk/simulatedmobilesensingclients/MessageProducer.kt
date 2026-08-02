@@ -1,5 +1,6 @@
 package org.leopoldblk.simulatedmobilesensingclients
 
+import crowdDensityLibrary.LocalAggregatedMeasurementMap
 import crowdDensityLibrary.MeasurementMap
 import crowdDensityLibrary.dataClasses.Measurement
 import crowdDensityLibrary.serializer.MeasurementMapSerializer
@@ -28,7 +29,7 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
         coroutineScopeUpdatePublishLamm.launch {
             // Generate randomized measurements for the nearby area of the sensing client
             val randomMeasurements: List<Measurement> = Utils.generateRandomMeasurementsForNearbyArea(
-                SimulatedMobileSensingClientsApplication.initialCoordinates,
+                SimulatedMobileSensingClientsApplication.simulatedClientPosition,
                 SimulatedMobileSensingClientsApplication.nearbyAreaDiscretizationLevel,
                 SimulatedMobileSensingClientsApplication.levelToDetermineNearbyArea
             )
@@ -44,16 +45,20 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
             val updatedLammAndOrderForTransmission: Pair<MeasurementMap, List<String>> =
                 SimulatedMobileSensingClientsApplication.measurementManager.updateLammAndOrderForTransmission()
 
-            // Serialize the updated LAMM according to the order of transmission to JSON format
-            val serializedLammToJson: String =
+            // Prioritize the measurements contained within the LAMM
+            val lamWithPrioritizedMeasurements: LocalAggregatedMeasurementMap =
+                Utils.measurementPrioritization(updatedLammAndOrderForTransmission.first as LocalAggregatedMeasurementMap)
+
+            // Serialize the updated and prioritized LAMM according to the order of transmission to JSON format
+            val serializedAndPrioritizedLammToJson: String =
                 MeasurementMapSerializer.serializeMeasurementMapToJson(
-                    updatedLammAndOrderForTransmission.first,
+                    lamWithPrioritizedMeasurements,
                     updatedLammAndOrderForTransmission.second
                 )
 
             // Create pair containing own client identifier along with the previously updated LAMM
             val serializedLammToJsonWithClientId: Pair<String, String> =
-                Pair(SimulatedMobileSensingClientsApplication.clientIdHexString, serializedLammToJson)
+                Pair(SimulatedMobileSensingClientsApplication.clientIdHexString, serializedAndPrioritizedLammToJson)
 
             // Publish the updated LAMM with the client identifier to the exchange for local density data
             publishMessage("rabbit-mq-exchange-local-density-data", serializedLammToJsonWithClientId.toString())
