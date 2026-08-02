@@ -1,0 +1,72 @@
+package server
+
+import com.uber.h3core.H3Core
+import crowdDensityLibrary.LocalAggregatedMeasurementMap
+import crowdDensityLibrary.dataClasses.Measurement
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
+object Utils {
+    private val logger: Logger = LoggerFactory.getLogger("Utils")
+
+    // H3Core instance for performing operations with Uber H3 cells
+    private val h3Core: H3Core = H3Core.newInstance()
+
+    // Checked
+    // Check the LAMM if this contains two measurements for the same area each with another discretization level.
+    // If this is the case, the measurement with the higher discretization level is chosen as this offers a
+    // more detailed information about the crowd density for the corresponding area.
+    // TODO: Mention in the thesis that the measurement prioritization is also done by the server
+    public fun measurementPrioritization(lamm: LocalAggregatedMeasurementMap): LocalAggregatedMeasurementMap {
+        val prioritizedMeasurementsLamm: LocalAggregatedMeasurementMap = lamm
+        val measurementsToBeRemoved: MutableMap<String, Measurement> =
+            mutableMapOf<String, Measurement>()
+        val measurementsForDistantAreasWithinLamm: MutableMap<String, Measurement> =
+            mutableMapOf<String, Measurement>()
+
+        // Iterate over the entries within the LAMM, to find measurements for distant areas with a
+        // lower discretization level contained within the LAMM
+        for (measurement in lamm.getAllMeasurements()) {
+            if (h3Core.getResolution(measurement.value.cellId) == ServerApplication.distantAreaDiscretizationLevel.toInt()) {
+                measurementsForDistantAreasWithinLamm[measurement.key] = measurement.value
+            }
+        }
+
+        // Iterate over the entries within the LAMM, to find measurements which correspond to the same are but have
+        // different discretization levels
+        for (measurement in lamm.getAllMeasurements()) {
+            // Get discretization level of the current measurement
+            val measurementCellIdLevel: Int = h3Core.getResolution(measurement.value.cellId)
+
+            // Find measurements having the discretization level of nearby areas
+            if (measurementCellIdLevel == ServerApplication.nearbyAreaDiscretizationLevel.toInt()) {
+                // Get the parent cell for this measurement for the discretization level used for distant areas
+                val parentCellAtDistantAreaDiscretizationLevel: String = h3Core.cellToParentAddress(
+                    measurement.key,
+                    ServerApplication.distantAreaDiscretizationLevel.toInt()
+                )
+
+                // The LAMM contains measurements covering the same area with different discretization levels
+                if (measurementsForDistantAreasWithinLamm.contains(
+                        parentCellAtDistantAreaDiscretizationLevel
+                    )
+                ) {
+                    // Mark the measurement with the lower discretization level for removal
+                    val measurementForDistantArea: Measurement =
+                        measurementsForDistantAreasWithinLamm[parentCellAtDistantAreaDiscretizationLevel]!!
+                    measurementsToBeRemoved[measurementForDistantArea.cellId] =
+                        measurementForDistantArea
+                }
+            }
+        }
+
+        logger.info("Number of measurements for distant areas to be removed because of more accurate data is present within the LAMM: ${measurementsToBeRemoved.size}")
+
+        // Remove the measurements for which a measurement covering the same area with a larger
+        // discretization level is present from the copy of the LAMM
+        prioritizedMeasurementsLamm.removeMeasurementsForCellIds(measurementsToBeRemoved.keys.toList())
+
+        // Return the LAMM with the prioritized measurements
+        return prioritizedMeasurementsLamm
+    }
+}
