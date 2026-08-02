@@ -34,17 +34,19 @@ class SimulatedMobileSensingClientsApplication {
         // Uber H3 cell levels used for discretizing nearby area, discretizing distant area and to determine the nearby
         // area of the client
         public val nearbyAreaDiscretizationLevel: UShort = 12U
-        public val distantAreaDiscretizationLevel: UShort = 10U
+        public val distantAreaDiscretizationLevel: UShort = 11U
         public val levelToDetermineNearbyArea: UShort = 11U
 
         // Randomly generated coordinates of the simulated mobile sensing client
         public val initialCoordinates: Coordinates =
             generateRandomCoordinatesWithinGeographicalSquare(topLeft, bottomRight)
 
-        public val initialCell: String = h3Core.latLngToCellAddress(
-            initialCoordinates.latitude,
-            initialCoordinates.longitude,
-            nearbyAreaDiscretizationLevel.toInt()
+        public val initialCell: String = Utils.addLeadingZerosToCellId(
+            h3Core.latLngToCellAddress(
+                initialCoordinates.latitude,
+                initialCoordinates.longitude,
+                nearbyAreaDiscretizationLevel.toInt()
+            )
         )
 
         public val simulatedClientPosition: Position = Position(initialCoordinates, initialCell)

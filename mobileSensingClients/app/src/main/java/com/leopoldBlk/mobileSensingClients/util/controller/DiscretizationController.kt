@@ -2,6 +2,7 @@ package com.leopoldBlk.mobileSensingClients.util.controller
 
 import android.util.Log
 import com.leopoldBlk.mobileSensingClients.util.DataStore
+import com.leopoldBlk.mobileSensingClients.util.converter.CellConverter
 import com.uber.h3core.H3Core
 import crowdDensityLibrary.ForeignAggregatedMeasurementMap
 import crowdDensityLibrary.LocalAggregatedMeasurementMap
@@ -118,7 +119,9 @@ object DiscretizationController {
                             // Set the original measurement included within the FAMM with the changed cell
                             // identifier in the map for the new measurements
                             val newMeasurement: Measurement = measurement.value
-                            newMeasurement.cellId = parentCellForLevelToDiscretizeDistantAreas
+                            newMeasurement.cellId = CellConverter.addLeadingZerosToCellId(
+                                parentCellForLevelToDiscretizeDistantAreas
+                            )
                             newMeasurements[parentCellForLevelToDiscretizeDistantAreas] =
                                 newMeasurement
                         }
@@ -208,10 +211,13 @@ object DiscretizationController {
             // Find measurements having the discretization level of nearby areas
             if (measurementCellIdLevel == DataStore.nearbyAreaDiscretizationLevel.toInt()) {
                 // Get the parent cell for this measurement for the discretization level used for distant areas
-                val parentCellAtDistantAreaDiscretizationLevel: String = h3Core.cellToParentAddress(
-                    measurement.key,
-                    DataStore.distantAreaDiscretizationLevel.toInt()
-                )
+                val parentCellAtDistantAreaDiscretizationLevel: String =
+                    CellConverter.addLeadingZerosToCellId(
+                        h3Core.cellToParentAddress(
+                            measurement.key,
+                            DataStore.distantAreaDiscretizationLevel.toInt()
+                        )
+                    )
 
                 // The LAMM contains measurements covering the same area with different discretization levels
                 if (measurementsForDistantAreasWithinLamm.contains(
@@ -227,11 +233,11 @@ object DiscretizationController {
             }
         }
 
-        LogController.log(
-            Log.INFO,
-            "DiscretizationController",
-            "Number of measurements for distant areas to be removed because of more accurate data is present within the LAMM: ${measurementsToBeRemoved.size}"
-        )
+//        LogController.log(
+//            Log.INFO,
+//            "DiscretizationController",
+//            "Number of measurements for distant areas to be removed because of more accurate data is present within the LAMM: ${measurementsToBeRemoved.size}"
+//        )
 
         // Remove the measurements for which a measurement covering the same area with a larger
         // discretization level is present from the copy of the LAMM

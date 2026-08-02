@@ -17,6 +17,18 @@ object Utils {
     // H3Core instance for performing operations with Uber H3 cells
     private val h3Core: H3Core = H3Core.newInstance()
 
+    // Adds leading zeros to cell identifier string, as Uber H3 cuts leading zeros off when generating
+    // cell identifiers
+    public fun addLeadingZerosToCellId(cellId: String): String {
+        var cellIdWithPadding = cellId
+
+        while (cellIdWithPadding.length < 16) {
+            cellIdWithPadding = "0" + cellIdWithPadding
+        }
+
+        return cellIdWithPadding
+    }
+
     // Generation of random coordinates within a geographical square specified by the top left and bottom right coordinate
     public fun generateRandomCoordinatesWithinGeographicalSquare(
         topLeft: Coordinates,
@@ -47,7 +59,7 @@ object Utils {
 
             // The measurement value is randomly chosen between 1 and 20
             val randomMeasurement: Measurement = Measurement(
-                cellId,
+                addLeadingZerosToCellId(cellId),
                 Random.nextUInt(UIntRange(1U, 20U)).toUShort(),
                 SimulatedMobileSensingClientsApplication.clientIdHexString,
                 (System.currentTimeMillis() / 1000).toULong()
@@ -142,11 +154,12 @@ object Utils {
                     ) {
                         // Get the parent cell the measurement is located in for the discretization level used
                         // to discretize distant areas
-                        val parentCellForLevelToDiscretizeDistantAreas: String =
+                        val parentCellForLevelToDiscretizeDistantAreas: String = addLeadingZerosToCellId(
                             h3Core.cellToParentAddress(
                                 measurement.key,
                                 SimulatedMobileSensingClientsApplication.distantAreaDiscretizationLevel.toInt()
                             )
+                        )
 
                         // This measurement is the first one processes from this FAMM which belongs to this
                         // parentCellForLevelToDiscretizeDistantAreas
@@ -232,9 +245,11 @@ object Utils {
             // Find measurements having the discretization level of nearby areas
             if (measurementCellIdLevel == SimulatedMobileSensingClientsApplication.nearbyAreaDiscretizationLevel.toInt()) {
                 // Get the parent cell for this measurement for the discretization level used for distant areas
-                val parentCellAtDistantAreaDiscretizationLevel: String = h3Core.cellToParentAddress(
-                    measurement.key,
-                    SimulatedMobileSensingClientsApplication.distantAreaDiscretizationLevel.toInt()
+                val parentCellAtDistantAreaDiscretizationLevel: String = addLeadingZerosToCellId(
+                    h3Core.cellToParentAddress(
+                        measurement.key,
+                        SimulatedMobileSensingClientsApplication.distantAreaDiscretizationLevel.toInt()
+                    )
                 )
 
                 // The LAMM contains measurements covering the same area with different discretization levels

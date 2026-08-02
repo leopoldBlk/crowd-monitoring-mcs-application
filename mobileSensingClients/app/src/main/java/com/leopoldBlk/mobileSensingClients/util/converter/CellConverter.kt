@@ -240,4 +240,16 @@ object CellConverter {
 
         return decompressedUberH3CellIdHexString
     }
+
+    // Adds leading zeros to cell identifier string, as Uber H3 cuts leading zeros off when generating
+    // cell identifiers
+    public fun addLeadingZerosToCellId(cellId: String): String {
+        var cellIdWithPadding = cellId
+
+        while (cellIdWithPadding.length < 16) {
+            cellIdWithPadding = "0" + cellIdWithPadding
+        }
+
+        return cellIdWithPadding
+    }
 }

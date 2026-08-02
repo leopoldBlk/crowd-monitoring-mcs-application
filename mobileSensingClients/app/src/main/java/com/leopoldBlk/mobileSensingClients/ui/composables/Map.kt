@@ -6,8 +6,8 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.leopoldBlk.mobileSensingClients.util.converter.CellConverter
 import com.leopoldBlk.mobileSensingClients.util.DataStore
+import com.leopoldBlk.mobileSensingClients.util.converter.CellConverter
 import crowdDensityLibrary.LocalAggregatedMeasurementMap
 import crowdDensityLibrary.MeasurementMap
 import crowdDensityLibrary.dataClasses.Measurement
@@ -142,9 +142,7 @@ fun Map(useTestData: Boolean) {
                 localAggregatedMeasurementMap.setMeasurement(fourthMeasurement)
             }
             // Fill local aggregated measurement map with real data
-            else if (lammAndOrderForMeasurementTransmission.value != null && lammAndOrderForMeasurementTransmission.value!!.first.getAllMeasurements()
-                    .isNotEmpty()
-            ) {
+            else if (lammAndOrderForMeasurementTransmission.value != null) {
                 localAggregatedMeasurementMap =
                     lammAndOrderForMeasurementTransmission.value!!.first as LocalAggregatedMeasurementMap
             }

@@ -21,12 +21,10 @@ import crowdDensityLibrary.MeasurementMap
 import crowdDensityLibrary.serializer.MeasurementMapSerializer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlin.time.Duration.Companion.seconds
 
 class MessagingService : LifecycleService() {
     // Flag to indicate if the client maintains an active connection to the RabbitMQ cluster
@@ -58,12 +56,10 @@ class MessagingService : LifecycleService() {
                 // RabbitMQ cluster, the client has to establish a connection in order to receive
                 // global and publish local density data
                 if (value != null && value && !isClientConnectedToRabbitMqCluster) {
-                    coroutineScope.launch {
-                        if (!runningConnectionEstablishingProcessMutex.isLocked) {
-                            runningConnectionEstablishingProcessMutex.withLock {
-                                connectToRabbitMqCluster()
-                                connectToGlobalDensityDataExchange()
-                            }
+                    if (!runningConnectionEstablishingProcessMutex.isLocked) {
+                        coroutineScope.launch {
+                            connectToRabbitMqCluster()
+                            connectToGlobalDensityDataExchange()
                         }
                     }
                 }
@@ -73,7 +69,7 @@ class MessagingService : LifecycleService() {
                     // TODO: Maybe find a more elegant solution
                     runBlocking {
                         coroutineScope.launch {
-                            disconnectFromGlobalDensityDataExchange()
+                            //disconnectFromGlobalDensityDataExchange()
                             disconnectFromRabbitMqCluster()
                         }
                     }
@@ -131,9 +127,11 @@ class MessagingService : LifecycleService() {
         super.onDestroy()
         // TODO: Maybe find a more elegant solution
         runBlocking {
-            coroutineScope.launch {
-                disconnectFromGlobalDensityDataExchange()
-                disconnectFromRabbitMqCluster()
+            if (isClientConnectedToRabbitMqCluster) {
+                coroutineScope.launch {
+                    //disconnectFromGlobalDensityDataExchange()
+                    disconnectFromRabbitMqCluster()
+                }
             }
         }
     }
@@ -150,12 +148,10 @@ class MessagingService : LifecycleService() {
         )
 
         if (DataStore.clientHasLargestTransmissionBenefitOfNearbyClients.value == true && !isClientConnectedToRabbitMqCluster) {
-            coroutineScope.launch {
-                if (!runningConnectionEstablishingProcessMutex.isLocked) {
-                    runningConnectionEstablishingProcessMutex.withLock {
-                        connectToRabbitMqCluster()
-                        connectToGlobalDensityDataExchange()
-                    }
+            if (!runningConnectionEstablishingProcessMutex.isLocked) {
+                coroutineScope.launch {
+                    connectToRabbitMqCluster()
+                    connectToGlobalDensityDataExchange()
                 }
             }
         }
@@ -164,15 +160,16 @@ class MessagingService : LifecycleService() {
     }
 
     private suspend fun connectToRabbitMqCluster() {
-        connectionFactory = ConnectionFactory()
+        runningConnectionEstablishingProcessMutex.withLock {
+            connectionFactory = ConnectionFactory()
 
-        connectionFactory.host = BuildConfig.RABBIT_MQ_HOST
-        connectionFactory.port = BuildConfig.RABBIT_MQ_PORT.toInt()
-        connectionFactory.username = BuildConfig.RABBIT_MQ_USERNAME
-        connectionFactory.password = BuildConfig.RABBIT_MQ_PASSWORD
-        connectionFactory.isAutomaticRecoveryEnabled = true
-
-        while (!isClientConnectedToRabbitMqCluster) {
+            connectionFactory.host = BuildConfig.RABBIT_MQ_HOST
+            connectionFactory.port = BuildConfig.RABBIT_MQ_PORT.toInt()
+            connectionFactory.username = BuildConfig.RABBIT_MQ_USERNAME
+            connectionFactory.password = BuildConfig.RABBIT_MQ_PASSWORD
+            connectionFactory.isAutomaticRecoveryEnabled = true
+//
+//        while (!isClientConnectedToRabbitMqCluster) {
             try {
                 connection = connectionFactory.newConnection()
                 channel = connection.createChannel()
@@ -192,42 +189,48 @@ class MessagingService : LifecycleService() {
                     "Not able to establish connection to RabbitMQ cluster!"
                 )
             }
-
-            // Retry establishing connection to RabbitMQ Cluster every 5 seconds
-            delay(5.seconds)
         }
+
+//
+//            // Retry establishing connection to RabbitMQ Cluster every 5 seconds
+//            delay(5.seconds)
+//        }
     }
 
-    private fun connectToGlobalDensityDataExchange() {
-        channel.queueDeclare(
-            globalDensityDataQueue,
-            true,
-            false,
-            false,
-            mapOf<String, Any>(
-                Pair<String, String>("x-queue-type", "quorum"),
-                Pair<String, Int>("x-expires", 5000)
-            )
-        )
-        LogController.log(
-            Log.INFO,
-            "MessagingService",
-            "Declared globalDensityDataQueue: ${globalDensityDataQueue}"
-        )
+    private suspend fun connectToGlobalDensityDataExchange() {
+        runningConnectionEstablishingProcessMutex.withLock {
+            if (isClientConnectedToRabbitMqCluster) {
+                channel.queueDeclare(
+                    globalDensityDataQueue,
+                    true,
+                    false,
+                    false,
+                    mapOf<String, Any>(
+                        Pair<String, String>("x-queue-type", "quorum"),
+                        Pair<String, Int>("x-expires", 5000)
+                    )
+                )
+                LogController.log(
+                    Log.INFO,
+                    "MessagingService",
+                    "Declared globalDensityDataQueue: ${globalDensityDataQueue}"
+                )
 
-        channel.queueBind(globalDensityDataQueue, globalDensityDataExchange, "")
-        LogController.log(
-            Log.INFO,
-            "MessagingService",
-            "${globalDensityDataQueue} bound to ${globalDensityDataExchange}"
-        )
+                channel.queueBind(globalDensityDataQueue, globalDensityDataExchange, "")
+                LogController.log(
+                    Log.INFO,
+                    "MessagingService",
+                    "${globalDensityDataQueue} bound to ${globalDensityDataExchange}"
+                )
 
-        channel.basicConsume(globalDensityDataQueue, true, globalDensityDataConsumer)
-        LogController.log(
-            Log.INFO,
-            "MessagingService",
-            "Started consumer for ${globalDensityDataQueue}"
-        )
+                channel.basicConsume(globalDensityDataQueue, true, globalDensityDataConsumer)
+                LogController.log(
+                    Log.INFO,
+                    "MessagingService",
+                    "Started consumer for ${globalDensityDataQueue}"
+                )
+            }
+        }
     }
 
     private fun installGlobalDensityDataConsumer(channel: Channel) {
