@@ -48,13 +48,13 @@ class LocationService : Service() {
 //              For testing purpose (location is the center of the Marienplatz in Munich):
                 var updatedClientPositionCellId: String = h3Core.latLngToCellAddress(
                     48.137371, 11.575328,
-                    13
+                    12
                 )
 
 //                var updatedClientPositionCellId: String = h3Core.latLngToCellAddress(
 //                    p0.latitude,
 //                    p0.longitude,
-//                    13
+//                    12
 //                )
 
                 // Adding leading zeros to h3 cell id so .hexToByteArray() can be used to convert the string to byte array
