@@ -17,8 +17,20 @@ abstract class MeasurementMap {
         measurements[measurement.cellId] = measurement
     }
 
+    fun addAllMeasurements(measurements: List<Measurement>) {
+        for (measurement in measurements){
+            setMeasurement(measurement)
+        }
+    }
+
     fun removeMeasurementForCellId(cellId: String) {
         measurements.remove(cellId)
+    }
+
+    fun removeMeasurementsForCellIds(cellIds: List<String>) {
+        for (cellId in cellIds){
+            removeMeasurementForCellId(cellId)
+        }
     }
 
     fun getAllMeasurements(): MutableMap<String, Measurement> {
