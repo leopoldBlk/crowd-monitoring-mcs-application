@@ -42,10 +42,14 @@ class MessageConsumer {
                     receivedMeasurementMapAsJson
                 )
 
-            // Handover the servers identifier and the received measurement map to the measurement manager for further processing
+            // Adaption of the discretization level of the measurements contained within the FAMM
+            val discretizedMeasurementMap: ForeignAggregatedMeasurementMap =
+                Utils.adaptionOfDiscretizationLevel(deserializedMeasurementMapFromJson as ForeignAggregatedMeasurementMap)
+
+            // Handover the servers identifier and the received and adapted measurement map to the measurement manager for further processing
             SimulatedMobileSensingClientsApplication.measurementManager.handleReceivedFamm(
                 serverIdMessageReceivedFrom,
-                deserializedMeasurementMapFromJson as ForeignAggregatedMeasurementMap
+                discretizedMeasurementMap
             )
 
             logger.info("Received global density data from server ($serverIdMessageReceivedFrom): $receivedMeasurementMapAsJson")

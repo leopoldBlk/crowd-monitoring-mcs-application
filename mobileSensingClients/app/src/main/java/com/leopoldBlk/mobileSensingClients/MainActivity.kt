@@ -12,7 +12,7 @@ import com.leopoldBlk.mobileSensingClients.services.PositionalBeaconService
 import com.leopoldBlk.mobileSensingClients.services.TransmissionBenefitService
 import com.leopoldBlk.mobileSensingClients.ui.composables.Map
 import com.leopoldBlk.mobileSensingClients.ui.theme.MCSAppTheme
-import com.leopoldBlk.mobileSensingClients.util.LogController
+import com.leopoldBlk.mobileSensingClients.util.controller.LogController
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData.WifiAwareDensityDataPublisherService
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData.WifiAwareDensityDataSubscriberService
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.positionalBeacon.WifiAwarePositionalBeaconPublisherService

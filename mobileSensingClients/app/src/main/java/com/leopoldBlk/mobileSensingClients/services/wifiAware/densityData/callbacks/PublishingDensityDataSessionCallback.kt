@@ -4,7 +4,7 @@ import android.net.wifi.aware.DiscoverySessionCallback
 import android.net.wifi.aware.PublishConfig
 import android.net.wifi.aware.PublishDiscoverySession
 import android.util.Log
-import com.leopoldBlk.mobileSensingClients.util.LogController
+import com.leopoldBlk.mobileSensingClients.util.controller.LogController
 import kotlinx.coroutines.CompletableDeferred
 
 class PublishingDensityDataSessionCallback : DiscoverySessionCallback() {

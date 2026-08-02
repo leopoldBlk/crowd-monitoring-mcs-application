@@ -14,7 +14,7 @@ import androidx.lifecycle.Observer
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.WifiAwareService
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.positionalBeacon.callbacks.PublishingPositionalBeaconSessionCallback
 import com.leopoldBlk.mobileSensingClients.util.DataStore
-import com.leopoldBlk.mobileSensingClients.util.PositionalBeaconConverter
+import com.leopoldBlk.mobileSensingClients.util.converter.PositionalBeaconConverter
 import crowdDensityLibrary.dataClasses.PositionalBeacon
 
 class WifiAwarePositionalBeaconPublisherService : WifiAwareService() {

@@ -1,4 +1,4 @@
-package com.leopoldBlk.mobileSensingClients.util
+package com.leopoldBlk.mobileSensingClients.util.controller
 
 import android.util.Log
 

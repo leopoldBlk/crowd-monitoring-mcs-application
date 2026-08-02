@@ -1,6 +1,6 @@
 package com.leopoldBlk.mobileSensingClients
 
-import com.leopoldBlk.mobileSensingClients.util.CellConverter
+import com.leopoldBlk.mobileSensingClients.util.converter.CellConverter
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

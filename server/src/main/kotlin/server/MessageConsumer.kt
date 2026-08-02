@@ -1,6 +1,7 @@
 package server
 
 import crowdDensityLibrary.ForeignAggregatedMeasurementMap
+import crowdDensityLibrary.LocalAggregatedMeasurementMap
 import crowdDensityLibrary.MeasurementMap
 import crowdDensityLibrary.serializer.MeasurementMapSerializer
 import kotlinx.coroutines.CoroutineScope
@@ -73,9 +74,12 @@ class MessageConsumer(private val messageProducer: MessageProducer) {
             val updatedLammAndOrderForTransmission: Pair<MeasurementMap, List<String>> =
                 ServerApplication.measurementManager.getCurrentLammAndOrderForTransmission()
 
+            val lamWithPrioritizedMeasurements: LocalAggregatedMeasurementMap =
+                Utils.measurementPrioritization(updatedLammAndOrderForTransmission.first as LocalAggregatedMeasurementMap)
+
             // Serialize the updated LAMM according to the order of transmission to JSON format
             val serializedLammToJson: String = MeasurementMapSerializer.serializeMeasurementMapToJson(
-                updatedLammAndOrderForTransmission.first,
+                lamWithPrioritizedMeasurements,
                 updatedLammAndOrderForTransmission.second
             )
 

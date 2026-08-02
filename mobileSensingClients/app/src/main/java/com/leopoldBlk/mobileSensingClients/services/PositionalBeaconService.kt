@@ -6,7 +6,7 @@ import android.util.Log
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.Observer
 import com.leopoldBlk.mobileSensingClients.util.DataStore
-import com.leopoldBlk.mobileSensingClients.util.LogController
+import com.leopoldBlk.mobileSensingClients.util.controller.LogController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

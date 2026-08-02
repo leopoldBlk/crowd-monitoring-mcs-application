@@ -1,7 +1,9 @@
 package org.leopoldblk.simulatedmobilesensingclients
 
+import com.uber.h3core.H3Core
 import crowdDensityLibrary.MeasurementManager
 import crowdDensityLibrary.dataClasses.Coordinates
+import crowdDensityLibrary.dataClasses.Position
 import org.leopoldblk.simulatedmobilesensingclients.Utils.generateRandomCoordinatesWithinGeographicalSquare
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
@@ -12,6 +14,9 @@ import kotlin.random.Random
 @EnableScheduling
 class SimulatedMobileSensingClientsApplication {
     companion object {
+        // H3Core instance for performing operations with Uber H3 cells
+        private val h3Core: H3Core = H3Core.newInstance()
+
         // Self-generated identifier of the simulated client
         private val clientId: ByteArray = Random.nextBytes(ByteArray(4))
 
@@ -23,10 +28,6 @@ class SimulatedMobileSensingClientsApplication {
         private val topLeft: Coordinates = Coordinates(48.142977, 11.566536)
         private val bottomRight: Coordinates = Coordinates(48.133292, 11.584525)
 
-        // Randomly generated coordinates of the simulated mobile sensing client
-        public val initialCoordinates: Coordinates =
-            generateRandomCoordinatesWithinGeographicalSquare(topLeft, bottomRight)
-
         // Self-generated identifier of the simulated client as hexadecimal string
         public val clientIdHexString: String = clientId.toHexString()
 
@@ -35,6 +36,18 @@ class SimulatedMobileSensingClientsApplication {
         public val nearbyAreaDiscretizationLevel: UShort = 12U
         public val distantAreaDiscretizationLevel: UShort = 10U
         public val levelToDetermineNearbyArea: UShort = 11U
+
+        // Randomly generated coordinates of the simulated mobile sensing client
+        public val initialCoordinates: Coordinates =
+            generateRandomCoordinatesWithinGeographicalSquare(topLeft, bottomRight)
+
+        public val initialCell: String = h3Core.latLngToCellAddress(
+            initialCoordinates.latitude,
+            initialCoordinates.longitude,
+            nearbyAreaDiscretizationLevel.toInt()
+        )
+
+        public val simulatedClientPosition: Position = Position(initialCoordinates, initialCell)
 
         // Measurement manager for handling density data
         public val measurementManager: MeasurementManager = MeasurementManager(clientIdHexString, timeToLiveInSeconds)
