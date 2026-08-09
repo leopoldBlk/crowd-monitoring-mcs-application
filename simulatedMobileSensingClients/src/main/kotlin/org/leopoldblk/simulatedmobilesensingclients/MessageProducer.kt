@@ -9,9 +9,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.amqp.core.Message
+import org.springframework.amqp.core.MessageProperties
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
+import kotlin.random.Random
 
 // Sources:
 // https://www.rabbitmq.com/tutorials/tutorial-one-spring-amqp
@@ -56,12 +59,8 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
                     updatedLammAndOrderForTransmission.second
                 )
 
-            // Create pair containing own client identifier along with the previously updated LAMM
-            val serializedLammToJsonWithClientId: Pair<String, String> =
-                Pair(SimulatedMobileSensingClientsApplication.clientIdHexString, serializedAndPrioritizedLammToJson)
-
-            // Publish the updated LAMM with the client identifier to the exchange for local density data
-            publishMessage("rabbit-mq-exchange-local-density-data", serializedLammToJsonWithClientId.toString())
+            // Publish the updated LAMM to the exchange for local density data
+            publishMessage("rabbit-mq-exchange-local-density-data", serializedAndPrioritizedLammToJson)
         }
     }
 
@@ -71,11 +70,21 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
      * @param messageToBePublished Message to be published.
      */
     fun publishMessage(exchangeToPublishOn: String, messageToBePublished: String) {
+        // Generate a random identifier for the message to be published
+        val messageId: ByteArray = Random.nextBytes(ByteArray(4))
+
+        // Generate message properties containing a header with client and the message identifier
+        val messageProperties: MessageProperties = MessageProperties()
+        messageProperties.setHeader("ProducerId", SimulatedMobileSensingClientsApplication.clientIdHexString)
+        messageProperties.setHeader("MessageId", messageId.toHexString())
+
+        val message = Message(messageToBePublished.toByteArray(), messageProperties)
+
         rabbitTemplate.convertAndSend(
             exchangeToPublishOn, null,
-            messageToBePublished
+            message
         )
 
-        logger.info("Published following message: $messageToBePublished")
+        logger.info("Published following message with the id (${messageId.toHexString()}) as producer with the id (${SimulatedMobileSensingClientsApplication.clientIdHexString}): ${messageToBePublished}")
     }
 }
