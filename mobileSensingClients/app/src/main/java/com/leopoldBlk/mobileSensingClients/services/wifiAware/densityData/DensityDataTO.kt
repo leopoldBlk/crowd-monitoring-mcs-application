@@ -23,6 +23,10 @@ class DensityDataTO(
         return clientId.toHexString()
     }
 
+    public fun getPacketId(): UShort{
+        return numberOfDensityDataToWithinTransmission.toUShort()
+    }
+
     public fun getHeaderTimestampAsULong(): ULong {
         // Add byte to beginning to correspond to byte size of long for successful conversion
         return ByteBuffer.wrap(ByteArray(1) + timestamp).getLong().toULong()

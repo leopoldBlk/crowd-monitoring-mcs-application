@@ -14,18 +14,19 @@ import com.leopoldBlk.mobileSensingClients.services.wifiAware.WifiAwareService
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData.callbacks.PublishingDensityDataSessionCallback
 import com.leopoldBlk.mobileSensingClients.util.DataStore
 import com.leopoldBlk.mobileSensingClients.util.controller.DiscretizationController
+import com.leopoldBlk.mobileSensingClients.util.controller.LoggingDirectoryController
 import com.leopoldBlk.mobileSensingClients.util.controller.TransmissionDecisionController
 import com.leopoldBlk.mobileSensingClients.util.converter.DensityDataConverter
 import crowdDensityLibrary.LocalAggregatedMeasurementMap
 import crowdDensityLibrary.MeasurementMap
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.HttpRedirect
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileWriter
+import kotlin.time.Duration.Companion.milliseconds
 
 class WifiAwareDensityDataPublisherService : WifiAwareService() {
     private var isWifiAwareSessionInitialized: Boolean = false
@@ -34,22 +35,16 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
     private val publishingDensityDataSessionCallback: PublishingDensityDataSessionCallback =
         PublishingDensityDataSessionCallback()
     private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    private val evaluationBroadcastedDensityDataLog: File =
+        File(LoggingDirectoryController.getEvaluationD2dCommunicationLogFilePath("BroadcastedDensityDataLog"))
 
-    // Sources for http client with Ktor:
-    // https://ktor.io/docs/client-create-new-application.html
-    // https://ktor.io/docs/client-requests.html
-    // https://slack-chats.kotlinlang.org/t/16267820/the-documentation-states-that-the-ktor-client-follows-redire
-    private val httpClient = HttpClient(CIO) {
-        install(HttpRedirect) {
-            allowHttpsDowngrade = true
-            checkHttpMethod = false
-        }
-    }
+    private var lammAsDensityDataTOs: List<DensityDataTO>? = null
 
     private lateinit var wifiAwareAttachEventCallbackHandler: Handler
     private lateinit var publishingSessionCallbackHandler: Handler
     private lateinit var publishConfigs: MutableList<PublishConfig>
     private lateinit var transmittingLammJob: Job
+    private lateinit var evaluationBroadcastedDensityDataLogFileWriter: FileWriter
 
     private var wifiAwareAttachEventCallback: AttachCallback = object : AttachCallback() {
         override fun onAttached(session: WifiAwareSession?) {
@@ -64,6 +59,17 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
 
     override fun onCreate() {
         super.onCreate()
+
+        // Create directory for the log file if not already existing
+        if (!File(evaluationBroadcastedDensityDataLog.parent).exists()) {
+            File(evaluationBroadcastedDensityDataLog.parent).mkdirs()
+        }
+
+        // Create file writer which appends new logs to the log file and specifying the logging format
+        evaluationBroadcastedDensityDataLogFileWriter =
+            FileWriter(evaluationBroadcastedDensityDataLog, true)
+        evaluationBroadcastedDensityDataLogFileWriter.write("transmission id; packet id; client id of the broadcaster; number of measurements within the data packet; packet size in bytes (header + measurement map); timestamp within packet header in seconds; timestamp after updating publish config in milliseconds\n")
+        evaluationBroadcastedDensityDataLogFileWriter.flush()
 
         wifiAwarePublisherHandlerThread.start()
 
@@ -94,6 +100,8 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
     override fun onDestroy() {
         super.onDestroy()
 
+        evaluationBroadcastedDensityDataLogFileWriter.close()
+
         transmittingLammJob.cancel()
         isWifiAwareSessionInitialized = false
     }
@@ -111,99 +119,162 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
         TransmissionDecisionController.updateTransmissionDecision()
 
         // Generate/update the lamm and order for transmission
-        val currentLammAndOrderForTransmission: Pair<MeasurementMap, List<String>> =
+        val updatedLammAndOrderForTransmission: Pair<MeasurementMap, List<String>> =
             DataStore.measurementManager.updateLammAndOrderForTransmission()
 
-        val lamWithPrioritizedMeasurements: LocalAggregatedMeasurementMap =
-            DiscretizationController.measurementPrioritization(currentLammAndOrderForTransmission.first as LocalAggregatedMeasurementMap)
+        val lammWithPrioritizedMeasurements: LocalAggregatedMeasurementMap =
+            DiscretizationController.measurementPrioritization(updatedLammAndOrderForTransmission.first as LocalAggregatedMeasurementMap)
 
         val prioritizedLammAndOrderForTransmission =
-            Pair(lamWithPrioritizedMeasurements, currentLammAndOrderForTransmission.second)
+            Pair(lammWithPrioritizedMeasurements, updatedLammAndOrderForTransmission.second)
 
         // Post generated/updated lamm so map can update the displayed data
         DataStore.lammAndOrderForMeasurementTransmission.postValue(
             prioritizedLammAndOrderForTransmission
         )
 
-        if (prioritizedLammAndOrderForTransmission != null) {
-            // Generating the publish configs according to the generated and updated lamm and order of transmission
-            updatePublishConfig(prioritizedLammAndOrderForTransmission)
+        // Generating the publish configs according to the generated and updated lamm and order of transmission
+        updatePublishConfig(prioritizedLammAndOrderForTransmission)
 
-            if (isWifiAwareSessionInitialized && publishConfigs.isNotEmpty()) {
-                // Split the defined transmission interval for a lamm evenly across the DensityDataTOs to send
-                val publishingIntervalForEachConfigInMilliseconds: Long =
-                    DataStore.publishLammIntervalInMilliseconds.toLong() / publishConfigs.size
+        // TODO: Stop publishing, if the LAMM is now empty but was not previously
+        if (isWifiAwareSessionInitialized && publishConfigs.isNotEmpty()) {
+            // Split the defined transmission interval for a lamm evenly across the DensityDataTOs to send
+            val publishingIntervalForEachConfigInMilliseconds: Long =
+                DataStore.publishLammIntervalInMilliseconds.toLong() / publishConfigs.size
 
-                if ((ActivityCompat.checkSelfPermission(
-                        applicationContext,
-                        Manifest.permission.NEARBY_WIFI_DEVICES
-                    ) ==
-                            PackageManager.PERMISSION_GRANTED) && (ActivityCompat.checkSelfPermission(
-                        applicationContext,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    ) ==
-                            PackageManager.PERMISSION_GRANTED)
-                ) {
-                    // First density data published by the client via Wifi Aware
-                    if (!publishingDensityDataSessionCallback.publishDiscoverySessionStarted.isCompleted) {
-                        wifiAwareSession.publish(
-                            publishConfigs.first(),
-                            publishingDensityDataSessionCallback,
-                            publishingSessionCallbackHandler
-                        )
+            if ((ActivityCompat.checkSelfPermission(
+                    applicationContext,
+                    Manifest.permission.NEARBY_WIFI_DEVICES
+                ) ==
+                        PackageManager.PERMISSION_GRANTED) && (ActivityCompat.checkSelfPermission(
+                    applicationContext,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) ==
+                        PackageManager.PERMISSION_GRANTED)
+            ) {
+                // First density data published by the client via Wifi Aware
+                if (!publishingDensityDataSessionCallback.publishDiscoverySessionStarted.isCompleted) {
+                    wifiAwareSession.publish(
+                        publishConfigs.first(),
+                        publishingDensityDataSessionCallback,
+                        publishingSessionCallbackHandler
+                    )
 
-                        publishingDensityDataSessionCallback.publishDiscoverySessionStarted.await()
+                    publishingDensityDataSessionCallback.publishDiscoverySessionStarted.await()
 
-                        delay(publishingIntervalForEachConfigInMilliseconds)
-
-                        if (publishConfigs.size > 1) {
-                            publishConfigs.drop(1).forEach { publishConfig ->
-                                publishingDensityDataSessionCallback.updatePublishConfig(
-                                    publishConfig
-                                )
-                                delay(publishingIntervalForEachConfigInMilliseconds)
-                            }
+                    val timestampAfterPublishingConfigUpdated: Long =
+                        if (DataStore.trustedTimeClient != null) {
+                            DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!!
+                        } else {
+                            System.currentTimeMillis()
                         }
-                    }
-                    // Client already published density data via Wifi Aware
-                    else {
-                        publishConfigs.forEach { publishConfig ->
+
+                    evaluationBroadcastedDensityDataLogFileWriter.write(
+                        "${lammAsDensityDataTOs!!.first().getTransmissionIdAsHexString()}; " +
+                                "${lammAsDensityDataTOs!!.first().getPacketId()}; " +
+                                "${lammAsDensityDataTOs!!.first().getClientIdAsHexString()}; " +
+                                "${lammAsDensityDataTOs!!.first().getDensityDataLength()}; " +
+                                "${
+                                    lammAsDensityDataTOs!!.first()
+                                        .getDensityDataTOasByteArray().size
+                                }; " +
+                                "${
+                                    lammAsDensityDataTOs!!.first().getHeaderTimestampAsULong()
+                                }; " +
+                                "${timestampAfterPublishingConfigUpdated}\n"
+                    )
+                    evaluationBroadcastedDensityDataLogFileWriter.flush()
+
+                    delay(publishingIntervalForEachConfigInMilliseconds.milliseconds)
+
+                    if (publishConfigs.size > 1) {
+                        var publishConfigIndexCounter: Int = 1
+
+                        publishConfigs.drop(1).forEach { publishConfig ->
                             publishingDensityDataSessionCallback.updatePublishConfig(
                                 publishConfig
                             )
-                            delay(publishingIntervalForEachConfigInMilliseconds)
+
+                            val timestampAfterPublishingConfigUpdated: Long =
+                                if (DataStore.trustedTimeClient != null) {
+                                    DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!!
+                                } else {
+                                    System.currentTimeMillis()
+                                }
+
+                            evaluationBroadcastedDensityDataLogFileWriter.write(
+                                "${lammAsDensityDataTOs!![publishConfigIndexCounter].getTransmissionIdAsHexString()}; " +
+                                        "${lammAsDensityDataTOs!![publishConfigIndexCounter].getPacketId()}; " +
+                                        "${lammAsDensityDataTOs!![publishConfigIndexCounter].getClientIdAsHexString()}; " +
+                                        "${lammAsDensityDataTOs!![publishConfigIndexCounter].getDensityDataLength()}; " +
+                                        "${
+                                            lammAsDensityDataTOs!![publishConfigIndexCounter]
+                                                .getDensityDataTOasByteArray().size
+                                        }; " +
+                                        "${
+                                            lammAsDensityDataTOs!![publishConfigIndexCounter].getHeaderTimestampAsULong()
+                                        }; " +
+                                        "${timestampAfterPublishingConfigUpdated}\n"
+                            )
+                            evaluationBroadcastedDensityDataLogFileWriter.flush()
+
+                            publishConfigIndexCounter += 1
+                            delay(publishingIntervalForEachConfigInMilliseconds.milliseconds)
                         }
                     }
                 }
-            }
+                // Client already published density data via Wifi Aware
+                else {
+                    var publishConfigIndexCounter: Int = 0
 
-            // Only send updated lamm to the server, if the client has the largest value for
-            // transmission benefit of the nearby clients
-//            if (DataStore.clientHasLargestTransmissionBenefitOfNearbyClients.value!!) {
-//                val serializedLammToJsonAccordingToTransmissionOrder: String =
-//                    MeasurementMapSerializer.serializeMeasurementMapToJson(
-//                        currentLammAndOrderForTransmission.first,
-//                        currentLammAndOrderForTransmission.second
-//                    )
-//
-//                httpClient.post(BuildConfig.MCS_SERVER_URL + "/${DataStore.clientIdHexString}") {
-//                    contentType(ContentType.Text.Plain)
-//                    setBody(serializedLammToJsonAccordingToTransmissionOrder)
-//                }
-//            }
+                    publishConfigs.forEach { publishConfig ->
+                        publishingDensityDataSessionCallback.updatePublishConfig(
+                            publishConfig
+                        )
+
+                        val timestampAfterPublishingConfigUpdated: Long =
+                            if (DataStore.trustedTimeClient != null) {
+                                DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!!
+                            } else {
+                                System.currentTimeMillis()
+                            }
+
+                        evaluationBroadcastedDensityDataLogFileWriter.write(
+                            "${lammAsDensityDataTOs!![publishConfigIndexCounter].getTransmissionIdAsHexString()}; " +
+                                    "${lammAsDensityDataTOs!![publishConfigIndexCounter].getPacketId()}; " +
+                                    "${lammAsDensityDataTOs!![publishConfigIndexCounter].getClientIdAsHexString()}; " +
+                                    "${lammAsDensityDataTOs!![publishConfigIndexCounter].getDensityDataLength()}; " +
+                                    "${
+                                        lammAsDensityDataTOs!![publishConfigIndexCounter]
+                                            .getDensityDataTOasByteArray().size
+                                    }; " +
+                                    "${
+                                        lammAsDensityDataTOs!![publishConfigIndexCounter].getHeaderTimestampAsULong()
+                                    }; " +
+                                    "${timestampAfterPublishingConfigUpdated}\n"
+                        )
+                        evaluationBroadcastedDensityDataLogFileWriter.flush()
+
+                        publishConfigIndexCounter += 1
+                        delay(publishingIntervalForEachConfigInMilliseconds.milliseconds)
+                    }
+                }
+            }
+        } else if (publishConfigs.isEmpty()) {
+            delay(DataStore.publishLammIntervalInMilliseconds.toLong().milliseconds)
         }
     }
 
     private fun updatePublishConfig(lammAndOrderForMeasurementTransmission: Pair<MeasurementMap, List<String>>) {
         publishConfigs = mutableListOf<PublishConfig>()
 
-        val lammAsDensityDataTOs: List<DensityDataTO>? =
+        lammAsDensityDataTOs =
             DensityDataConverter.convertDensityDataToDensityDataTOs(
                 lammAndOrderForMeasurementTransmission
             )
 
         if (lammAsDensityDataTOs != null) {
-            lammAsDensityDataTOs.forEach { lammDensityDataTO ->
+            for (lammDensityDataTO in lammAsDensityDataTOs) {
                 val publishConfigForTO: PublishConfig =
                     PublishConfig.Builder()
                         .setServiceName("MCS-DensityData")
