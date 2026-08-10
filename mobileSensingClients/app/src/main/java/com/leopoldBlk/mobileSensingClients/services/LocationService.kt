@@ -37,11 +37,11 @@ class LocationService : Service() {
 
             )
 
-            LogController.log(
-                Log.DEBUG,
-                className,
-                "FusedLocationListener - Thread-ID: ${Thread.currentThread().threadId()}"
-            )
+//            LogController.log(
+//                Log.DEBUG,
+//                className,
+//                "FusedLocationListener - Thread-ID: ${Thread.currentThread().threadId()}"
+//            )
 
             // TODO: Choose proper threshold for location accuracy
             if (p0.accuracy < 20.0) {
@@ -94,11 +94,11 @@ class LocationService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val superOnStartCommandStatus: Int = super.onStartCommand(intent, flags, startId)
 
-        LogController.log(
-            Log.DEBUG,
-            className,
-            "onStartCommand - Thread-ID: ${Thread.currentThread().threadId()}"
-        )
+//        LogController.log(
+//            Log.DEBUG,
+//            className,
+//            "onStartCommand - Thread-ID: ${Thread.currentThread().threadId()}"
+//        )
 
         if ((ActivityCompat.checkSelfPermission(
                 applicationContext,
