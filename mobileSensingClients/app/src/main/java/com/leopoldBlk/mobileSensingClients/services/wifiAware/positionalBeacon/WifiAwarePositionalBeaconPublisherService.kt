@@ -27,7 +27,7 @@ class WifiAwarePositionalBeaconPublisherService : WifiAwareService() {
     private val publishingPositionalBeaconSessionCallback: PublishingPositionalBeaconSessionCallback =
         PublishingPositionalBeaconSessionCallback()
     private val evaluationPublishedPositionalBeaconsLog: File =
-        File(LoggingDirectoryController.getEvaluationPositionalBeaconsLogFilePath("PublishedPositionalBeaconsLog"))
+        File(LoggingDirectoryController.getEvaluationD2dCommunicationLogFilePath("PublishedPositionalBeaconsLog"))
 
     private lateinit var wifiAwareAttachEventCallbackHandler: Handler
     private lateinit var publishingSessionCallbackHandler: Handler
