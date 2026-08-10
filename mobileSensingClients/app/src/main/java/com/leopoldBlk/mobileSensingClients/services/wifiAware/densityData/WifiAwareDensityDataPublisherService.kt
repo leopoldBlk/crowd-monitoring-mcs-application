@@ -101,6 +101,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
         super.onDestroy()
 
         evaluationBroadcastedDensityDataLogFileWriter.close()
+        TransmissionDecisionController.closeEvaluationSelectionOfEdgeClientEventLogFileWriter()
 
         transmittingLammJob.cancel()
         isWifiAwareSessionInitialized = false

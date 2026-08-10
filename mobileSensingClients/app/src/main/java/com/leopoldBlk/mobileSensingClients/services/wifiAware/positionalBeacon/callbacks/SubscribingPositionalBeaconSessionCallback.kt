@@ -115,6 +115,7 @@ class SubscribingPositionalBeaconSessionCallback : DiscoverySessionCallback() {
         super.onSessionTerminated()
 
         evaluationReceivedPositionalBeaconsLogFileWriter.close()
+        TransmissionDecisionController.closeEvaluationSelectionOfEdgeClientEventLogFileWriter()
     }
 
 //    For testing purpose:

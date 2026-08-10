@@ -14,11 +14,12 @@ import android.os.BatteryManager
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.ActivityCompat
 import com.leopoldBlk.mobileSensingClients.util.DataStore
-import com.leopoldBlk.mobileSensingClients.util.controller.LogController
+import com.leopoldBlk.mobileSensingClients.util.controller.LoggingDirectoryController
 import com.leopoldBlk.mobileSensingClients.util.controller.TransmissionDecisionController
+import java.io.File
+import java.io.FileWriter
 
 class TransmissionBenefitService : Service() {
     private val className: String = "TransmissionBenefitService"
@@ -26,23 +27,26 @@ class TransmissionBenefitService : Service() {
     private var clientConnectionState: Int? = null
     private var networkBatteryUpdateHandlerThread: HandlerThread =
         HandlerThread("NetworkBatteryUpdateHandlerThread")
+    private val evaluationTransmissionBenefitValueLog: File =
+        File(LoggingDirectoryController.getEvaluationSelectionOfEdgeClientsLogFilePath("TransmissionBenefitValueLog"))
 
     private lateinit var connectivityManager: ConnectivityManager
     private lateinit var networkUpdateHandler: Handler
     private lateinit var batteryUpdateHandler: Handler
+    private lateinit var evaluationTransmissionBenefitValueLogFileWriter: FileWriter
 
     private val networkCallback: ConnectivityManager.NetworkCallback =
         object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
                 super.onAvailable(network)
 
-                LogController.log(
-                    Log.DEBUG,
-                    className,
-                    "networkUpdateHandler onAvailable - Thread-ID: ${
-                        Thread.currentThread().threadId()
-                    }"
-                )
+//                LogController.log(
+//                    Log.DEBUG,
+//                    className,
+//                    "networkUpdateHandler onAvailable - Thread-ID: ${
+//                        Thread.currentThread().threadId()
+//                    }"
+//                )
             }
 
             override fun onCapabilitiesChanged(
@@ -79,14 +83,14 @@ class TransmissionBenefitService : Service() {
             batteryUpdateHandler.post {
                 if (intent != null) {
                     clientBatteryLevel = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0)
-
-                    LogController.log(
-                        Log.DEBUG,
-                        className,
-                        "batteryUpdateHandler onReceive - Thread-ID: ${
-                            Thread.currentThread().threadId()
-                        }"
-                    )
+//
+//                    LogController.log(
+//                        Log.DEBUG,
+//                        className,
+//                        "batteryUpdateHandler onReceive - Thread-ID: ${
+//                            Thread.currentThread().threadId()
+//                        }"
+//                    )
 
                     updateTransmissionBenefit()
                 }
@@ -97,15 +101,29 @@ class TransmissionBenefitService : Service() {
     private fun updateTransmissionBenefit() {
         if (clientBatteryLevel != null && clientConnectionState != null) {
             var updatedTransmissionBenefit: Float = 0.0f
+            var clientConnectionStateAsString: String = ""
 
-            // TODO: Specify proper multiplication factor for Wifi and cellular connection
             if (clientConnectionState == NetworkCapabilities.TRANSPORT_WIFI) {
-                updatedTransmissionBenefit = clientBatteryLevel!! * 1.44f
+                updatedTransmissionBenefit = clientBatteryLevel!! * 2.817f
+                clientConnectionStateAsString = "wifi"
             } else if (clientConnectionState == NetworkCapabilities.TRANSPORT_CELLULAR) {
                 updatedTransmissionBenefit = clientBatteryLevel!! * 1.0f
+                clientConnectionStateAsString = "cellular"
+            } else {
+                updatedTransmissionBenefit = clientBatteryLevel!! * 0.0f
+                clientConnectionStateAsString = "no connection"
             }
 
             DataStore.clientTransmissionBenefit.postValue(updatedTransmissionBenefit)
+            val timestampAfterUpdateOfTransmissionBenefitValue: Long =
+                if (DataStore.trustedTimeClient != null) {
+                    DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!!
+                } else {
+                    System.currentTimeMillis()
+                }
+
+            evaluationTransmissionBenefitValueLogFileWriter.write("${DataStore.clientIdHexString}; ${clientConnectionStateAsString}; ${clientBatteryLevel}; ${updatedTransmissionBenefit}; ${timestampAfterUpdateOfTransmissionBenefitValue}\n")
+            evaluationTransmissionBenefitValueLogFileWriter.flush()
 
             // Recalculate transmission decision (check if sensing client has the largest transmission benefit of nearby clients)
             // This might have been changed since the value for transmission benefit for this client was updated in the previous step
@@ -116,15 +134,26 @@ class TransmissionBenefitService : Service() {
     override fun onCreate() {
         super.onCreate()
 
-        LogController.log(
-            Log.DEBUG,
-            className,
-            "onCreate - Thread-ID: ${Thread.currentThread().threadId()}"
-        )
+//        LogController.log(
+//            Log.DEBUG,
+//            className,
+//            "onCreate - Thread-ID: ${Thread.currentThread().threadId()}"
+//        )
 
         networkBatteryUpdateHandlerThread.start()
         networkUpdateHandler = Handler(networkBatteryUpdateHandlerThread.looper)
         batteryUpdateHandler = Handler(networkBatteryUpdateHandlerThread.looper)
+
+        // Create directory for the log file if not already existing
+        if (!File(evaluationTransmissionBenefitValueLog.parent).exists()) {
+            File(evaluationTransmissionBenefitValueLog.parent).mkdirs()
+        }
+
+        // Create file writer which appends new logs to the log file and specifying the logging format
+        evaluationTransmissionBenefitValueLogFileWriter =
+            FileWriter(evaluationTransmissionBenefitValueLog, true)
+        evaluationTransmissionBenefitValueLogFileWriter.write("client id; connectivity state; battery level in percent; new transmission benefit value; timestamp after update of the transmission benefit value in milliseconds\n")
+        evaluationTransmissionBenefitValueLogFileWriter.flush()
     }
 
     override fun onBind(intent: Intent): IBinder {
@@ -159,6 +188,9 @@ class TransmissionBenefitService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+
+        evaluationTransmissionBenefitValueLogFileWriter.close()
+        TransmissionDecisionController.closeEvaluationSelectionOfEdgeClientEventLogFileWriter()
 
         unregisterReceiver(batteryChangeBroadcastReceiver)
         connectivityManager.unregisterNetworkCallback(networkCallback)
