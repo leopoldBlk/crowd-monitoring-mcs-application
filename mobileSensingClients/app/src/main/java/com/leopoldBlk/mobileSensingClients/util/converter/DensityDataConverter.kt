@@ -1,29 +1,29 @@
 package com.leopoldBlk.mobileSensingClients.util.converter
 
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData.DensityDataTO
+import com.leopoldBlk.mobileSensingClients.util.DataStore
 import crowdDensityLibrary.ForeignAggregatedMeasurementMap
 import crowdDensityLibrary.MeasurementMap
 import crowdDensityLibrary.dataClasses.Measurement
 import java.nio.ByteBuffer
 import kotlin.random.Random
 
-// TODO: Adapt to the format specified in the concept!
 object DensityDataConverter {
     // Length of a total data packet for D2D data transmission in bytes
-    // --> for Wifi Aware Discovery: 255 byte
+    // --> for Wifi Aware Service Discovery: 255 byte
     private val totalDataPacketLengthInBytes: UInt = 255u
 
     // Header length of data transmission with on data packet
-    // --> 1 byte transmissionId + 4 byte clientId + 7 byte unix timestamp (seconds) + 1 byte as flag for end of transmission / transmission state
-    private val headerLengthInBytes: UInt = 7u
+    // --> 1 byte transmissionId + 1 byte packetId + 4 byte clientId + 4 byte unix timestamp (seconds)
+    private val headerLengthInBytes: UInt = 10u
 
     // Bytes in data packet left for application data (density data in this case)
     private val bytesInDataPacketForDensityData: UInt =
         totalDataPacketLengthInBytes - headerLengthInBytes
 
     // Bytes needed for encoding one cell measurement (density data element)
-    // --> 7 byte cellId + 2 byte measurement value + 2 byte timestamp (reference to timestamp in header)
-    private val bytesPerMeasurement: UInt = 7u + 2u + 2u
+    // --> 6 byte cellId (compressed at maximum Uber H3 level 12) + 2 byte measurement value + 2 byte timestamp (reference to timestamp in header)
+    private val bytesPerMeasurement: UInt = 6u + 2u + 2u
 
     public fun convertDensityDataToDensityDataTOs(lammAndOrderForMeasurementTransmission: Pair<MeasurementMap, List<String>>): List<DensityDataTO>? {
         val localAggregatedMeasurementMap: MeasurementMap =
@@ -44,22 +44,30 @@ object DensityDataConverter {
                 if (measurement != null) {
                     // There is already a DensityDataTO created for this transmission
                     if (densityDataTOs.isNotEmpty()) {
+                        // Get the amount of measurements within the current DensityDataTO
                         val densityDataInCurrentDensityDataTO: UInt =
                             densityDataTOs.last().getDensityDataLength().toUInt()
 
-                        // The already existing DensityDataTO is not able to fit the current measurement due to size limitation
+                        // The already existing DensityDataTO is not able to fit an additional measurement due to size limitation
                         // --> a new DensityDataTO has to be generated
-                        if (densityDataInCurrentDensityDataTO == (bytesInDataPacketForDensityData / bytesPerMeasurement)) {
+                        if ((densityDataInCurrentDensityDataTO + 1u) > (bytesInDataPacketForDensityData.floorDiv(
+                                bytesPerMeasurement
+                            ))
+                        ) {
                             referenceTimestampOfLastDensityDataTO =
-                                (System.currentTimeMillis() / 1000).toULong()
+                                if (DataStore.trustedTimeClient != null) {
+                                    (DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!! / 1000).toULong()
+                                } else {
+                                    (System.currentTimeMillis() / 1000).toULong()
+                                }
 
                             // Create byte buffer with 8 bytes for storing timestamp as long
-                            // --> Remove first byte since the timestamp has seconds accuracy and therefore only 7 bytes are needed
+                            // --> Remove first 4 bytes since only the lower 4 byte are used as timestamp (seconds)
                             val timestampByteBuffer: ByteBuffer =
                                 ByteBuffer.allocate(8)
                                     .putLong(referenceTimestampOfLastDensityDataTO.toLong())
                             val timestampByteArray: ByteArray =
-                                timestampByteBuffer.array().drop(1).toByteArray()
+                                timestampByteBuffer.array().drop(4).toByteArray()
 
                             val newDensityDataTO: DensityDataTO = DensityDataTO(
                                 transmissionId,
@@ -75,15 +83,19 @@ object DensityDataConverter {
                     // A DensityDataTO is not yet created for this transmission
                     else {
                         referenceTimestampOfLastDensityDataTO =
-                            (System.currentTimeMillis() / 1000).toULong()
+                            if (DataStore.trustedTimeClient != null) {
+                                (DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!! / 1000).toULong()
+                            } else {
+                                (System.currentTimeMillis() / 1000).toULong()
+                            }
 
                         // Create byte buffer with 8 bytes for storing timestamp as long
-                        // --> Remove first byte since the timestamp has seconds accuracy and therefore only 7 bytes are needed
+                        // --> Remove first 4 bytes since only the lower 4 byte are used as timestamp (seconds)
                         val timestampByteBuffer: ByteBuffer =
                             ByteBuffer.allocate(8)
                                 .putLong(referenceTimestampOfLastDensityDataTO.toLong())
                         val timestampByteArray: ByteArray =
-                            timestampByteBuffer.array().drop(1).toByteArray()
+                            timestampByteBuffer.array().drop(4).toByteArray()
 
                         val newDensityDataTO: DensityDataTO = DensityDataTO(
                             transmissionId,
@@ -124,10 +136,10 @@ object DensityDataConverter {
             ByteBuffer.allocate(UShort.SIZE_BYTES).putShort(measurement.measurementValue.toShort())
                 .array()
 
-        val measurementCreationTimestamp: ULong =
+        val measurementCreationTimestampReferenced: ULong =
             referenceTimestampOfLastDensityDataTO - measurement.measurementCreationTimestamp
         val measurementCreationTimestampByteBuffer: ByteBuffer =
-            ByteBuffer.allocate(8).putLong(measurementCreationTimestamp.toLong())
+            ByteBuffer.allocate(8).putLong(measurementCreationTimestampReferenced.toLong())
         // Timestamp for measurement is stripped to size of 2 bytes, which fits 65,536s (ca. 18.20h)
         val measurementCreationTimestampByteArray: ByteArray =
             measurementCreationTimestampByteBuffer.array().drop(6).toByteArray()
@@ -143,8 +155,8 @@ object DensityDataConverter {
         val transmissionId: ByteArray = byteArray.copyOfRange(0, 1)
         val numberOfDensityDataToWithinTransmission: ByteArray = byteArray.copyOfRange(1, 2)
         val clientId: ByteArray = byteArray.copyOfRange(2, 6)
-        val referenceTimestamp: ByteArray = byteArray.copyOfRange(6, 13)
-        val densityData: ByteArray = byteArray.copyOfRange(13, byteArray.size)
+        val referenceTimestamp: ByteArray = byteArray.copyOfRange(6, 10)
+        val densityData: ByteArray = byteArray.copyOfRange(10, byteArray.size)
 
         val densityDataTO: DensityDataTO = DensityDataTO(
             transmissionId[0],
@@ -156,7 +168,7 @@ object DensityDataConverter {
         val amountOfDensityDataElements: UInt =
             densityData.size.toUInt().floorDiv(bytesPerMeasurement)
 
-        // Iterate over all density data elements (cell measurements) and insert them to DensityDataTO
+        // Iterate over all density data elements (cell measurements) and insert them into DensityDataTO
         for (densityDataElementNumber in 0u until amountOfDensityDataElements) {
             val densityDataElement: ByteArray = densityData.copyOfRange(
                 (densityDataElementNumber * bytesPerMeasurement).toInt(),
@@ -197,21 +209,21 @@ object DensityDataConverter {
         measurementByteArray: ByteArray,
         referenceHeaderTimestamp: ULong
     ): Measurement {
-        // 7 byte cellId (optimized Uber H3 Level 13 cellIds)
+        // 6 byte cellId (optimized Uber H3 Level 12 cellIds)
         val measurementCellId: String = CellConverter.decompressUberH3CellIdHexString(
-            measurementByteArray.copyOfRange(0, 7).toHexString()
+            measurementByteArray.copyOfRange(0, 6).toHexString()
         )
 
         // 2 byte measurement value
         val measurementValue: UShort =
-            ByteBuffer.wrap(measurementByteArray.copyOfRange(7, 9)).getShort().toUShort()
+            ByteBuffer.wrap(measurementByteArray.copyOfRange(6, 8)).getShort().toUShort()
 
         // 4 byte clientId already as hexadecimal string
         val measurementClientId: String = senderClientId
 
         // Add 6 bytes to beginning since timestamp for measurement is encoded with 2 bytes in reference to header timestamp
         val densityDataElementTimestamp: ULong =
-            ByteBuffer.wrap(ByteArray(6) + measurementByteArray.copyOfRange(9, 11)).getLong()
+            ByteBuffer.wrap(ByteArray(6) + measurementByteArray.copyOfRange(8, 10)).getLong()
                 .toULong()
 
         val measurement: Measurement = Measurement(
