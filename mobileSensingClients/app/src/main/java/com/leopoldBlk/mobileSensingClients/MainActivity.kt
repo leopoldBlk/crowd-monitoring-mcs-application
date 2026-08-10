@@ -7,6 +7,8 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.google.android.gms.time.TrustedTime
+import com.google.android.gms.time.TrustedTimeClient
 import com.leopoldBlk.mobileSensingClients.services.LocationService
 import com.leopoldBlk.mobileSensingClients.services.MessagingService
 import com.leopoldBlk.mobileSensingClients.services.PositionalBeaconService
@@ -21,14 +23,16 @@ import com.leopoldBlk.mobileSensingClients.util.DataStore
 import com.leopoldBlk.mobileSensingClients.util.controller.LogController
 
 class MainActivity : ComponentActivity() {
+    private val isPublisher: Boolean = true
+    private val isSubscriber: Boolean = true
+    private val isEvaluation: Boolean = true
+
+    private lateinit var trustedTimeClient: TrustedTimeClient
+
     // Necessary for running H3 Library on Android, Source: https://github.com/isaacbrodsky/h3-android-sample.git
     init {
         System.loadLibrary("h3")
     }
-
-    private val isPublisher: Boolean = true
-    private val isSubscriber: Boolean = true
-    private val isEvaluation: Boolean = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +57,11 @@ class MainActivity : ComponentActivity() {
                 Manifest.permission.ACCESS_FINE_LOCATION
             ), 1
         )
+
+        TrustedTime.createClient(applicationContext).addOnSuccessListener { client ->
+            trustedTimeClient = client
+            DataStore.trustedTimeClient = trustedTimeClient
+        }
 
         if (isEvaluation) {
             val deviceName: String =
