@@ -25,7 +25,7 @@ class SubscribingPositionalBeaconSessionCallback : DiscoverySessionCallback() {
         CoroutineScope(Dispatchers.IO)
 
     private val evaluationReceivedPositionalBeaconsLog: File =
-        File(LoggingDirectoryController.getEvaluationPositionalBeaconsLogFilePath("ReceivedPositionalBeaconsLog"))
+        File(LoggingDirectoryController.getEvaluationD2dCommunicationLogFilePath("ReceivedPositionalBeaconsLog"))
 
     private lateinit var evaluationReceivedPositionalBeaconsLogFileWriter: FileWriter
 
