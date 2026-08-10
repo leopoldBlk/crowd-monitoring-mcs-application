@@ -1,6 +1,8 @@
 package com.leopoldBlk.mobileSensingClients.services
 
 import android.content.Intent
+import android.os.Environment
+import android.os.Environment.DIRECTORY_DOCUMENTS
 import android.os.IBinder
 import android.util.Log
 import androidx.lifecycle.LifecycleService
@@ -25,6 +27,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.io.File
+import java.io.FileWriter
+import java.time.LocalDateTime
+import kotlin.random.Random
 
 class MessagingService : LifecycleService() {
     // Flag to indicate if the client maintains an active connection to the RabbitMQ cluster
@@ -93,15 +99,20 @@ class MessagingService : LifecycleService() {
                                 value.second
                             )
 
-                        // Create pair containing own identifier along with the previously updated LAMM
-                        val serializedLammToJsonWithClientId: Pair<String, String> =
-                            Pair(DataStore.clientIdHexString, serializedLammToJson)
+                        // Generate message headers including the identifier of the publisher along
+                        // with an identifier for the message which is randomly generated
+                        val messageHeaders: MutableMap<String, Any> = mutableMapOf<String, Any>()
+                        val messageId: ByteArray = Random.nextBytes(ByteArray(4))
+                        messageHeaders["ProducerId"] = DataStore.clientIdHexString
+                        messageHeaders["MessageId"] = messageId.toHexString()
 
+                        // Publish the serialized LAMM along with the message headers containing
+                        // the producer and message identifier
                         channel.basicPublish(
                             localDensityDataExchange,
                             "",
-                            null,
-                            serializedLammToJsonWithClientId.toString().toByteArray()
+                            AMQP.BasicProperties.Builder().headers(messageHeaders).build(),
+                            serializedLammToJson.toByteArray()
                         )
                     }
                 }
@@ -245,25 +256,21 @@ class MessagingService : LifecycleService() {
                 coroutineScopeHandleReceivedMessages.launch {
                     super.handleDelivery(consumerTag, envelope, properties, body)
 
-                    if (body != null) {
+                    if (properties != null && body != null) {
+                        val messageProducerId: String = properties.headers["ProducerId"].toString()
+                        val messageId: String = properties.headers["MessageId"].toString()
                         val messageBodyAsString: String = body.decodeToString()
 
                         LogController.log(
                             Log.INFO,
                             "MessagingService",
-                            "Received global density data: $messageBodyAsString"
+                            "Received global density data from server (${messageProducerId}) in message (${messageId}): ${messageBodyAsString}"
                         )
-
-                        // Split up received message as this is pair of the id of the server who sent the message and the updated LAMM of that server
-                        val splitReceivedMessage: List<String> =
-                            messageBodyAsString.removeSurrounding("(", ")").split(", ")
-                        val serverIdMessageReceivedFrom: String = splitReceivedMessage[0]
-                        val receivedMeasurementMapAsJson: String = splitReceivedMessage[1]
 
                         // Deserialize the received measurement map as this is in JSON format
                         val deserializedMeasurementMapFromJson: MeasurementMap =
                             MeasurementMapSerializer.deserializeJsonToMeasurementMap(
-                                receivedMeasurementMapAsJson
+                                messageBodyAsString
                             )
 
                         val discretizedMeasurementMap: ForeignAggregatedMeasurementMap =
@@ -273,7 +280,7 @@ class MessagingService : LifecycleService() {
 
                         // Handover the servers identifier and the received density data to the measurement manager for further processing
                         DataStore.measurementManager.handleReceivedFamm(
-                            serverIdMessageReceivedFrom,
+                            messageProducerId,
                             discretizedMeasurementMap
                         )
                     }
