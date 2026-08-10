@@ -25,12 +25,12 @@ object PositionalBeaconConverter {
             .putFloat(positionalBeacon.clientTransmissionBenefit).array()
 
         // Capacity of 8 bytes necessary to convert long in byte array
-        // --> Stripped to length of 7 bytes after conversion
+        // --> Stripped to length of 4 bytes after conversion
         val timestampByteBuffer: ByteBuffer =
             ByteBuffer.allocate(8)
                 .putLong(positionalBeacon.beaconCreationTimestamp.toLong())
         val timestampByteArray: ByteArray =
-            timestampByteBuffer.array().drop(1).toByteArray()
+            timestampByteBuffer.array().drop(4).toByteArray()
 
         val newPositionalBeaconTO: PositionalBeaconTO = PositionalBeaconTO(
             clientId,
@@ -54,14 +54,14 @@ object PositionalBeaconConverter {
         // 8 byte for longitude value of position
         val clientPositionLongitude: ByteArray = byteArray.copyOfRange(12, 20)
 
-        // 7 byte cell identifier (optimized Uber H3 Level 13 cellIds)
-        val clientPositionCellId: ByteArray = byteArray.copyOfRange(20, 27)
+        // 6 byte cell identifier (optimized Uber H3 Level 12 cellIds)
+        val clientPositionCellId: ByteArray = byteArray.copyOfRange(20, 26)
 
         // 4 byte transmission benefit value
-        val transmissionBenefit: ByteArray = byteArray.copyOfRange(27, 31)
+        val transmissionBenefit: ByteArray = byteArray.copyOfRange(26, 30)
 
-        // 7 byte for unix timestamp (seconds)
-        val beaconCreationTimestamp: ByteArray = byteArray.copyOfRange(31, 38)
+        // 4 lower byte of unix timestamp (seconds)
+        val beaconCreationTimestamp: ByteArray = byteArray.copyOfRange(30, 34)
 
         val positionalBeaconTO: PositionalBeaconTO = PositionalBeaconTO(
             clientId,
@@ -92,9 +92,9 @@ object PositionalBeaconConverter {
         val transmissionBenefit: Float =
             ByteBuffer.wrap(positionalBeaconTO.getTransmissionBenefit()).getFloat()
 
-        // Insert leading zero byte to fill up 8 bytes which are necessary for conversion of byte array to long
+        // Insert leading zero bytes to fill up 8 bytes which are necessary for conversion of byte array to long
         val beaconCreationTimestamp: ULong =
-            ByteBuffer.wrap(ByteArray(1) + positionalBeaconTO.getTimestamp()).getLong().toULong()
+            ByteBuffer.wrap(ByteArray(4) + positionalBeaconTO.getTimestamp()).getLong().toULong()
 
         val positionalBeacon: PositionalBeacon = PositionalBeacon(
             clientId, Position(
