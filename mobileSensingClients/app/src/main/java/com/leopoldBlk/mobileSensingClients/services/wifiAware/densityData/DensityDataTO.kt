@@ -9,10 +9,10 @@ class DensityDataTO(
     private val numberOfDensityDataToWithinTransmission: Byte,
     // 4 byte for identifier of the sending client
     private val clientId: ByteArray,
-    // 7 byte for unix timestamp in seconds (reference for timestamps in density data)
+    // 4 byte for unix timestamp in seconds (reference for timestamps in density data)
     private val timestamp: ByteArray,
 ) {
-    // 242 byte for density data (cell measurements)
+    // 245 byte for density data (cell measurements)
     private var densityData: MutableList<ByteArray> = mutableListOf<ByteArray>()
 
     public fun getTransmissionIdAsHexString(): String {
@@ -23,13 +23,13 @@ class DensityDataTO(
         return clientId.toHexString()
     }
 
-    public fun getPacketId(): UShort{
+    public fun getPacketId(): UShort {
         return numberOfDensityDataToWithinTransmission.toUShort()
     }
 
     public fun getHeaderTimestampAsULong(): ULong {
         // Add byte to beginning to correspond to byte size of long for successful conversion
-        return ByteBuffer.wrap(ByteArray(1) + timestamp).getLong().toULong()
+        return ByteBuffer.wrap(ByteArray(4) + timestamp).getLong().toULong()
     }
 
     public fun getDensityData(): List<ByteArray> {

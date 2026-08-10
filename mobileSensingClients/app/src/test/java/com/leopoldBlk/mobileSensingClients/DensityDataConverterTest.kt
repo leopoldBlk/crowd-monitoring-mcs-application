@@ -27,38 +27,38 @@ class DensityDataConverterTest {
     @Before
     public fun prepareLammsAndOrdersForMeasurementTransmissionForTests() {
         val firstMeasurement: Measurement = Measurement(
-            "08d1f8d7a498883f", 10u, "01020304",
+            "08c1f8d7a4988bff", 10u, "01020304",
             // One hour before timestamp starting the test
             ((System.currentTimeMillis() / 1000) - 3600).toULong()
         )
 
         val secondMeasurement: Measurement = Measurement(
-            "08d1f8d7a49888ff", 5u, "01020304",
+            "08c1f8d7a49883ff", 5u, "01020304",
             // Two hours before timestamp starting the test
             ((System.currentTimeMillis() / 1000) - 7200).toULong()
         )
 
         localAggregatedMeasurementMapForTestWithoutSplitting.setMeasurement(firstMeasurement)
         localAggregatedMeasurementMapForTestWithoutSplitting.setMeasurement(secondMeasurement)
-        measurementOrderForTestWithoutSplitting.add("08d1f8d7a49888ff")
-        measurementOrderForTestWithoutSplitting.add("08d1f8d7a498883f")
+        measurementOrderForTestWithoutSplitting.add("08c1f8d7a49883ff")
+        measurementOrderForTestWithoutSplitting.add("08c1f8d7a4988bff")
 
         // Add 50 measurements to local aggregated measurement map with random cellId and measurement value
         for (measurementNumber in 1..49) {
             // Create random Uber H3 cell id with maximum level 13
-            // --> Generate random byte array with 6 bytes
-            // --> convert to binary representation and add padding up to length of 50 bits as this is the length which is needed
-            // to encode every Uber H3 cell id in cell mode up to level 13
+            // --> Generate random byte array with 5 bytes
+            // --> convert to binary representation and add padding up to length of 47 bits as this is the length which is needed
+            // to encode every Uber H3 cell id in cell mode up to level 12
             var randomCellIdBinaryString: String =
-                BigInteger(Random.nextBytes(ByteArray(6)).toHexString(), 16).toString(2)
+                BigInteger(Random.nextBytes(ByteArray(5)).toHexString(), 16).toString(2)
 
-            while (randomCellIdBinaryString.length < 50) {
+            while (randomCellIdBinaryString.length < 47) {
                 randomCellIdBinaryString = "0" + randomCellIdBinaryString
             }
 
             // Add the bits which are later optimized to correspond to Uber H3 cell id format
             randomCellIdBinaryString =
-                "0" + "0001" + "000" + randomCellIdBinaryString + "111" + "111"
+                "0" + "0001" + "000" + randomCellIdBinaryString + "111" + "111" + "111"
 
             // Convert the generated Uber H3 cell id to hexadecimal string
             var randomCellIdHexString = randomCellIdBinaryString.toBigInteger(2).toString(16)

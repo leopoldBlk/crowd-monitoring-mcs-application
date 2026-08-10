@@ -13,7 +13,7 @@ import java.time.Instant
 class PositionalBeaconConverterTest {
     private val positionalBeaconForTest: PositionalBeacon = PositionalBeacon(
         "01020304",
-        Position(Coordinates(48.137371, 11.575328), "08d1f8d7a498c0bf"),
+        Position(Coordinates(48.137371, 11.575328), "08c1f8d7a49883ff"),
         50.0f,
         Instant.parse("2026-01-01T11:12:13Z").epochSecond.toULong()
     )

@@ -5,7 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class CellConverterTest {
-    private val uberH3CellIdHexStringForTest: String = "08d1f8d7a498883f"
+    private val uberH3CellIdHexStringForTest: String = "08c1f8d7a4988bff"
 
     @Test
     public fun cellIdConverterTest() {

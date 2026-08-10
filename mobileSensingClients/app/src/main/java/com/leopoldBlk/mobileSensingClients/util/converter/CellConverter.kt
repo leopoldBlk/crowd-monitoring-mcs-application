@@ -200,15 +200,15 @@ object CellConverter {
         var compressedUberH3CellIdBinaryString: String =
             decompressedUberH3CellIdBinaryString.drop(8)
 
-        // Remove the padding bits of digit 14 and 15 as these are not used
-        compressedUberH3CellIdBinaryString = compressedUberH3CellIdBinaryString.dropLast(6)
+        // Remove the padding bits of digit 13, 14 and 15 as these are not used
+        compressedUberH3CellIdBinaryString = compressedUberH3CellIdBinaryString.dropLast(9)
 
         // Convert binary string to hexadecimal string
         var compressedUberH3CellIdHexString =
             compressedUberH3CellIdBinaryString.toBigInteger(2).toString(16)
 
-        // Add leading zeros to hexadecimal string since these are removed with the conversion using BigInteger(...).toString(...) to fill 7 byte for cell identifier
-        while (compressedUberH3CellIdHexString.length < 14) {
+        // Add leading zeros to hexadecimal string since these are removed with the conversion using BigInteger(...).toString(...) to fill 6 byte for cell identifier
+        while (compressedUberH3CellIdHexString.length < 12) {
             compressedUberH3CellIdHexString = "0" + compressedUberH3CellIdHexString
         }
 
@@ -221,13 +221,13 @@ object CellConverter {
             BigInteger(compressedUberH3CellIdHexString, 16).toString(2)
 
         // Add leading zeros to binary string since these are removed with the conversion using BigInteger(...).toString(...)
-        while (compressedUberH3CellIdBinaryString.length < 50) {
+        while (compressedUberH3CellIdBinaryString.length < 47) {
             compressedUberH3CellIdBinaryString = "0" + compressedUberH3CellIdBinaryString
         }
 
-        // Adding reserved bits, bits indicating cell mode and padding bits for digit 14 and 15
+        // Adding reserved bits, bits indicating cell mode and padding bits for digit 13, 14 and 15
         val decompressedUberH3CellIdBinaryString: String =
-            "0" + "0001" + "000" + compressedUberH3CellIdBinaryString + "111" + "111"
+            "0" + "0001" + "000" + compressedUberH3CellIdBinaryString + "111" + "111" + "111"
 
         // Convert binary string to hexadecimal string
         var decompressedUberH3CellIdHexString =
