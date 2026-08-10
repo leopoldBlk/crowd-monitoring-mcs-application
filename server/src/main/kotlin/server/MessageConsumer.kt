@@ -9,6 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.amqp.core.Message
+import org.springframework.amqp.core.MessageProperties
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
 
@@ -29,19 +31,21 @@ class MessageConsumer(private val messageProducer: MessageProducer) {
      * @param receivedMessage Message arrived at the queue containing global density data.
      */
     @RabbitListener(queues = ["#{globalDensityDataQueue.getName()}"])
-    fun onReceiveGlobalDensityData(receivedMessage: String) {
+    fun onReceiveGlobalDensityData(receivedMessage: Message) {
         // Launch coroutine for handling received global density data within the corresponding CoroutineScope
         coroutineScopeHandleReceivedMessages.launch {
-            // Split up received message as this is pair of the id of the server who sent the message and the updated LAMM of that server
-            val splitReceivedMessage: List<String> = receivedMessage.removeSurrounding("(", ")").split(", ")
-            val serverIdMessageReceivedFrom: String = splitReceivedMessage[0]
-            val receivedMeasurementMapAsJson: String = splitReceivedMessage[1]
-
-            logger.info("Received global density data from server ($serverIdMessageReceivedFrom): $receivedMeasurementMapAsJson")
+            val messageProperties: MessageProperties = receivedMessage.messageProperties
+            val messageProducerId: String = messageProperties.getHeader<String>("ProducerId")!!
+            val messageId: String = messageProperties.getHeader<String>("MessageId")!!
+            val messageBody: String = receivedMessage.body.decodeToString()
 
             // Only handle received global density data sent by other server instances
-            if (serverIdMessageReceivedFrom != ServerApplication.serverIdHexString) {
-                handleReceivedMessage(serverIdMessageReceivedFrom, receivedMeasurementMapAsJson)
+            if (messageProducerId != ServerApplication.serverIdHexString) {
+                logger.info("Received global density data for synchronization purposes from server (${messageProducerId}) in message (${messageId}): ${messageBody}")
+
+                handleReceivedMessage(messageProducerId, messageBody)
+            } else {
+                logger.info("Received own synchronization message, global density data wont be handled!")
             }
         }
     }
@@ -52,18 +56,18 @@ class MessageConsumer(private val messageProducer: MessageProducer) {
      * @param receivedMessage Message arrived at the queue containing local density data.
      */
     @RabbitListener(queues = arrayOf("rabbit-mq-queue-local-density-data"))
-    fun onReceiveLocalDensityData(receivedMessage: String) {
+    fun onReceiveLocalDensityData(receivedMessage: Message) {
         // Launch coroutine for handling received local density data within the corresponding CoroutineScope
         coroutineScopeHandleReceivedMessages.launch {
-            // Split up received message as this is pair of the id of the client who sent the message and the LAMM of the client
-            val splitReceivedMessage: List<String> = receivedMessage.removeSurrounding("(", ")").split(", ")
-            val clientIdMessageReceivedFrom: String = splitReceivedMessage[0]
-            val receivedMeasurementMapAsJson: String = splitReceivedMessage[1]
+            val messageProperties: MessageProperties = receivedMessage.messageProperties
+            val messageProducerId: String = messageProperties.getHeader<String>("ProducerId")!!
+            val messageId: String = messageProperties.getHeader<String>("MessageId")!!
+            val messageBody: String = receivedMessage.body.decodeToString()
 
-            logger.info("Received local density data from client ($clientIdMessageReceivedFrom): $receivedMeasurementMapAsJson")
+            logger.info("Received local density data from client (${messageProducerId}) in message (${messageId}): ${messageBody}")
 
             // Handle received local density data sent by an edge client
-            handleReceivedMessage(clientIdMessageReceivedFrom, receivedMeasurementMapAsJson)
+            handleReceivedMessage(messageProducerId, messageBody)
 
             // TODO: Clarify if this cleanUp step is really necessary here
             ServerApplication.measurementManager.cleanUp()
@@ -83,15 +87,11 @@ class MessageConsumer(private val messageProducer: MessageProducer) {
                 updatedLammAndOrderForTransmission.second
             )
 
-            // Create pair containing own identifier along with the previously updated LAMM
-            val serializedLammToJsonWithClientId: Pair<String, String> =
-                Pair(ServerApplication.serverIdHexString, serializedLammToJson)
-
             // Publish updated LAMM as message to the exchange for global density data. This way the global density data
             // is transmitted to the edge clients and the other server instances for synchronization purposes.
             messageProducer.publishMessage(
                 "rabbit-mq-exchange-global-density-data",
-                serializedLammToJsonWithClientId.toString()
+                serializedLammToJson
             )
         }
     }

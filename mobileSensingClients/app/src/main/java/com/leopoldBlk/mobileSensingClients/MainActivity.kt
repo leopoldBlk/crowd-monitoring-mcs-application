@@ -3,6 +3,7 @@ package com.leopoldBlk.mobileSensingClients
 import android.Manifest
 import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -10,13 +11,14 @@ import com.leopoldBlk.mobileSensingClients.services.LocationService
 import com.leopoldBlk.mobileSensingClients.services.MessagingService
 import com.leopoldBlk.mobileSensingClients.services.PositionalBeaconService
 import com.leopoldBlk.mobileSensingClients.services.TransmissionBenefitService
-import com.leopoldBlk.mobileSensingClients.ui.composables.Map
-import com.leopoldBlk.mobileSensingClients.ui.theme.MCSAppTheme
-import com.leopoldBlk.mobileSensingClients.util.controller.LogController
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData.WifiAwareDensityDataPublisherService
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData.WifiAwareDensityDataSubscriberService
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.positionalBeacon.WifiAwarePositionalBeaconPublisherService
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.positionalBeacon.WifiAwarePositionalBeaconSubscriberService
+import com.leopoldBlk.mobileSensingClients.ui.composables.Map
+import com.leopoldBlk.mobileSensingClients.ui.theme.MCSAppTheme
+import com.leopoldBlk.mobileSensingClients.util.DataStore
+import com.leopoldBlk.mobileSensingClients.util.controller.LogController
 
 class MainActivity : ComponentActivity() {
     // Necessary for running H3 Library on Android, Source: https://github.com/isaacbrodsky/h3-android-sample.git
@@ -26,6 +28,7 @@ class MainActivity : ComponentActivity() {
 
     private val isPublisher: Boolean = true
     private val isSubscriber: Boolean = true
+    private val isEvaluation: Boolean = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -50,6 +53,17 @@ class MainActivity : ComponentActivity() {
                 Manifest.permission.ACCESS_FINE_LOCATION
             ), 1
         )
+
+        if (isEvaluation) {
+            val deviceName: String =
+                Settings.Global.getString(contentResolver, Settings.Global.DEVICE_NAME)
+
+            when (deviceName) {
+                "Pixel 10 UE1" -> DataStore.updateClientId(byteArrayOf(0, 0, 0, 1))
+                "Pixel 10 UE2" -> DataStore.updateClientId(byteArrayOf(0, 0, 0, 2))
+                "Pixel 10 UE3" -> DataStore.updateClientId(byteArrayOf(0, 0, 0, 3))
+            }
+        }
 
         applicationContext.startService(
             Intent(
