@@ -50,11 +50,11 @@ class PositionalBeaconService : LifecycleService() {
             DataStore.clientPositionalBeacon.postValue(updatedPositionalBeacon)
         }
 
-        LogController.log(
-            Log.DEBUG,
-            className,
-            "updatePositionalBeacon - Thread-ID: ${Thread.currentThread().threadId()}"
-        )
+//        LogController.log(
+//            Log.DEBUG,
+//            className,
+//            "updatePositionalBeacon - Thread-ID: ${Thread.currentThread().threadId()}"
+//        )
     }
 
     private fun updatePositionalBeacon(updatedTransmissionBenefit: Float?) {
@@ -71,11 +71,11 @@ class PositionalBeaconService : LifecycleService() {
             DataStore.clientPositionalBeacon.postValue(updatedPositionalBeacon)
         }
 
-        LogController.log(
-            Log.DEBUG,
-            className,
-            "updatePositionalBeacon - Thread-ID: ${Thread.currentThread().threadId()}"
-        )
+//        LogController.log(
+//            Log.DEBUG,
+//            className,
+//            "updatePositionalBeacon - Thread-ID: ${Thread.currentThread().threadId()}"
+//        )
     }
 
     override fun onCreate() {
@@ -84,11 +84,11 @@ class PositionalBeaconService : LifecycleService() {
         DataStore.clientPosition.observe(this, clientPositionObserver)
         DataStore.clientTransmissionBenefit.observe(this, clientTransmissionBenefitObserver)
 
-        LogController.log(
-            Log.DEBUG,
-            className,
-            "onCreate - Thread-ID: ${Thread.currentThread().threadId()}"
-        )
+//        LogController.log(
+//            Log.DEBUG,
+//            className,
+//            "onCreate - Thread-ID: ${Thread.currentThread().threadId()}"
+//        )
     }
 
     override fun onBind(intent: Intent): IBinder {

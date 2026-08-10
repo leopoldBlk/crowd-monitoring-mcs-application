@@ -8,11 +8,14 @@ import com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData.Densit
 import com.leopoldBlk.mobileSensingClients.util.DataStore
 import com.leopoldBlk.mobileSensingClients.util.controller.DiscretizationController
 import com.leopoldBlk.mobileSensingClients.util.controller.LogController
+import com.leopoldBlk.mobileSensingClients.util.controller.LoggingDirectoryController
 import com.leopoldBlk.mobileSensingClients.util.converter.DensityDataConverter
 import crowdDensityLibrary.ForeignAggregatedMeasurementMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileWriter
 
 class SubscribingDensityDataSessionCallback : DiscoverySessionCallback() {
     private val className: String = "SubscribingDensityDataSessionCallback"
@@ -21,8 +24,26 @@ class SubscribingDensityDataSessionCallback : DiscoverySessionCallback() {
     private val coroutineScopeHandleReceivedDensityData: CoroutineScope =
         CoroutineScope(Dispatchers.IO)
 
+    private val evaluationReceivedDensityDataLog: File =
+        File(LoggingDirectoryController.getEvaluationD2dCommunicationLogFilePath("ReceivedDensityDataLog"))
+
+    private lateinit var evaluationReceivedDensityDataLogFileWriter: FileWriter
+
     // Track ongoing transmission (clientId, TransmissionId, DensityDataTOs of the transmission)
     private lateinit var ongoingTransmission: Triple<String, String, MutableList<DensityDataTO>>
+
+    init {
+        // Create directory for the log file if not already existing
+        if (!File(evaluationReceivedDensityDataLog.parent).exists()) {
+            File(evaluationReceivedDensityDataLog.parent).mkdirs()
+        }
+
+        // Create file writer which appends new logs to the log file and specifying the logging format
+        evaluationReceivedDensityDataLogFileWriter =
+            FileWriter(evaluationReceivedDensityDataLog, true)
+        evaluationReceivedDensityDataLogFileWriter.write("transmission id; packet id; client id of broadcaster; client id of receiver; number of measurements; packet size in bytes (header + measurement map); timestamp within packet header in seconds; timestamp after discovering the service with the density data in milliseconds\n")
+        evaluationReceivedDensityDataLogFileWriter.flush()
+    }
 
     override fun onSubscribeStarted(session: SubscribeDiscoverySession) {
         super.onSubscribeStarted(session)
@@ -47,6 +68,13 @@ class SubscribingDensityDataSessionCallback : DiscoverySessionCallback() {
     override fun onServiceDiscovered(info: ServiceDiscoveryInfo) {
         // Launch coroutine for handling received density data within the corresponding CoroutineScope
         coroutineScopeHandleReceivedDensityData.launch {
+            val timestampServiceWithDensityDataDiscovered: Long =
+                if (DataStore.trustedTimeClient != null) {
+                    DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!!
+                } else {
+                    System.currentTimeMillis()
+                }
+
             super.onServiceDiscovered(info)
 
             if (info.serviceSpecificInfo != null) {
@@ -56,6 +84,9 @@ class SubscribingDensityDataSessionCallback : DiscoverySessionCallback() {
 
                 val transmissionIdAsHexString: String = densityDataTO.getTransmissionIdAsHexString()
                 val clientIdAsHexString: String = densityDataTO.getClientIdAsHexString()
+
+                evaluationReceivedDensityDataLogFileWriter.write("${transmissionIdAsHexString}; ${densityDataTO.getPacketId()}; ${clientIdAsHexString}; ${DataStore.clientIdHexString}; ${densityDataTO.getDensityDataLength()}; ${densityDataTO.getDensityDataTOasByteArray().size}; ${densityDataTO.getHeaderTimestampAsULong()}; ${timestampServiceWithDensityDataDiscovered}\n")
+                evaluationReceivedDensityDataLogFileWriter.flush()
 
                 // If the DensityDataTO belongs to a new transmission and there was no previous ongoing transmission
                 if (!::ongoingTransmission.isInitialized) {
@@ -102,5 +133,11 @@ class SubscribingDensityDataSessionCallback : DiscoverySessionCallback() {
                 )
             }
         }
+    }
+
+    override fun onSessionTerminated() {
+        super.onSessionTerminated()
+
+        evaluationReceivedDensityDataLogFileWriter.close()
     }
 }

@@ -1,6 +1,7 @@
 package com.leopoldBlk.mobileSensingClients.util
 
 import androidx.lifecycle.MutableLiveData
+import com.google.android.gms.time.TrustedTimeClient
 import crowdDensityLibrary.LocalAggregatedMeasurementMap
 import crowdDensityLibrary.MeasurementManager
 import crowdDensityLibrary.MeasurementMap
@@ -22,6 +23,8 @@ object DataStore {
     public val distantAreaDiscretizationLevel: UShort = 11U
     public val levelToDetermineNearbyArea: UShort = 11U
 
+    public var trustedTimeClient: TrustedTimeClient? = null
+
     public var measurementManager: MeasurementManager =
         MeasurementManager(clientIdHexString, timeToLiveInSeconds)
 
@@ -29,6 +32,7 @@ object DataStore {
         MutableLiveData(null)
     public var clientTransmissionBenefit: MutableLiveData<Float?> =
         MutableLiveData(null)
+
     // By default, each mobile sensing client does not act as an edge client
     public var clientHasLargestTransmissionBenefitOfNearbyClients: MutableLiveData<Boolean> =
         MutableLiveData(false)

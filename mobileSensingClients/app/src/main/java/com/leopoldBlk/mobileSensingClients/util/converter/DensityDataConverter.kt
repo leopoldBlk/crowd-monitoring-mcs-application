@@ -7,6 +7,7 @@ import crowdDensityLibrary.dataClasses.Measurement
 import java.nio.ByteBuffer
 import kotlin.random.Random
 
+// TODO: Adapt to the format specified in the concept!
 object DensityDataConverter {
     // Length of a total data packet for D2D data transmission in bytes
     // --> for Wifi Aware Discovery: 255 byte
