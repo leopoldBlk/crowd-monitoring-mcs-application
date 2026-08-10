@@ -104,11 +104,11 @@ dependencies {
     // Sources: https://mvnrepository.com/artifact/androidx.compose.runtime/runtime-livedata
     // https://stackoverflow.com/questions/66560404/jetpack-compose-unresolved-reference-observeasstate
     implementation("androidx.compose.runtime:runtime-livedata:1.11.2")
-    // Source: https://ktor.io/docs/client-create-new-application.html#add-dependencies
-    implementation("io.ktor:ktor-client-core:3.5.0")
-    implementation("io.ktor:ktor-client-cio:3.5.0")
     // Source: https://www.rabbitmq.com/client-libraries/java-client
     implementation("com.rabbitmq:amqp-client:5.31.0")
+    // Sources: https://android-developers.googleblog.com/2025/02/trustedtime-api-introducing-reliable-approach-to-time-keeping-for-apps.html
+    // https://developers.google.com/location-context/time
+    implementation("com.google.android.gms:play-services-time:16.0.1")
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

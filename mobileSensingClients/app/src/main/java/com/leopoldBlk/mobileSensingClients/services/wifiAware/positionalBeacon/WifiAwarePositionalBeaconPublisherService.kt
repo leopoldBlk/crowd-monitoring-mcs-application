@@ -14,8 +14,11 @@ import androidx.lifecycle.Observer
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.WifiAwareService
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.positionalBeacon.callbacks.PublishingPositionalBeaconSessionCallback
 import com.leopoldBlk.mobileSensingClients.util.DataStore
+import com.leopoldBlk.mobileSensingClients.util.controller.LoggingDirectoryController
 import com.leopoldBlk.mobileSensingClients.util.converter.PositionalBeaconConverter
 import crowdDensityLibrary.dataClasses.PositionalBeacon
+import java.io.File
+import java.io.FileWriter
 
 class WifiAwarePositionalBeaconPublisherService : WifiAwareService() {
     private var isWifiAwareSessionInitialized: Boolean = false
@@ -23,10 +26,13 @@ class WifiAwarePositionalBeaconPublisherService : WifiAwareService() {
         HandlerThread("WifiAwarePositionalBeaconPublisherHandlerThread")
     private val publishingPositionalBeaconSessionCallback: PublishingPositionalBeaconSessionCallback =
         PublishingPositionalBeaconSessionCallback()
+    private val evaluationPublishedPositionalBeaconsLog: File =
+        File(LoggingDirectoryController.getEvaluationD2dCommunicationLogFilePath("PublishedPositionalBeaconsLog"))
 
     private lateinit var wifiAwareAttachEventCallbackHandler: Handler
     private lateinit var publishingSessionCallbackHandler: Handler
     private lateinit var publishConfig: PublishConfig
+    private lateinit var evaluationPublishedPositionalBeaconsLogFileWriter: FileWriter
 
     private val clientPositionalBeaconObserver: Observer<PositionalBeacon?> =
         object : Observer<PositionalBeacon?> {
@@ -61,6 +67,17 @@ class WifiAwarePositionalBeaconPublisherService : WifiAwareService() {
                                 publishConfig
                             )
                         }
+
+                        val timestampAfterUpdateOfThePublishConfigWithTheNewBeacon: Long = if (DataStore.trustedTimeClient != null){
+                            DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!!
+                        }
+                        else{
+                            System.currentTimeMillis()
+                        }
+
+                        // Create log entry after the update of the positional beacon with the beacon content and an external timestamp
+                        evaluationPublishedPositionalBeaconsLogFileWriter.write("${value.clientId}; ${value.clientPosition.coordinates.latitude}; ${value.clientPosition.coordinates.longitude}; ${value.clientPosition.cellId}; ${value.clientTransmissionBenefit}; ${value.beaconCreationTimestamp}; ${timestampAfterUpdateOfThePublishConfigWithTheNewBeacon}\n")
+                        evaluationPublishedPositionalBeaconsLogFileWriter.flush()
                     }
                 }
             }
@@ -79,6 +96,17 @@ class WifiAwarePositionalBeaconPublisherService : WifiAwareService() {
 
     override fun onCreate() {
         super.onCreate()
+
+        // Create directory for the log file if not already existing
+        if (!File(evaluationPublishedPositionalBeaconsLog.parent).exists()) {
+            File(evaluationPublishedPositionalBeaconsLog.parent).mkdirs()
+        }
+
+        // Create file writer which appends new logs to the log file and specifying the logging format
+        evaluationPublishedPositionalBeaconsLogFileWriter =
+            FileWriter(evaluationPublishedPositionalBeaconsLog, true)
+        evaluationPublishedPositionalBeaconsLogFileWriter.write("client id included in the positional beacon; latitude included in the positional beacon; longitude included in the positional beacon; cell id included in the positional beacon; transmission benefit included in the positional beacon; timestamp included in the positional beacon in seconds; timestamp after update of the positional beacon in milliseconds\n")
+        evaluationPublishedPositionalBeaconsLogFileWriter.flush()
 
         wifiAwarePublisherHandlerThread.start()
 
@@ -103,6 +131,9 @@ class WifiAwarePositionalBeaconPublisherService : WifiAwareService() {
 
     override fun onDestroy() {
         super.onDestroy()
+
+        // Close the stream for writing logs
+        evaluationPublishedPositionalBeaconsLogFileWriter.close()
 
         isWifiAwareSessionInitialized = false
     }
