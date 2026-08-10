@@ -15,6 +15,9 @@ object LoggingDirectoryController {
     private val evaluationInfrastructureBasedCommunicationLogDirectory: String =
         evaluationLogDirectory + "DeterminationOfCrowdDensity/TransmissionOfDensityData/InfrastructureBasedCommunication/"
 
+    private val evaluationSelectionOfEdgeClientsLogDirectory: String =
+        evaluationLogDirectory + "DeterminationOfCrowdDensity/SelectionOfEdgeClients/"
+
     public fun getEvaluationD2dCommunicationLogFilePath(
         evaluationD2dCommunicationLogFileName: String
     ): String {
@@ -39,5 +42,18 @@ object LoggingDirectoryController {
             evaluationInfrastructureBasedCommunicationLogDirectory + evaluationInfrastructureBasedCommunicationLogFileName + "_" + evaluationLogSuffix + ".txt"
 
         return evaluationInfrastructureBasedCommunicationLogFilePath
+    }
+
+    public fun getEvaluationSelectionOfEdgeClientsLogFilePath(
+        evaluationSelectionOfEdgeClientsLogFileName: String
+    ): String {
+        val evaluationLogSuffix: String =
+            (DataStore.clientIdHexString + "_" + LocalDateTime.now()).replace("T", "_")
+                .replace(":", "-")
+
+        val evaluationSelectionOfEdgeClientsLogFilePath: String =
+            evaluationSelectionOfEdgeClientsLogDirectory + evaluationSelectionOfEdgeClientsLogFileName + "_" + evaluationLogSuffix + ".txt"
+
+        return evaluationSelectionOfEdgeClientsLogFilePath
     }
 }
