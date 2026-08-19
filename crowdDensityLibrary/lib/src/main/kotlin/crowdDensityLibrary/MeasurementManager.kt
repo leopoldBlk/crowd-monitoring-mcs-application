@@ -7,7 +7,8 @@ import kotlinx.coroutines.sync.withLock
 
 class MeasurementManager(
     private val clientId: String,
-    private val timeToLiveInSeconds: ULong
+    private val timeToLiveNeighborhoodTableInMilliseconds: ULong,
+    private val timeToLiveMeasurementMapInMilliseconds: ULong
 ) {
     private val neighborhoodTable: NeighborhoodTable = NeighborhoodTable()
     private val localMeasurementMap: LocalMeasurementMap = LocalMeasurementMap()
@@ -27,28 +28,28 @@ class MeasurementManager(
      */
     private fun updateNtAndLmm(positionalBeacon: PositionalBeacon) {
         val exceededPositionalBeacons: MutableMap<String, PositionalBeacon> =
-            neighborhoodTable.getExceededNtEntries(timeToLiveInSeconds)
+            neighborhoodTable.getExceededNtEntries(timeToLiveNeighborhoodTableInMilliseconds)
 
         exceededPositionalBeacons.forEach { (clientId, positionalBeacon) ->
-            localMeasurementMap.decrementLmmMeasurementValue(positionalBeacon.clientPosition.cellId)
+            localMeasurementMap.decrementLmmMeasurementValue(positionalBeacon.clientPosition.cellIdHexString)
             neighborhoodTable.removeNtEntry(clientId)
         }
 
         // Positional beacon already reached TTL and will therefore not be processed
-        if (Utils.positionalBeaconExceededTtlInSeconds(positionalBeacon, timeToLiveInSeconds)) {
+        if (Utils.checkPositionalBeaconExceededTtl(positionalBeacon, timeToLiveNeighborhoodTableInMilliseconds)) {
             return
         }
 
-        val currentNtEntry: PositionalBeacon? = neighborhoodTable.getNtEntry(positionalBeacon.clientId)
+        val currentNtEntry: PositionalBeacon? = neighborhoodTable.getNtEntry(positionalBeacon.clientIdHexString)
         val currentLmmMeasurement: Measurement? =
-            localMeasurementMap.getMeasurement(positionalBeacon.clientPosition.cellId)
+            localMeasurementMap.getMeasurement(positionalBeacon.clientPosition.cellIdHexString)
 
         // First positional beacon received from this client
         if (currentNtEntry == null) {
             // No measurement for cell identifier in positional beacon exits -> create new one
             if (currentLmmMeasurement == null) {
                 val newLmmMeasurement: Measurement = Measurement(
-                    positionalBeacon.clientPosition.cellId,
+                    positionalBeacon.clientPosition.cellIdHexString,
                     1u,
                     clientId,
                     (System.currentTimeMillis() / 1000).toULong()
@@ -57,23 +58,23 @@ class MeasurementManager(
             }
             // Measurement for cell identifier in positional beacon already exits -> update existing one
             else {
-                localMeasurementMap.incrementLmmMeasurementValue(positionalBeacon.clientPosition.cellId)
+                localMeasurementMap.incrementLmmMeasurementValue(positionalBeacon.clientPosition.cellIdHexString)
             }
         }
 
         // Not first positional beacon of client and client did not switch cells
-        else if (currentNtEntry.clientPosition.cellId == positionalBeacon.clientPosition.cellId) {
-            localMeasurementMap.updateMeasurementCreationTime(positionalBeacon.clientPosition.cellId)
+        else if (currentNtEntry.clientPosition.cellIdHexString == positionalBeacon.clientPosition.cellIdHexString) {
+            localMeasurementMap.updateMeasurementCreationTime(positionalBeacon.clientPosition.cellIdHexString)
         }
 
         // Not first positional beacon of client and client switched cells
         else {
-            localMeasurementMap.decrementLmmMeasurementValue(currentNtEntry.clientPosition.cellId)
+            localMeasurementMap.decrementLmmMeasurementValue(currentNtEntry.clientPosition.cellIdHexString)
 
             // No measurement for cell identifier in positional beacon exits -> create new one
             if (currentLmmMeasurement == null) {
                 val newLmmMeasurement: Measurement = Measurement(
-                    positionalBeacon.clientPosition.cellId,
+                    positionalBeacon.clientPosition.cellIdHexString,
                     1u,
                     clientId,
                     (System.currentTimeMillis() / 1000).toULong()
@@ -82,7 +83,7 @@ class MeasurementManager(
             }
             // Measurement for cell identifier in positional beacon already exits -> update existing one
             else {
-                localMeasurementMap.incrementLmmMeasurementValue(positionalBeacon.clientPosition.cellId)
+                localMeasurementMap.incrementLmmMeasurementValue(positionalBeacon.clientPosition.cellIdHexString)
             }
         }
 
@@ -102,8 +103,8 @@ class MeasurementManager(
             currentFamm = ForeignAggregatedMeasurementMap()
         }
 
-        currentFamm.removeExceededMmEntries(timeToLiveInSeconds)
-        receivedFamm.removeExceededMmEntries(timeToLiveInSeconds)
+        currentFamm.removeExceededMmEntries(timeToLiveMeasurementMapInMilliseconds)
+        receivedFamm.removeExceededMmEntries(timeToLiveMeasurementMapInMilliseconds)
 
         receivedFamm.getAllMeasurements().forEach { (cellId, measurement) ->
             // Measurement for cell already exists in current FAMM for corresponding client
@@ -213,12 +214,17 @@ class MeasurementManager(
     public suspend fun cleanUp(): Unit {
         // Lock mutex for exclusive access to and modification of the NT, the LMM and all the FAMMs
         operatingOnDensityDataMutex.withLock {
-            neighborhoodTable.removeExceededNtEntries(timeToLiveInSeconds)
+            val exceededPositionalBeacons: MutableMap<String, PositionalBeacon> =
+                neighborhoodTable.getExceededNtEntries(timeToLiveNeighborhoodTableInMilliseconds)
 
-            localMeasurementMap.removeExceededMmEntries(timeToLiveInSeconds)
+            exceededPositionalBeacons.forEach { (clientId, positionalBeacon) ->
+                neighborhoodTable.removeNtEntry(clientId)
+            }
+
+            localMeasurementMap.removeExceededMmEntries(timeToLiveMeasurementMapInMilliseconds)
 
             foreignAggregatedMeasurementMaps.forEach { (clientId, map) ->
-                map.removeExceededMmEntries(timeToLiveInSeconds)
+                map.removeExceededMmEntries(timeToLiveMeasurementMapInMilliseconds)
             }
         }
     }

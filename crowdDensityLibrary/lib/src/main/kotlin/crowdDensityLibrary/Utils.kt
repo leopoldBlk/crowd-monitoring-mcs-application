@@ -5,40 +5,25 @@ import crowdDensityLibrary.dataClasses.PositionalBeacon
 
 class Utils {
     companion object {
-        fun getAgeInMinutes(timestampToBeChecked: ULong): ULong {
-            val currentTimestamp: ULong = (System.currentTimeMillis() / 1000).toULong()
-            return (currentTimestamp - timestampToBeChecked) / 60u
+        fun getAgeInMilliseconds(timestampToBeChecked: ULong): ULong {
+            return System.currentTimeMillis().toULong() - timestampToBeChecked
         }
 
-        fun getAgeInSeconds(timestampToBeChecked: ULong): ULong {
-            val currentTimestamp: ULong = (System.currentTimeMillis() / 1000).toULong()
-            return currentTimestamp - timestampToBeChecked
-        }
-
-        fun positionalBeaconExceededTtlInMinutes(
+        fun checkPositionalBeaconExceededTtl(
             positionalBeacon: PositionalBeacon,
-            timeToLiveInMinutes: ULong
+            timeToLiveInMilliseconds: ULong
         ): Boolean {
-            val positionalBeaconAgeInMinutes: ULong = getAgeInMinutes(positionalBeacon.beaconCreationTimestamp)
-            return timeToLiveInMinutes < positionalBeaconAgeInMinutes
+            // Multiply with factor 1000 as the beacon creation timestamp is stored with second accuracy
+            val positionalBeaconAgeInMilliseconds: ULong =
+                getAgeInMilliseconds(positionalBeacon.beaconCreationTimestamp * 1000u)
+            return timeToLiveInMilliseconds < positionalBeaconAgeInMilliseconds
         }
 
-        fun measurementExceededTtlInMinutes(measurement: Measurement, timeToLiveInMinutes: ULong): Boolean {
-            val measurementAgeInMinutes: ULong = getAgeInMinutes(measurement.measurementCreationTimestamp)
-            return timeToLiveInMinutes < measurementAgeInMinutes
-        }
-
-        fun positionalBeaconExceededTtlInSeconds(
-            positionalBeacon: PositionalBeacon,
-            timeToLiveInSeconds: ULong
-        ): Boolean {
-            val positionalBeaconAgeInSeconds: ULong = getAgeInSeconds(positionalBeacon.beaconCreationTimestamp)
-            return timeToLiveInSeconds < positionalBeaconAgeInSeconds
-        }
-
-        fun measurementExceededTtlInSeconds(measurement: Measurement, timeToLiveInSeconds: ULong): Boolean {
-            val measurementAgeInSeconds: ULong = getAgeInSeconds(measurement.measurementCreationTimestamp)
-            return timeToLiveInSeconds < measurementAgeInSeconds
+        fun checkMeasurementExceededTtl(measurement: Measurement, timeToLiveInMilliseconds: ULong): Boolean {
+            // Multiply with factor 1000 as the measurement creation timestamp is stored with second accuracy
+            val measurementAgeInMilliseconds: ULong =
+                getAgeInMilliseconds(measurement.measurementCreationTimestamp * 1000u)
+            return timeToLiveInMilliseconds < measurementAgeInMilliseconds
         }
     }
 }
