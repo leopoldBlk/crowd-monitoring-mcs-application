@@ -8,7 +8,7 @@ import java.nio.ByteBuffer
 
 object PositionalBeaconConverter {
     public fun convertPositionalBeaconToPositionalBeaconTO(positionalBeacon: PositionalBeacon): PositionalBeaconTO {
-        val clientId: ByteArray = positionalBeacon.clientId.hexToByteArray()
+        val clientId: ByteArray = positionalBeacon.clientIdHexString.hexToByteArray()
 
         val clientPositionLatitude: ByteArray = ByteBuffer.allocate(Double.SIZE_BYTES)
             .putDouble(positionalBeacon.clientPosition.coordinates.latitude).array()
@@ -18,7 +18,7 @@ object PositionalBeaconConverter {
 
         // Convert cell identifier to optimized format for transmission
         val clientPositionCellId: ByteArray =
-            CellConverter.compressUberH3CellIdHexString(positionalBeacon.clientPosition.cellId)
+            CellConverter.compressUberH3CellIdHexString(positionalBeacon.clientPosition.cellIdHexString)
                 .hexToByteArray()
 
         val transmissionBenefit: ByteArray = ByteBuffer.allocate(Float.SIZE_BYTES)

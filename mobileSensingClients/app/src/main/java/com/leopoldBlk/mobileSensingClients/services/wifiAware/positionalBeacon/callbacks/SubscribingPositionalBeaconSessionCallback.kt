@@ -99,13 +99,13 @@ class SubscribingPositionalBeaconSessionCallback : DiscoverySessionCallback() {
                 // for transmission benefit could have been arrived in the previous step
                 TransmissionDecisionController.updateTransmissionDecision()
 
-                evaluationReceivedPositionalBeaconsLogFileWriter.write("${receivedPositionalBeacon.clientId}; ${receivedPositionalBeacon.clientPosition.coordinates.latitude}; ${receivedPositionalBeacon.clientPosition.coordinates.longitude}; ${receivedPositionalBeacon.clientPosition.cellId}; ${receivedPositionalBeacon.clientTransmissionBenefit}; ${receivedPositionalBeacon.beaconCreationTimestamp}; ${timestampServiceWithPositionalBeaconDiscovered}\n")
+                evaluationReceivedPositionalBeaconsLogFileWriter.write("${receivedPositionalBeacon.clientIdHexString}; ${receivedPositionalBeacon.clientPosition.coordinates.latitude}; ${receivedPositionalBeacon.clientPosition.coordinates.longitude}; ${receivedPositionalBeacon.clientPosition.cellIdHexString}; ${receivedPositionalBeacon.clientTransmissionBenefit}; ${receivedPositionalBeacon.beaconCreationTimestamp}; ${timestampServiceWithPositionalBeaconDiscovered}\n")
                 evaluationReceivedPositionalBeaconsLogFileWriter.flush()
 
                 LogController.log(
                     Log.INFO,
                     className,
-                    "Received positional beacon from client (${receivedPositionalBeacon.clientId}): ${receivedPositionalBeacon}"
+                    "Received positional beacon from client (${receivedPositionalBeacon.clientIdHexString}): ${receivedPositionalBeacon}"
                 )
             }
         }

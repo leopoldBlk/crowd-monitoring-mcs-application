@@ -64,7 +64,7 @@ object TransmissionDecisionController {
                     false
                 } else if (clientTransmissionBenefit == positionalBeaconFromNtWithLargestTransmissionBenefit.clientTransmissionBenefit) {
                     ByteBuffer.wrap(DataStore.clientId).getInt() < ByteBuffer.wrap(
-                        positionalBeaconFromNtWithLargestTransmissionBenefit.clientId.hexToByteArray()
+                        positionalBeaconFromNtWithLargestTransmissionBenefit.clientIdHexString.hexToByteArray()
                     ).getInt()
                 } else if (clientTransmissionBenefit < positionalBeaconFromNtWithLargestTransmissionBenefit.clientTransmissionBenefit) {
                     true
