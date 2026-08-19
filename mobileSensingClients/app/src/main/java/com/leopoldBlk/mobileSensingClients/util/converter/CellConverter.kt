@@ -1,6 +1,7 @@
 package com.leopoldBlk.mobileSensingClients.util.converter
 
 import com.leopoldBlk.mobileSensingClients.util.DataStore
+import com.leopoldBlk.mobileSensingClients.util.controller.DiscretizationController
 import com.uber.h3core.H3Core
 import com.uber.h3core.util.LatLng
 import crowdDensityLibrary.LocalAggregatedMeasurementMap
@@ -152,10 +153,29 @@ object CellConverter {
     // Get the map structures of the local aggregated measurement map, which are printed to the map visible to the user
     // --> Returns geometry collection of polygons for the cells and a map of the cells centroids as points to the measurement value of the corresponding
     // cell for printing the measurement value to the map visible to the user
-    public fun getMapStructuresForLamm(localAggregatedMeasurementMap: LocalAggregatedMeasurementMap): Pair<GeometryCollection<Polygon>, MutableMap<Triple<String, Point, Int>, UShort>> {
+    public fun getMapStructuresForLamm(localAggregatedMeasurementMap: LocalAggregatedMeasurementMap, clientPositionCellId: String): Triple<GeometryCollection<Polygon>, GeometryCollection<Polygon>, MutableMap<Triple<String, Point, Int>, UShort>> {
         val polygonsForUberH3Cells: MutableList<Polygon> = mutableListOf<Polygon>()
         val labelsForUberH3Cells: MutableMap<Triple<String, Point, Int>, UShort> =
             mutableMapOf<Triple<String, Point, Int>, UShort>()
+        val polygonsForNearbyArea: MutableList<Polygon> = mutableListOf<Polygon>()
+
+        val parentCellWithNeighborhoodComprisingNearbyArea: List<String> = DiscretizationController.getParentCellWithNeighborhood(clientPositionCellId,
+            DataStore.levelToDetermineNearbyArea)
+
+        parentCellWithNeighborhoodComprisingNearbyArea.forEach { cellId ->
+            val verticesForUberH3Cell: MutableList<LatLng> = getVerticesForUberH3Cell(cellId)
+
+            val verticesOfUberH3CellAsPositions: MutableList<Position> =
+                mutableListOf<Position>()
+
+            verticesForUberH3Cell.forEach { vertex ->
+                val position: Position = Position(vertex.lng, vertex.lat)
+                verticesOfUberH3CellAsPositions.add(position)
+            }
+
+            val polygon: Polygon = Polygon(verticesOfUberH3CellAsPositions)
+            polygonsForNearbyArea.add(polygon)
+        }
 
         localAggregatedMeasurementMap.getAllMeasurements().forEach { (cellId, measurement) ->
             if (measurement.measurementValue > 0u) {
@@ -182,8 +202,10 @@ object CellConverter {
 
         val polygonGeometryCollection: GeometryCollection<Polygon> =
             GeometryCollection<Polygon>(polygonsForUberH3Cells)
+        val polygonNearbyAreaGeometryCollection: GeometryCollection<Polygon> =
+            GeometryCollection<Polygon>(polygonsForNearbyArea)
 
-        return Pair(polygonGeometryCollection, labelsForUberH3Cells)
+        return Triple(polygonGeometryCollection, polygonNearbyAreaGeometryCollection, labelsForUberH3Cells)
     }
 
     public fun compressUberH3CellIdHexString(decompressedUberH3CellIdHexString: String): String {

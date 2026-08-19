@@ -15,6 +15,7 @@ import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
 import org.maplibre.compose.expressions.dsl.const
 import org.maplibre.compose.layers.FillLayer
+import org.maplibre.compose.layers.LineLayer
 import org.maplibre.compose.layers.SymbolLayer
 import org.maplibre.compose.location.Location
 import org.maplibre.compose.location.LocationPuck
@@ -148,7 +149,7 @@ fun Map(useTestData: Boolean) {
             }
 
             val mapStructures =
-                CellConverter.getMapStructuresForLamm(localAggregatedMeasurementMap)
+                CellConverter.getMapStructuresForLamm(localAggregatedMeasurementMap, clientPosition.value!!.cellId)
 
             // Draw Uber H3 cells
             FillLayer(
@@ -158,10 +159,18 @@ fun Map(useTestData: Boolean) {
                 opacity = const(0.2f)
             )
 
+            // Draw nearby area of the mobile sensing client
+            LineLayer(
+                id = "NearbyArea",
+                source = rememberGeoJsonSource(GeoJsonData.JsonString(mapStructures.second.toJson())),
+                color = const(Color(43, 145, 251)),
+                opacity = const(0.5f)
+            )
+
             var labelCounter: UInt = 0u
 
             // Draw labels with measurement values for Uber H3 cells
-            mapStructures.second.forEach { (cellIdPointLevelTriple, measurementValue) ->
+            mapStructures.third.forEach { (cellIdPointLevelTriple, measurementValue) ->
                 // Standard zoom level for Uber H3 level 13 cells
                 var minZoom: Float = 18.0f
 
