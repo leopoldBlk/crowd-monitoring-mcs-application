@@ -15,7 +15,9 @@ object DataStore {
 
     public val timeToLiveInMinutes: ULong = 2u
     public val timeToLiveInSeconds: ULong = 60u
+
     public val publishLammIntervalInMilliseconds: ULong = 5000u
+    public val lowerLimitForPublishingIntervalPerDataPacketInMilliseconds: ULong = 500u
 
     // Uber H3 cell levels used for discretizing nearby area, discretizing distant area and to determine the nearby
     // area of the client
