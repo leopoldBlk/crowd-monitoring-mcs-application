@@ -70,7 +70,7 @@ class MessageConsumer(private val messageProducer: MessageProducer) {
             handleReceivedMessage(messageProducerId, messageBody)
 
             // TODO: Clarify if this cleanUp step is really necessary here
-            ServerApplication.measurementManager.cleanUp()
+            ServerApplication.measurementManager.removeExceededBeaconsAndMeasurements()
 
             // Update own LAMM and order for transmission
             ServerApplication.measurementManager.updateLammAndOrderForTransmission()
