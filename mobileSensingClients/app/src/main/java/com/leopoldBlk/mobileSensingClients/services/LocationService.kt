@@ -33,39 +33,38 @@ class LocationService : Service() {
             LogController.log(
                 Log.INFO,
                 className,
-                "FusedLocationListener - Location update accuracy: ${p0.accuracy}"
+                "Received location update with accuracy: ${p0.accuracy}"
 
             )
 
-//            LogController.log(
-//                Log.DEBUG,
-//                className,
-//                "FusedLocationListener - Thread-ID: ${Thread.currentThread().threadId()}"
-//            )
-
             // TODO: Choose proper threshold for location accuracy
-            if (p0.accuracy < 20.0) {
+            if (p0.accuracy < DataStore.accuracyThresholdForLocationDeterminationInMeters) {
 //              For testing purpose (location is the center of the Marienplatz in Munich):
+//              --------------------------------------------------------------------------
                 var updatedClientPositionCellId: String = h3Core.latLngToCellAddress(
                     48.137371, 11.575328,
                     12
                 )
+
+                while (updatedClientPositionCellId.length < 16) {
+                    updatedClientPositionCellId = "0" + updatedClientPositionCellId
+                }
+
+                val updatedClientPosition: Position =
+                    Position(Coordinates(48.137371, 11.575328), updatedClientPositionCellId)
+//              --------------------------------------------------------------------------
 
 //                var updatedClientPositionCellId: String = h3Core.latLngToCellAddress(
 //                    p0.latitude,
 //                    p0.longitude,
 //                    12
 //                )
-
-                // Adding leading zeros to h3 cell id so .hexToByteArray() can be used to convert the string to byte array
-                while (updatedClientPositionCellId.length < 16) {
-                    updatedClientPositionCellId = "0" + updatedClientPositionCellId
-                }
-
-//              For testing purpose (location is the center of the Marienplatz in Munich):
-                val updatedClientPosition: Position =
-                    Position(Coordinates(48.137371, 11.575328), updatedClientPositionCellId)
-
+//
+//                // Adding leading zeros to h3 cell id so .hexToByteArray() can be used to convert the string to byte array
+//                while (updatedClientPositionCellId.length < 16) {
+//                    updatedClientPositionCellId = "0" + updatedClientPositionCellId
+//                }
+//
 //                val updatedClientPosition: Position =
 //                    Position(Coordinates(p0.latitude, p0.longitude), updatedClientPositionCellId)
 
@@ -74,7 +73,13 @@ class LocationService : Service() {
                 LogController.log(
                     Log.INFO,
                     className,
-                    "FusedLocationListener - Location updated (Lat/Long): ${p0.latitude}/${p0.longitude}"
+                    "Updated location (Lat/Long): ${p0.latitude}/${p0.longitude}"
+                )
+            } else {
+                LogController.log(
+                    Log.INFO,
+                    className,
+                    "No updated of client location due to missing accuracy of location update!"
                 )
             }
         }
@@ -94,12 +99,6 @@ class LocationService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val superOnStartCommandStatus: Int = super.onStartCommand(intent, flags, startId)
 
-//        LogController.log(
-//            Log.DEBUG,
-//            className,
-//            "onStartCommand - Thread-ID: ${Thread.currentThread().threadId()}"
-//        )
-
         if ((ActivityCompat.checkSelfPermission(
                 applicationContext,
                 Manifest.permission.ACCESS_COARSE_LOCATION
@@ -110,7 +109,6 @@ class LocationService : Service() {
             ) ==
                     PackageManager.PERMISSION_GRANTED)
         ) {
-            // TODO: Decide proper priority level for this use case
             // Location updates arrive at most every second (not faster)
             fusedLocationProviderClient.requestLocationUpdates(
                 LocationRequest.Builder(
