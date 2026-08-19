@@ -1,14 +1,17 @@
 package crowdDensityLibrary.dataClasses
 
+import kotlinx.serialization.Serializable
+
 /**
  * Positional beacon for sensing process
- * @property clientId Identifier of the client generated the beacon
- * @property position Coordinates of the client generated the beacon
- * @property creationTime The creation time of the beacon
- * @property cellID Identifier of the cell the client generated the beacon is located within
+ * @property clientIdHexString Identifier of the client sent the beacon as hexadecimal string
+ * @property clientPosition Positional information of the client generated the beacon
+ * @property clientTransmissionBenefit Transmission benefit of the client generated the beacon
+ * @property beaconCreationTimestamp Timestamp of beacon creation in seconds
  */
+@Serializable
 data class PositionalBeacon(
-    val clientId: String,
+    val clientIdHexString: String,
     val clientPosition: Position,
     val clientTransmissionBenefit: Float,
     val beaconCreationTimestamp: ULong
