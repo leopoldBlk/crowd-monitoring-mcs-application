@@ -27,7 +27,7 @@ object Utils {
         // Iterate over the entries within the LAMM, to find measurements for distant areas with a
         // lower discretization level contained within the LAMM
         for (measurement in lamm.getAllMeasurements()) {
-            if (h3Core.getResolution(measurement.value.cellId) == ServerApplication.distantAreaDiscretizationLevel.toInt()) {
+            if (h3Core.getResolution(measurement.value.cellIdHexString) == ServerApplication.distantAreaDiscretizationLevel.toInt()) {
                 measurementsForDistantAreasWithinLamm[measurement.key] = measurement.value
             }
         }
@@ -36,7 +36,7 @@ object Utils {
         // different discretization levels
         for (measurement in lamm.getAllMeasurements()) {
             // Get discretization level of the current measurement
-            val measurementCellIdLevel: Int = h3Core.getResolution(measurement.value.cellId)
+            val measurementCellIdLevel: Int = h3Core.getResolution(measurement.value.cellIdHexString)
 
             // Find measurements having the discretization level of nearby areas
             if (measurementCellIdLevel == ServerApplication.nearbyAreaDiscretizationLevel.toInt()) {
@@ -54,7 +54,7 @@ object Utils {
                     // Mark the measurement with the lower discretization level for removal
                     val measurementForDistantArea: Measurement =
                         measurementsForDistantAreasWithinLamm[parentCellAtDistantAreaDiscretizationLevel]!!
-                    measurementsToBeRemoved[measurementForDistantArea.cellId] =
+                    measurementsToBeRemoved[measurementForDistantArea.cellIdHexString] =
                         measurementForDistantArea
                 }
             }

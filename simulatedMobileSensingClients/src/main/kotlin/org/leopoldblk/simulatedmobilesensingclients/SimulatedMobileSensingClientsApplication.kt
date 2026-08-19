@@ -20,8 +20,9 @@ class SimulatedMobileSensingClientsApplication {
         // Self-generated identifier of the simulated client
         private val clientId: ByteArray = Random.nextBytes(ByteArray(4))
 
-        // Time to live for the density data of the crowd monitoring system
-        private val timeToLiveInSeconds: ULong = 20u
+        // TTL for NT and MMs
+        public val timeToLiveNeighborhoodTableInMilliseconds: ULong = 5000u
+        public val timeToLiveMeasurementMapInMilliseconds: ULong = 15000u
 
         // Definition of the coordinates of the top left and the bottom right corner of the geographical square
         // from which the position of the simulated mobile sensing client is randomly chosen (Munich center)
@@ -52,7 +53,7 @@ class SimulatedMobileSensingClientsApplication {
         public val simulatedClientPosition: Position = Position(initialCoordinates, initialCell)
 
         // Measurement manager for handling density data
-        public val measurementManager: MeasurementManager = MeasurementManager(clientIdHexString, timeToLiveInSeconds)
+        public val measurementManager: MeasurementManager = MeasurementManager(clientIdHexString, timeToLiveNeighborhoodTableInMilliseconds, timeToLiveMeasurementMapInMilliseconds)
     }
 }
 
