@@ -11,7 +11,7 @@ class NeighborhoodTable {
     }
 
     fun setNtEntry(positionalBeacon: PositionalBeacon) {
-        neighborhoodTableEntries[positionalBeacon.clientId] = positionalBeacon
+        neighborhoodTableEntries[positionalBeacon.clientIdHexString] = positionalBeacon
     }
 
     fun getAllNtEntries(): MutableMap<String, PositionalBeacon> {
@@ -22,30 +22,16 @@ class NeighborhoodTable {
         neighborhoodTableEntries.remove(clientId)
     }
 
-    fun getExceededNtEntries(timeToLiveInSeconds: ULong): MutableMap<String, PositionalBeacon> {
+    fun getExceededNtEntries(timeToLiveInMilliseconds: ULong): MutableMap<String, PositionalBeacon> {
         val exceededPositionalBeacons: MutableMap<String, PositionalBeacon> =
             mutableMapOf<String, PositionalBeacon>()
 
         neighborhoodTableEntries.forEach { (clientId, positionalBeacon) ->
-            if (Utils.positionalBeaconExceededTtlInSeconds(positionalBeacon, timeToLiveInSeconds)) {
+            if (Utils.checkPositionalBeaconExceededTtl(positionalBeacon, timeToLiveInMilliseconds)) {
                 exceededPositionalBeacons[clientId] = positionalBeacon
             }
         }
 
         return exceededPositionalBeacons
-    }
-
-    fun removeExceededNtEntries(timeToLiveInSeconds: ULong) {
-        val entriesToBeRemoved: MutableList<String> = mutableListOf<String>()
-
-        neighborhoodTableEntries.forEach { (clientId, positionalBeacon) ->
-            if (Utils.positionalBeaconExceededTtlInSeconds(positionalBeacon, timeToLiveInSeconds)) {
-                entriesToBeRemoved.add(clientId)
-            }
-        }
-
-        entriesToBeRemoved.forEach { clientId ->
-            neighborhoodTableEntries.remove(clientId)
-        }
     }
 }
