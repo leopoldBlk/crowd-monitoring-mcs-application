@@ -76,7 +76,7 @@ class WifiAwarePositionalBeaconPublisherService : WifiAwareService() {
                         }
 
                         // Create log entry after the update of the positional beacon with the beacon content and an external timestamp
-                        evaluationPublishedPositionalBeaconsLogFileWriter.write("${value.clientId}; ${value.clientPosition.coordinates.latitude}; ${value.clientPosition.coordinates.longitude}; ${value.clientPosition.cellId}; ${value.clientTransmissionBenefit}; ${value.beaconCreationTimestamp}; ${timestampAfterUpdateOfThePublishConfigWithTheNewBeacon}\n")
+                        evaluationPublishedPositionalBeaconsLogFileWriter.write("${value.clientIdHexString}; ${value.clientPosition.coordinates.latitude}; ${value.clientPosition.coordinates.longitude}; ${value.clientPosition.cellIdHexString}; ${value.clientTransmissionBenefit}; ${value.beaconCreationTimestamp}; ${timestampAfterUpdateOfThePublishConfigWithTheNewBeacon}\n")
                         evaluationPublishedPositionalBeaconsLogFileWriter.flush()
                     }
                 }

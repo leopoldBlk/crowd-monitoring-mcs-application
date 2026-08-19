@@ -1,51 +1,53 @@
 package crowdDensityLibrary
 
 // Source: https://kotlinlang.org/docs/serialization.html
-import kotlinx.serialization.Serializable
 import crowdDensityLibrary.dataClasses.Measurement
+import kotlinx.serialization.Serializable
 
+// Checked (final)
 @Serializable
 abstract class MeasurementMap {
     // Mapping of cellIds to corresponding measurements
     protected var measurements: MutableMap<String, Measurement> = mutableMapOf<String, Measurement>()
 
-    fun getMeasurement(cellId: String): Measurement? {
-        return measurements[cellId]
+    // Checked (final)
+    fun getMeasurement(cellIdHexString: String): Measurement? {
+        return measurements[cellIdHexString]
     }
 
-    fun setMeasurement(measurement: Measurement) {
-        measurements[measurement.cellId] = measurement
-    }
-
-    fun addAllMeasurements(measurements: List<Measurement>) {
-        for (measurement in measurements){
-            setMeasurement(measurement)
-        }
-    }
-
-    fun removeMeasurementForCellId(cellId: String) {
-        measurements.remove(cellId)
-    }
-
-    fun removeMeasurementsForCellIds(cellIds: List<String>) {
-        for (cellId in cellIds){
-            removeMeasurementForCellId(cellId)
-        }
-    }
-
+    // Checked (final)
     fun getAllMeasurements(): MutableMap<String, Measurement> {
         return measurements
     }
 
-    fun measurementForCellExists(cellId: String): Boolean {
-        return measurements[cellId] != null
+    // Checked (final)
+    fun measurementForCellExists(cellIdHexString: String): Boolean {
+        return measurements[cellIdHexString] != null
     }
 
-    fun removeExceededMmEntries(timeToLiveInSeconds: ULong) {
+    // Checked (final)
+    fun setMeasurement(measurement: Measurement) {
+        measurements[measurement.cellIdHexString] = measurement
+    }
+
+    // Checked (final)
+    fun removeMeasurementForCellId(cellIdHexString: String) {
+        measurements.remove(cellIdHexString)
+    }
+
+    // Checked (final)
+    fun removeMeasurementsForCellIds(cellIds: List<String>) {
+        for (cellIdHexString in cellIds) {
+            removeMeasurementForCellId(cellIdHexString)
+        }
+    }
+
+    // Checked (final)
+    fun removeExceededMmEntries(timeToLiveInMilliseconds: ULong) {
         val measurementsToBeRemoved: MutableList<String> = mutableListOf<String>()
 
         measurements.forEach { (cellId, measurement) ->
-            if (Utils.measurementExceededTtlInSeconds(measurement, timeToLiveInSeconds)) {
+            if (Utils.checkMeasurementExceededTtl(measurement, timeToLiveInMilliseconds)) {
                 measurementsToBeRemoved.add(cellId)
             }
         }
@@ -55,34 +57,12 @@ abstract class MeasurementMap {
         }
     }
 
-    fun updateMeasurementClientId(cellId: String, clientId: String) {
-        if (measurements.containsKey(cellId)) {
-            val updatedLmmMeasurement: Measurement = measurements[cellId] as Measurement
-            updatedLmmMeasurement.clientId = clientId
-            measurements[cellId] = updatedLmmMeasurement
-        }
-    }
-
-    fun updateMeasurementCreationTime(cellId: String) {
-        if (measurements.containsKey(cellId)) {
-            val updatedLmmMeasurement: Measurement = measurements[cellId] as Measurement
-            // Get UNIX epoch time with accuracy of seconds
+    // Checked (final)
+    fun updateMeasurementCreationTime(cellIdHexString: String) {
+        if (measurements.containsKey(cellIdHexString)) {
+            val updatedLmmMeasurement: Measurement = measurements[cellIdHexString] as Measurement
             updatedLmmMeasurement.measurementCreationTimestamp = (System.currentTimeMillis() / 1000).toULong()
-            measurements[cellId] = updatedLmmMeasurement
+            measurements[cellIdHexString] = updatedLmmMeasurement
         }
     }
-
-//    fun removeMeasurementsWithMeasurementValueZero(){
-//        val measurementsToBeRemoved: MutableList<String> = mutableListOf<String>()
-//
-//        measurements.forEach { (cellId, measurement) ->
-//            if (measurement.measurementValue == 0u.toUShort()) {
-//                measurementsToBeRemoved.add(cellId)
-//            }
-//        }
-//
-//        measurementsToBeRemoved.forEach { cellId ->
-//            measurements.remove(cellId)
-//        }
-//    }
 }

@@ -53,8 +53,8 @@ class MeasurementMapSerializerTest {
         )
 
         deserializedMeasurementMapFromJson.getAllMeasurements().forEach { (cellId, measurement) ->
-            assertEquals(localAggregatedMeasurementMapTest.getMeasurement(cellId)!!.cellId, measurement.cellId)
-            assertEquals(localAggregatedMeasurementMapTest.getMeasurement(cellId)!!.clientId, measurement.clientId)
+            assertEquals(localAggregatedMeasurementMapTest.getMeasurement(cellId)!!.cellIdHexString, measurement.cellIdHexString)
+            assertEquals(localAggregatedMeasurementMapTest.getMeasurement(cellId)!!.clientIdHexString, measurement.clientIdHexString)
             assertEquals(
                 localAggregatedMeasurementMapTest.getMeasurement(cellId)!!.measurementValue,
                 measurement.measurementValue

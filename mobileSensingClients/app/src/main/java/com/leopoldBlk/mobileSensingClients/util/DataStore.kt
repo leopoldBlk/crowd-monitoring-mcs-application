@@ -13,11 +13,15 @@ object DataStore {
     public var clientId: ByteArray = Random.nextBytes(ByteArray(4))
     public var clientIdHexString: String = clientId.toHexString()
 
-    public val timeToLiveInMinutes: ULong = 2u
-    public val timeToLiveInSeconds: ULong = 60u
+    // TTL for NT and MMs
+    public val timeToLiveNeighborhoodTableInMilliseconds: ULong = 5000u
+    public val timeToLiveMeasurementMapInMilliseconds: ULong = 15000u
 
     public val publishLammIntervalInMilliseconds: ULong = 5000u
     public val lowerLimitForPublishingIntervalPerDataPacketInMilliseconds: ULong = 500u
+    public val publishPositionalBeaconIntervalInMilliseconds: ULong = 1000u
+
+    public val accuracyThresholdForLocationDeterminationInMeters: Float = 10.0f
 
     // Uber H3 cell levels used for discretizing nearby area, discretizing distant area and to determine the nearby
     // area of the client
@@ -28,7 +32,7 @@ object DataStore {
     public var trustedTimeClient: TrustedTimeClient? = null
 
     public var measurementManager: MeasurementManager =
-        MeasurementManager(clientIdHexString, timeToLiveInSeconds)
+        MeasurementManager(clientIdHexString, timeToLiveNeighborhoodTableInMilliseconds, timeToLiveMeasurementMapInMilliseconds)
 
     public var clientPosition: MutableLiveData<Position> =
         MutableLiveData(null)
@@ -48,6 +52,6 @@ object DataStore {
         clientId = newClientId
         clientIdHexString = newClientId.toHexString()
 
-        measurementManager = MeasurementManager(clientIdHexString, timeToLiveInSeconds)
+        measurementManager = MeasurementManager(clientIdHexString, timeToLiveNeighborhoodTableInMilliseconds, timeToLiveMeasurementMapInMilliseconds)
     }
 }
