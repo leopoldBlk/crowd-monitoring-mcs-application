@@ -39,6 +39,8 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
         File(LoggingDirectoryController.getEvaluationD2dCommunicationLogFilePath("BroadcastedDensityDataLog"))
 
     private var lammAsDensityDataTOs: List<DensityDataTO>? = null
+    private val maximumDataPacketsToBroadcastPerPublishingInterval: ULong =
+        DataStore.publishLammIntervalInMilliseconds / DataStore.lowerLimitForPublishingIntervalPerDataPacketInMilliseconds
 
     private lateinit var wifiAwareAttachEventCallbackHandler: Handler
     private lateinit var publishingSessionCallbackHandler: Handler
@@ -275,7 +277,13 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
             )
 
         if (lammAsDensityDataTOs != null) {
+            var lammDensityDataToCounter: ULong = 0u
+
             for (lammDensityDataTO in lammAsDensityDataTOs) {
+                if (lammDensityDataToCounter == maximumDataPacketsToBroadcastPerPublishingInterval) {
+                    break
+                }
+
                 val publishConfigForTO: PublishConfig =
                     PublishConfig.Builder()
                         .setServiceName("MCS-DensityData")
@@ -285,6 +293,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
                         .build()
 
                 publishConfigs.add(publishConfigForTO)
+                lammDensityDataToCounter += 1u
             }
         }
     }
