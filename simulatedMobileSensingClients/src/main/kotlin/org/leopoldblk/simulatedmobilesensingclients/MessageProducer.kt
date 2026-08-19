@@ -38,7 +38,7 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
             )
 
             // Use the generated measurements for the nearby area as local measurement map of the sensing client
-            SimulatedMobileSensingClientsApplication.measurementManager.overrideLmm(randomMeasurements)
+            SimulatedMobileSensingClientsApplication.measurementManager.clearLmmAndSetNewMeasurements(randomMeasurements)
         }
     }
 
@@ -48,7 +48,7 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
         coroutineScopeUpdatePublishLamm.launch {
             // Cleanup process to remove entries from the FAMMs which exceeded the ttl
             // TODO: Is cleanup here really necessary?
-            SimulatedMobileSensingClientsApplication.measurementManager.cleanUp()
+            SimulatedMobileSensingClientsApplication.measurementManager.removeExceededBeaconsAndMeasurements()
 
             // Generate/update the LAMM and order for transmission
             val updatedLammAndOrderForTransmission: Pair<MeasurementMap, List<String>> =
