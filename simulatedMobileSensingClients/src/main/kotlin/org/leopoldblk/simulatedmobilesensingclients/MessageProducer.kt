@@ -26,9 +26,9 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
     // CoroutineScope for updating and publishing the LAMM
     private val coroutineScopeUpdatePublishLamm: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
-    @Scheduled(fixedRate = 5000)
-    fun publishLamm() {
-        // Launch coroutine for updating and publishing the LAMM within the corresponding CoroutineScope
+    @Scheduled(fixedRate = 30000)
+    fun updateLmm() {
+        // Launch coroutine for updating the LMM within the corresponding CoroutineScope
         coroutineScopeUpdatePublishLamm.launch {
             // Generate randomized measurements for the nearby area of the sensing client
             val randomMeasurements: List<Measurement> = Utils.generateRandomMeasurementsForNearbyArea(
@@ -39,7 +39,13 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
 
             // Use the generated measurements for the nearby area as local measurement map of the sensing client
             SimulatedMobileSensingClientsApplication.measurementManager.overrideLmm(randomMeasurements)
+        }
+    }
 
+    @Scheduled(fixedRate = 5000)
+    fun publishLamm() {
+        // Launch coroutine for updating and publishing the LAMM within the corresponding CoroutineScope
+        coroutineScopeUpdatePublishLamm.launch {
             // Cleanup process to remove entries from the FAMMs which exceeded the ttl
             // TODO: Is cleanup here really necessary?
             SimulatedMobileSensingClientsApplication.measurementManager.cleanUp()
