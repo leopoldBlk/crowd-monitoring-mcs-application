@@ -72,7 +72,7 @@ object DensityDataConverter {
                             val newDensityDataTO: DensityDataTO = DensityDataTO(
                                 transmissionId,
                                 numberOfDensityDataToWithinTransmission,
-                                measurement.clientId.hexToByteArray(),
+                                measurement.clientIdHexString.hexToByteArray(),
                                 timestampByteArray
                             )
                             densityDataTOs.add(newDensityDataTO)
@@ -100,7 +100,7 @@ object DensityDataConverter {
                         val newDensityDataTO: DensityDataTO = DensityDataTO(
                             transmissionId,
                             numberOfDensityDataToWithinTransmission,
-                            measurement.clientId.hexToByteArray(),
+                            measurement.clientIdHexString.hexToByteArray(),
                             timestampByteArray
                         )
                         densityDataTOs.add(newDensityDataTO)
@@ -130,7 +130,7 @@ object DensityDataConverter {
         referenceTimestampOfLastDensityDataTO: ULong
     ): ByteArray {
         val measurementCellIdByteArray: ByteArray =
-            CellConverter.compressUberH3CellIdHexString(measurement.cellId).hexToByteArray()
+            CellConverter.compressUberH3CellIdHexString(measurement.cellIdHexString).hexToByteArray()
 
         val measurementValueByteArray: ByteArray =
             ByteBuffer.allocate(UShort.SIZE_BYTES).putShort(measurement.measurementValue.toShort())

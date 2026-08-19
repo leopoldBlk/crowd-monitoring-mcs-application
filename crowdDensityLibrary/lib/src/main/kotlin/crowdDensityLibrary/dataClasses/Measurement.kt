@@ -3,16 +3,18 @@ package crowdDensityLibrary.dataClasses
 // Source: https://kotlinlang.org/docs/serialization.html
 import kotlinx.serialization.Serializable
 
+// Checked (final)
 /**
  * The measurement for a cell
- *
- * @property measurementValue The number of clients present in the observed cell
- * @property measurementMetadata The metadata of the measurement
+ * @property cellIdHexString Cell identifier as hexadecimal string
+ * @property measurementValue Measurement value
+ * @property clientIdHexString Client identifier as hexadecimal string
+ * @property measurementCreationTimestamp Timestamp of measurement creation in seconds
  */
 @Serializable
 data class Measurement(
-    var cellId: String,
+    var cellIdHexString: String,
     var measurementValue: UShort,
-    var clientId: String,
+    var clientIdHexString: String,
     var measurementCreationTimestamp: ULong
 ) {}

@@ -2,50 +2,43 @@ package crowdDensityLibrary
 
 import crowdDensityLibrary.dataClasses.PositionalBeacon
 
+// Checked (final)
 class NeighborhoodTable {
+    // Stores positional beacons mapped by the identifier of the client (hexadecimal string) which sent the beacon
     private var neighborhoodTableEntries: MutableMap<String, PositionalBeacon> =
         mutableMapOf<String, PositionalBeacon>()
 
-    fun getNtEntry(clientId: String): PositionalBeacon? {
-        return neighborhoodTableEntries[clientId]
+    // Checked (final)
+    fun getNtEntry(clientIdHexString: String): PositionalBeacon? {
+        return neighborhoodTableEntries[clientIdHexString]
     }
 
+    // Checked (final)
     fun setNtEntry(positionalBeacon: PositionalBeacon) {
-        neighborhoodTableEntries[positionalBeacon.clientId] = positionalBeacon
+        neighborhoodTableEntries[positionalBeacon.clientIdHexString] = positionalBeacon
     }
 
+    // Checked (final)
     fun getAllNtEntries(): MutableMap<String, PositionalBeacon> {
         return neighborhoodTableEntries
     }
 
-    fun removeNtEntry(clientId: String) {
-        neighborhoodTableEntries.remove(clientId)
+    // Checked (final)
+    fun removeNtEntry(clientIdHexString: String) {
+        neighborhoodTableEntries.remove(clientIdHexString)
     }
 
-    fun getExceededNtEntries(timeToLiveInSeconds: ULong): MutableMap<String, PositionalBeacon> {
+    // Checked (final)
+    fun getExceededNtEntries(timeToLiveInMilliseconds: ULong): MutableMap<String, PositionalBeacon> {
         val exceededPositionalBeacons: MutableMap<String, PositionalBeacon> =
             mutableMapOf<String, PositionalBeacon>()
 
-        neighborhoodTableEntries.forEach { (clientId, positionalBeacon) ->
-            if (Utils.positionalBeaconExceededTtlInSeconds(positionalBeacon, timeToLiveInSeconds)) {
-                exceededPositionalBeacons[clientId] = positionalBeacon
+        neighborhoodTableEntries.forEach { (clientIdHexString, positionalBeacon) ->
+            if (Utils.checkPositionalBeaconExceededTtl(positionalBeacon, timeToLiveInMilliseconds)) {
+                exceededPositionalBeacons[clientIdHexString] = positionalBeacon
             }
         }
 
         return exceededPositionalBeacons
-    }
-
-    fun removeExceededNtEntries(timeToLiveInSeconds: ULong) {
-        val entriesToBeRemoved: MutableList<String> = mutableListOf<String>()
-
-        neighborhoodTableEntries.forEach { (clientId, positionalBeacon) ->
-            if (Utils.positionalBeaconExceededTtlInSeconds(positionalBeacon, timeToLiveInSeconds)) {
-                entriesToBeRemoved.add(clientId)
-            }
-        }
-
-        entriesToBeRemoved.forEach { clientId ->
-            neighborhoodTableEntries.remove(clientId)
-        }
     }
 }

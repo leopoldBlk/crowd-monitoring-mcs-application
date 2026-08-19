@@ -5,14 +5,18 @@ import crowdDensityLibrary.dataClasses.PositionalBeacon
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+// Checked (final)
 class MeasurementManager(
-    private val clientId: String,
-    private val timeToLiveInSeconds: ULong
+    private val clientIdHexString: String,
+    private val timeToLiveNeighborhoodTableInMilliseconds: ULong,
+    private val timeToLiveMeasurementMapInMilliseconds: ULong
 ) {
     private val neighborhoodTable: NeighborhoodTable = NeighborhoodTable()
     private val localMeasurementMap: LocalMeasurementMap = LocalMeasurementMap()
     private val foreignAggregatedMeasurementMaps: MutableMap<String, ForeignAggregatedMeasurementMap> =
         mutableMapOf<String, ForeignAggregatedMeasurementMap>()
+
+    // List of cell identifiers which indicates the order for transmitting the measurements
     private var orderForMeasurementTransmission: MutableList<String> = mutableListOf<String>()
 
     // Mutex for ensuring exclusive access to and modification of density data to prevent unwanted effects due to concurrent modification
@@ -20,111 +24,118 @@ class MeasurementManager(
 
     private lateinit var localAggregatedMeasurementMap: LocalAggregatedMeasurementMap
 
-    //Checked
+    //Checked (final)
     /**
      * Updates the NT and LMM according to received positional beacon
      * @param positionalBeacon Positional beacon for updating the NT and LMM
      */
     private fun updateNtAndLmm(positionalBeacon: PositionalBeacon) {
-        val exceededPositionalBeacons: MutableMap<String, PositionalBeacon> =
-            neighborhoodTable.getExceededNtEntries(timeToLiveInSeconds)
+        val neighborhoodTableIterator = neighborhoodTable.getAllNtEntries().iterator()
 
-        exceededPositionalBeacons.forEach { (clientId, positionalBeacon) ->
-            localMeasurementMap.decrementLmmMeasurementValue(positionalBeacon.clientPosition.cellId)
-            neighborhoodTable.removeNtEntry(clientId)
+        while (neighborhoodTableIterator.hasNext()) {
+            val neighborhoodTableEntry = neighborhoodTableIterator.next()
+
+            if (Utils.checkPositionalBeaconExceededTtl(
+                    neighborhoodTableEntry.value,
+                    timeToLiveNeighborhoodTableInMilliseconds
+                )
+            ) {
+                localMeasurementMap.decrementLmmMeasurementValue(neighborhoodTableEntry.value.clientPosition.cellIdHexString)
+                neighborhoodTableIterator.remove()
+            }
         }
 
         // Positional beacon already reached TTL and will therefore not be processed
-        if (Utils.positionalBeaconExceededTtlInSeconds(positionalBeacon, timeToLiveInSeconds)) {
+        if (Utils.checkPositionalBeaconExceededTtl(positionalBeacon, timeToLiveNeighborhoodTableInMilliseconds)) {
             return
         }
 
-        val currentNtEntry: PositionalBeacon? = neighborhoodTable.getNtEntry(positionalBeacon.clientId)
+        val currentNtEntry: PositionalBeacon? = neighborhoodTable.getNtEntry(positionalBeacon.clientIdHexString)
         val currentLmmMeasurement: Measurement? =
-            localMeasurementMap.getMeasurement(positionalBeacon.clientPosition.cellId)
+            localMeasurementMap.getMeasurement(positionalBeacon.clientPosition.cellIdHexString)
 
         // First positional beacon received from this client
         if (currentNtEntry == null) {
             // No measurement for cell identifier in positional beacon exits -> create new one
             if (currentLmmMeasurement == null) {
                 val newLmmMeasurement: Measurement = Measurement(
-                    positionalBeacon.clientPosition.cellId,
+                    positionalBeacon.clientPosition.cellIdHexString,
                     1u,
-                    clientId,
+                    clientIdHexString,
                     (System.currentTimeMillis() / 1000).toULong()
                 )
                 localMeasurementMap.setMeasurement(newLmmMeasurement)
             }
             // Measurement for cell identifier in positional beacon already exits -> update existing one
             else {
-                localMeasurementMap.incrementLmmMeasurementValue(positionalBeacon.clientPosition.cellId)
+                localMeasurementMap.incrementLmmMeasurementValue(positionalBeacon.clientPosition.cellIdHexString)
             }
         }
 
-        // Not first positional beacon of client and client did not switch cells
-        else if (currentNtEntry.clientPosition.cellId == positionalBeacon.clientPosition.cellId) {
-            localMeasurementMap.updateMeasurementCreationTime(positionalBeacon.clientPosition.cellId)
+        // Not first positional beacon of client and client did not switch cells -> only update timestamp
+        else if (currentNtEntry.clientPosition.cellIdHexString == positionalBeacon.clientPosition.cellIdHexString) {
+            localMeasurementMap.updateMeasurementCreationTime(positionalBeacon.clientPosition.cellIdHexString)
         }
 
         // Not first positional beacon of client and client switched cells
         else {
-            localMeasurementMap.decrementLmmMeasurementValue(currentNtEntry.clientPosition.cellId)
+            localMeasurementMap.decrementLmmMeasurementValue(currentNtEntry.clientPosition.cellIdHexString)
 
             // No measurement for cell identifier in positional beacon exits -> create new one
             if (currentLmmMeasurement == null) {
                 val newLmmMeasurement: Measurement = Measurement(
-                    positionalBeacon.clientPosition.cellId,
+                    positionalBeacon.clientPosition.cellIdHexString,
                     1u,
-                    clientId,
+                    clientIdHexString,
                     (System.currentTimeMillis() / 1000).toULong()
                 )
                 localMeasurementMap.setMeasurement(newLmmMeasurement)
             }
             // Measurement for cell identifier in positional beacon already exits -> update existing one
             else {
-                localMeasurementMap.incrementLmmMeasurementValue(positionalBeacon.clientPosition.cellId)
+                localMeasurementMap.incrementLmmMeasurementValue(positionalBeacon.clientPosition.cellIdHexString)
             }
         }
 
         neighborhoodTable.setNtEntry(positionalBeacon)
     }
 
-    //Checked
+    // Checked (final)
     /**
      * Updates the current FAMM based on received FAMM for the corresponding client
-     * @param senderClientId Identifier of the client sent the FAMM
-     * @param reivedFamm FAMM the foreign client sent
+     * @param senderClientIdHexString Identifier of the client sent the FAMM
+     * @param receivedFamm FAMM the foreign client sent
      */
-    private fun updateFamm(senderClientId: String, receivedFamm: ForeignAggregatedMeasurementMap) {
-        var currentFamm: ForeignAggregatedMeasurementMap? = foreignAggregatedMeasurementMaps[senderClientId]
+    private fun updateFamm(senderClientIdHexString: String, receivedFamm: ForeignAggregatedMeasurementMap) {
+        var currentFamm: ForeignAggregatedMeasurementMap? = foreignAggregatedMeasurementMaps[senderClientIdHexString]
 
         if (currentFamm == null) {
             currentFamm = ForeignAggregatedMeasurementMap()
         }
 
-        currentFamm.removeExceededMmEntries(timeToLiveInSeconds)
-        receivedFamm.removeExceededMmEntries(timeToLiveInSeconds)
+        currentFamm.removeExceededMmEntries(timeToLiveMeasurementMapInMilliseconds)
+        receivedFamm.removeExceededMmEntries(timeToLiveMeasurementMapInMilliseconds)
 
-        receivedFamm.getAllMeasurements().forEach { (cellId, measurement) ->
+        receivedFamm.getAllMeasurements().forEach { (cellIdHexString, receivedMeasurement) ->
             // Measurement for cell already exists in current FAMM for corresponding client
-            if (currentFamm.measurementForCellExists(cellId)) {
-                val currentMeasurement: Measurement = currentFamm.getMeasurement(cellId) as Measurement
+            if (currentFamm.measurementForCellExists(cellIdHexString)) {
+                val currentMeasurement: Measurement = currentFamm.getMeasurement(cellIdHexString) as Measurement
 
                 // Measurement for cell in received FAMM is newer than the one in current FAMM
-                if (currentMeasurement.measurementCreationTimestamp < measurement.measurementCreationTimestamp) {
-                    currentFamm.setMeasurement(measurement)
+                if (currentMeasurement.measurementCreationTimestamp < receivedMeasurement.measurementCreationTimestamp) {
+                    currentFamm.setMeasurement(receivedMeasurement)
                 }
             }
             // Measurement for cell does not already exist in current FAMM for corresponding client
             else {
-                currentFamm.setMeasurement(measurement)
+                currentFamm.setMeasurement(receivedMeasurement)
             }
         }
 
-        foreignAggregatedMeasurementMaps[senderClientId] = currentFamm
+        foreignAggregatedMeasurementMaps[senderClientIdHexString] = currentFamm
     }
 
-    //Checked
+    // Checked (final)
     /**
      * Generates the LAMM of the client based on its LMM and the FAMMs it has stored
      */
@@ -135,32 +146,33 @@ class MeasurementManager(
         val totalMeasurementsPerCell: MutableMap<String, MutableSet<Measurement>> =
             mutableMapOf<String, MutableSet<Measurement>>()
 
-        localMeasurementMap.getAllMeasurements().forEach { (cellId, measurement) ->
-            totalMeasurementsPerCell[cellId] = mutableSetOf<Measurement>(measurement)
+        localMeasurementMap.getAllMeasurements().forEach { (cellIdHexString, measurement) ->
+            totalMeasurementsPerCell[cellIdHexString] = mutableSetOf<Measurement>(measurement)
         }
 
-        foreignAggregatedMeasurementMaps.forEach { (clientId, famm) ->
-            famm.getAllMeasurements().forEach { (cellId, measurement) ->
-                if (totalMeasurementsPerCell.containsKey(cellId)) {
-                    totalMeasurementsPerCell[cellId]?.add(measurement)
+        foreignAggregatedMeasurementMaps.forEach { (clientIdHexString, famm) ->
+            famm.getAllMeasurements().forEach { (cellIdHexString, measurement) ->
+                if (totalMeasurementsPerCell.containsKey(cellIdHexString)) {
+                    totalMeasurementsPerCell[cellIdHexString]!!.add(measurement)
                 } else {
-                    totalMeasurementsPerCell[cellId] = mutableSetOf<Measurement>(measurement)
+                    totalMeasurementsPerCell[cellIdHexString] = mutableSetOf<Measurement>(measurement)
                 }
             }
         }
 
-        totalMeasurementsPerCell.forEach { (cellId, measurements) ->
+        totalMeasurementsPerCell.forEach { (cellIdHexString, measurements) ->
             val sortedMeasurements: List<Measurement> = measurements.sortedBy { it.measurementCreationTimestamp }
 
             // Youngest-Measurement-First as rank function for measurements
-            newLocalAggregatedMeasurementMap.setMeasurement(sortedMeasurements.last())
-            newLocalAggregatedMeasurementMap.updateMeasurementClientId(cellId, clientId)
+            val mostRecentMeasurement: Measurement = sortedMeasurements.last()
+            mostRecentMeasurement.clientIdHexString = clientIdHexString
+            newLocalAggregatedMeasurementMap.setMeasurement(mostRecentMeasurement)
         }
 
         localAggregatedMeasurementMap = newLocalAggregatedMeasurementMap
     }
 
-    //Checked
+    // Checked (final)
     private fun updateOrderForMeasurementTransmission() {
         val orderedLammMeasurements: List<Pair<String, Measurement>> =
             localAggregatedMeasurementMap.getAllMeasurements().toList().sortedBy { (cellId, measurement) ->
@@ -174,6 +186,7 @@ class MeasurementManager(
         }
     }
 
+    // Checked (final)
     public suspend fun handleReceivedPositionalBeacon(receivedPositionalBeacon: PositionalBeacon): Unit {
         // Lock mutex for exclusive access to and modification of the NT and LMM
         operatingOnDensityDataMutex.withLock {
@@ -181,13 +194,18 @@ class MeasurementManager(
         }
     }
 
-    public suspend fun handleReceivedFamm(senderClientId: String, receivedFamm: ForeignAggregatedMeasurementMap): Unit {
+    // Checked (final)
+    public suspend fun handleReceivedFamm(
+        senderClientIdHexString: String,
+        receivedFamm: ForeignAggregatedMeasurementMap
+    ): Unit {
         // Lock mutex for exclusive access to and modification of the corresponding FAMM
         operatingOnDensityDataMutex.withLock {
-            updateFamm(senderClientId, receivedFamm)
+            updateFamm(senderClientIdHexString, receivedFamm)
         }
     }
 
+    // Checked (final)
     public suspend fun updateLammAndOrderForTransmission(): Pair<LocalAggregatedMeasurementMap, List<String>> {
         // Lock mutex for exclusive access to and modification of the LAMM and the order for transmission of the measurements
         operatingOnDensityDataMutex.withLock {
@@ -202,6 +220,7 @@ class MeasurementManager(
         )
     }
 
+    // Checked (final)
     public fun getPositionalBeaconFromNtWithLargestTransmissionBenefit(): PositionalBeacon? {
         if (neighborhoodTable.getAllNtEntries().isNotEmpty()) {
             return neighborhoodTable.getAllNtEntries().maxBy { it.value.clientTransmissionBenefit }.value
@@ -209,28 +228,38 @@ class MeasurementManager(
         return null
     }
 
-    // For self updating the NT, LMM and FAMMs (removing entries exceeded the specified TTL)
-    public suspend fun cleanUp(): Unit {
+    // Checked (final)
+    // Remove the entries of the NT, LMM and FAMMs which exceeded the TTL without an external trigger
+    public suspend fun removeExceededBeaconsAndMeasurements(): Unit {
         // Lock mutex for exclusive access to and modification of the NT, the LMM and all the FAMMs
         operatingOnDensityDataMutex.withLock {
-            neighborhoodTable.removeExceededNtEntries(timeToLiveInSeconds)
+            val exceededPositionalBeacons: MutableMap<String, PositionalBeacon> =
+                neighborhoodTable.getExceededNtEntries(timeToLiveNeighborhoodTableInMilliseconds)
 
-            localMeasurementMap.removeExceededMmEntries(timeToLiveInSeconds)
+            exceededPositionalBeacons.forEach { (clientIdHexString, positionalBeacon) ->
+                neighborhoodTable.removeNtEntry(clientIdHexString)
+            }
 
-            foreignAggregatedMeasurementMaps.forEach { (clientId, map) ->
-                map.removeExceededMmEntries(timeToLiveInSeconds)
+            localMeasurementMap.removeExceededMmEntries(timeToLiveMeasurementMapInMilliseconds)
+
+            foreignAggregatedMeasurementMaps.forEach { (clientIdHexString, famm) ->
+                famm.removeExceededMmEntries(timeToLiveMeasurementMapInMilliseconds)
             }
         }
     }
 
-    public suspend fun overrideLmm(newMeasurements: List<Measurement>) {
+    // Checked (final)
+    // Clear the current LMM and set custom measurements
+    // (this is solely for the simulated clients to fill the LMM with the randomized measurements, usual sensing clients
+    // shall not use this functionality!)
+    public suspend fun clearLmmAndSetNewMeasurements(newMeasurements: List<Measurement>) {
         // Lock mutex for exclusive access to and modification of the LMM
         operatingOnDensityDataMutex.withLock {
-            localMeasurementMap.override(newMeasurements)
+            localMeasurementMap.setAllMeasurements(newMeasurements)
         }
     }
 
-    // For server, if clients request current lamm
+    // Checked (final)
     public fun getCurrentLammAndOrderForTransmission(): Pair<LocalAggregatedMeasurementMap, List<String>> {
         return Pair<LocalAggregatedMeasurementMap, List<String>>(
             localAggregatedMeasurementMap,

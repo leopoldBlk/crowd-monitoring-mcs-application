@@ -82,7 +82,7 @@ object CellConverter {
             // Get the list of Uber H3 cellIds which are defined as proximate area as hexadecimal strings
             val proximateParentAndNeighborhoodCellIdsHexString: List<String> =
                 getProximateParentCellAndNeighborhoodCells(
-                    clientPosition.cellId,
+                    clientPosition.cellIdHexString,
                     // For testing the handling of distant cells:
                     // "08d1f8d7a498c0bf",
                     cellLevelToDetermineProximity
@@ -107,7 +107,7 @@ object CellConverter {
                             val measurement: Measurement = Measurement(
                                 parentCellId,
                                 measurement.measurementValue,
-                                measurement.clientId,
+                                measurement.clientIdHexString,
                                 measurement.measurementCreationTimestamp
                             )
 
@@ -123,7 +123,7 @@ object CellConverter {
                             val newMeasurement: Measurement = Measurement(
                                 parentCellId,
                                 (existingMeasurement.measurementValue + measurement.measurementValue).toUShort(),
-                                existingMeasurement.clientId,
+                                existingMeasurement.clientIdHexString,
                                 if (existingMeasurement.measurementCreationTimestamp < measurement.measurementCreationTimestamp) measurement.measurementCreationTimestamp.toULong() else existingMeasurement.measurementCreationTimestamp.toULong()
                             )
 
