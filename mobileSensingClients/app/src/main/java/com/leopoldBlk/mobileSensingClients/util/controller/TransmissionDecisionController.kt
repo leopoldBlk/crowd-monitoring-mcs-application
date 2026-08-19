@@ -4,6 +4,7 @@ import com.leopoldBlk.mobileSensingClients.util.DataStore
 import crowdDensityLibrary.dataClasses.PositionalBeacon
 import java.io.File
 import java.io.FileWriter
+import java.nio.ByteBuffer
 
 object TransmissionDecisionController {
     private val evaluationSelectionOfEdgeClientEventLog: File =
@@ -59,7 +60,17 @@ object TransmissionDecisionController {
         // --> only makes sense, if the client itself has a value for transmission benefit
         if (!(clientTransmissionBenefit == null || clientTransmissionBenefit == 0.0f)) {
             val neighborWithLargerTransmissionBenefitExists: Boolean =
-                positionalBeaconFromNtWithLargestTransmissionBenefit != null && clientTransmissionBenefit < positionalBeaconFromNtWithLargestTransmissionBenefit.clientTransmissionBenefit
+                if (positionalBeaconFromNtWithLargestTransmissionBenefit == null) {
+                    false
+                } else if (clientTransmissionBenefit == positionalBeaconFromNtWithLargestTransmissionBenefit.clientTransmissionBenefit) {
+                    ByteBuffer.wrap(DataStore.clientId).getInt() < ByteBuffer.wrap(
+                        positionalBeaconFromNtWithLargestTransmissionBenefit.clientId.hexToByteArray()
+                    ).getInt()
+                } else if (clientTransmissionBenefit < positionalBeaconFromNtWithLargestTransmissionBenefit.clientTransmissionBenefit) {
+                    true
+                } else {
+                    false
+                }
 
             return neighborWithLargerTransmissionBenefitExists
         }
