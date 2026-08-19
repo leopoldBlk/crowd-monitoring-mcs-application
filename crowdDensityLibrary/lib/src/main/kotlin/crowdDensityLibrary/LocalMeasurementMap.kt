@@ -11,7 +11,7 @@ class LocalMeasurementMap : MeasurementMap() {
      */
     fun generateInitialLmm(clientId: String, neighborhoodTable: NeighborhoodTable) {
         // Group entries in NT by cell identifier and create measurement for that cell
-        neighborhoodTable.getAllNtEntries().entries.groupBy { it.value.clientPosition.cellId }
+        neighborhoodTable.getAllNtEntries().entries.groupBy { it.value.clientPosition.cellIdHexString }
             .forEach { (cellId, positionalBeacons) ->
                 val measurement: Measurement = Measurement(
                     cellId, positionalBeacons.size.toUShort(), clientId, (System.currentTimeMillis() / 1000).toULong()
@@ -58,7 +58,7 @@ class LocalMeasurementMap : MeasurementMap() {
         measurements.clear()
 
         for (newMeasurement in newMeasurements){
-            measurements.put(newMeasurement.cellId, newMeasurement)
+            measurements.put(newMeasurement.cellIdHexString, newMeasurement)
         }
     }
 }
