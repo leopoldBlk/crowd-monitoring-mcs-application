@@ -3,6 +3,7 @@ package crowdDensityLibrary.dataClasses
 // Source: https://kotlinlang.org/docs/serialization.html
 import kotlinx.serialization.Serializable
 
+// Checked (final)
 /**
  * The measurement for a cell
  * @property cellIdHexString Cell identifier as hexadecimal string

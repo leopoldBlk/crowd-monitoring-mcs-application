@@ -2,6 +2,7 @@ package crowdDensityLibrary.dataClasses
 
 import kotlinx.serialization.Serializable
 
+// Checked (final)
 /**
  * Positional beacon for sensing process
  * @property clientIdHexString Identifier of the client sent the beacon as hexadecimal string

@@ -2,33 +2,40 @@ package crowdDensityLibrary
 
 import crowdDensityLibrary.dataClasses.PositionalBeacon
 
+// Checked (final)
 class NeighborhoodTable {
+    // Stores positional beacons mapped by the identifier of the client (hexadecimal string) which sent the beacon
     private var neighborhoodTableEntries: MutableMap<String, PositionalBeacon> =
         mutableMapOf<String, PositionalBeacon>()
 
-    fun getNtEntry(clientId: String): PositionalBeacon? {
-        return neighborhoodTableEntries[clientId]
+    // Checked (final)
+    fun getNtEntry(clientIdHexString: String): PositionalBeacon? {
+        return neighborhoodTableEntries[clientIdHexString]
     }
 
+    // Checked (final)
     fun setNtEntry(positionalBeacon: PositionalBeacon) {
         neighborhoodTableEntries[positionalBeacon.clientIdHexString] = positionalBeacon
     }
 
+    // Checked (final)
     fun getAllNtEntries(): MutableMap<String, PositionalBeacon> {
         return neighborhoodTableEntries
     }
 
-    fun removeNtEntry(clientId: String) {
-        neighborhoodTableEntries.remove(clientId)
+    // Checked (final)
+    fun removeNtEntry(clientIdHexString: String) {
+        neighborhoodTableEntries.remove(clientIdHexString)
     }
 
+    // Checked (final)
     fun getExceededNtEntries(timeToLiveInMilliseconds: ULong): MutableMap<String, PositionalBeacon> {
         val exceededPositionalBeacons: MutableMap<String, PositionalBeacon> =
             mutableMapOf<String, PositionalBeacon>()
 
-        neighborhoodTableEntries.forEach { (clientId, positionalBeacon) ->
+        neighborhoodTableEntries.forEach { (clientIdHexString, positionalBeacon) ->
             if (Utils.checkPositionalBeaconExceededTtl(positionalBeacon, timeToLiveInMilliseconds)) {
-                exceededPositionalBeacons[clientId] = positionalBeacon
+                exceededPositionalBeacons[clientIdHexString] = positionalBeacon
             }
         }
 

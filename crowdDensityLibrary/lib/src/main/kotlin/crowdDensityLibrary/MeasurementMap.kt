@@ -4,37 +4,45 @@ package crowdDensityLibrary
 import crowdDensityLibrary.dataClasses.Measurement
 import kotlinx.serialization.Serializable
 
+// Checked (final)
 @Serializable
 abstract class MeasurementMap {
     // Mapping of cellIds to corresponding measurements
     protected var measurements: MutableMap<String, Measurement> = mutableMapOf<String, Measurement>()
 
-    fun getMeasurement(cellId: String): Measurement? {
-        return measurements[cellId]
+    // Checked (final)
+    fun getMeasurement(cellIdHexString: String): Measurement? {
+        return measurements[cellIdHexString]
     }
 
+    // Checked (final)
     fun getAllMeasurements(): MutableMap<String, Measurement> {
         return measurements
     }
 
-    fun measurementForCellExists(cellId: String): Boolean {
-        return measurements[cellId] != null
+    // Checked (final)
+    fun measurementForCellExists(cellIdHexString: String): Boolean {
+        return measurements[cellIdHexString] != null
     }
 
+    // Checked (final)
     fun setMeasurement(measurement: Measurement) {
         measurements[measurement.cellIdHexString] = measurement
     }
 
-    fun removeMeasurementForCellId(cellId: String) {
-        measurements.remove(cellId)
+    // Checked (final)
+    fun removeMeasurementForCellId(cellIdHexString: String) {
+        measurements.remove(cellIdHexString)
     }
 
+    // Checked (final)
     fun removeMeasurementsForCellIds(cellIds: List<String>) {
-        for (cellId in cellIds) {
-            removeMeasurementForCellId(cellId)
+        for (cellIdHexString in cellIds) {
+            removeMeasurementForCellId(cellIdHexString)
         }
     }
 
+    // Checked (final)
     fun removeExceededMmEntries(timeToLiveInMilliseconds: ULong) {
         val measurementsToBeRemoved: MutableList<String> = mutableListOf<String>()
 
@@ -49,21 +57,12 @@ abstract class MeasurementMap {
         }
     }
 
-    fun updateMeasurementClientId(cellId: String, clientId: String) {
-        if (measurements.containsKey(cellId)) {
-            val updatedLmmMeasurement: Measurement = measurements[cellId] as Measurement
-            updatedLmmMeasurement.clientIdHexString = clientId
-            measurements[cellId] = updatedLmmMeasurement
-        }
-    }
-
-    fun updateMeasurementCreationTime(cellId: String) {
-        if (measurements.containsKey(cellId)) {
-            val updatedLmmMeasurement: Measurement = measurements[cellId] as Measurement
-            // Get UNIX epoch time with accuracy of seconds
+    // Checked (final)
+    fun updateMeasurementCreationTime(cellIdHexString: String) {
+        if (measurements.containsKey(cellIdHexString)) {
+            val updatedLmmMeasurement: Measurement = measurements[cellIdHexString] as Measurement
             updatedLmmMeasurement.measurementCreationTimestamp = (System.currentTimeMillis() / 1000).toULong()
-            measurements[cellId] = updatedLmmMeasurement
+            measurements[cellIdHexString] = updatedLmmMeasurement
         }
     }
-
 }
