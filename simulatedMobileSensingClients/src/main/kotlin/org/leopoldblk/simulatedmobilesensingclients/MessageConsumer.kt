@@ -13,6 +13,7 @@ import org.springframework.amqp.core.MessageProperties
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
 
+// Checked (final)
 // Sources:
 // https://www.rabbitmq.com/tutorials/tutorial-one-spring-amqp
 // https://www.svix.com/guides/rabbitmq/rabbitmq-springboot-tutorial/
