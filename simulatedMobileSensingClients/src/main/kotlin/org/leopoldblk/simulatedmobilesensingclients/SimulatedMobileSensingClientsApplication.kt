@@ -10,6 +10,7 @@ import org.springframework.boot.runApplication
 import org.springframework.scheduling.annotation.EnableScheduling
 import kotlin.random.Random
 
+// Checked (final)
 @SpringBootApplication
 @EnableScheduling
 class SimulatedMobileSensingClientsApplication {
@@ -42,7 +43,7 @@ class SimulatedMobileSensingClientsApplication {
         public val initialCoordinates: Coordinates =
             generateRandomCoordinatesWithinGeographicalSquare(topLeft, bottomRight)
 
-        public val initialCell: String = Utils.addLeadingZerosToCellId(
+        public val initialCellSimulatedClientIsLocatedIn: String = Utils.addLeadingZerosToCellId(
             h3Core.latLngToCellAddress(
                 initialCoordinates.latitude,
                 initialCoordinates.longitude,
@@ -50,10 +51,15 @@ class SimulatedMobileSensingClientsApplication {
             )
         )
 
-        public val simulatedClientPosition: Position = Position(initialCoordinates, initialCell)
+        public val simulatedClientPosition: Position =
+            Position(initialCoordinates, initialCellSimulatedClientIsLocatedIn)
 
         // Measurement manager for handling density data
-        public val measurementManager: MeasurementManager = MeasurementManager(clientIdHexString, timeToLiveNeighborhoodTableInMilliseconds, timeToLiveMeasurementMapInMilliseconds)
+        public val measurementManager: MeasurementManager = MeasurementManager(
+            clientIdHexString,
+            timeToLiveNeighborhoodTableInMilliseconds,
+            timeToLiveMeasurementMapInMilliseconds
+        )
     }
 }
 
