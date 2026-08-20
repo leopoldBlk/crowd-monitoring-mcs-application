@@ -24,6 +24,9 @@ dependencies {
     implementation("tools.jackson.module:jackson-module-kotlin")
     // Library for determination of crowd density
     implementation("crowdDensityLibrary:lib:0.1")
+    // Library for NTP-Client
+    // Source: https://commons.apache.org/proper/commons-net/apidocs/org/apache/commons/net/ntp/package-summary.html
+    implementation("commons-net:commons-net:3.13.0")
     // Sources:
     // https://spring.io/projects/spring-amqp#overview
     // https://docs.spring.io/spring-boot/reference/messaging/amqp.html#messaging.amqp

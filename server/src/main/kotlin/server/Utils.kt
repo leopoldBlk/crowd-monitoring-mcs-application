@@ -6,17 +6,17 @@ import crowdDensityLibrary.dataClasses.Measurement
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+// Checked (final)
 object Utils {
     private val logger: Logger = LoggerFactory.getLogger("Utils")
 
     // H3Core instance for performing operations with Uber H3 cells
     private val h3Core: H3Core = H3Core.newInstance()
 
-    // Checked
+    // Checked (final)
     // Check the LAMM if this contains two measurements for the same area each with another discretization level.
     // If this is the case, the measurement with the higher discretization level is chosen as this offers a
     // more detailed information about the crowd density for the corresponding area.
-    // TODO: Mention in the thesis that the measurement prioritization is also done by the server
     public fun measurementPrioritization(lamm: LocalAggregatedMeasurementMap): LocalAggregatedMeasurementMap {
         val prioritizedMeasurementsLamm: LocalAggregatedMeasurementMap = lamm
         val measurementsToBeRemoved: MutableMap<String, Measurement> =
@@ -24,36 +24,35 @@ object Utils {
         val measurementsForDistantAreasWithinLamm: MutableMap<String, Measurement> =
             mutableMapOf<String, Measurement>()
 
-        // Iterate over the entries within the LAMM, to find measurements for distant areas with a
-        // lower discretization level contained within the LAMM
+        // Iterate over the entries within the LAMM, to find measurements for distant areas contained within the LAMM
         for (measurement in lamm.getAllMeasurements()) {
             if (h3Core.getResolution(measurement.value.cellIdHexString) == ServerApplication.distantAreaDiscretizationLevel.toInt()) {
                 measurementsForDistantAreasWithinLamm[measurement.key] = measurement.value
             }
         }
 
-        // Iterate over the entries within the LAMM, to find measurements which correspond to the same are but have
+        // Iterate over the entries within the LAMM, to find measurements which correspond to the same area but have
         // different discretization levels
         for (measurement in lamm.getAllMeasurements()) {
             // Get discretization level of the current measurement
-            val measurementCellIdLevel: Int = h3Core.getResolution(measurement.value.cellIdHexString)
+            val measurementDiscretizationLevel: Int = h3Core.getResolution(measurement.value.cellIdHexString)
 
             // Find measurements having the discretization level of nearby areas
-            if (measurementCellIdLevel == ServerApplication.nearbyAreaDiscretizationLevel.toInt()) {
+            if (measurementDiscretizationLevel == ServerApplication.nearbyAreaDiscretizationLevel.toInt()) {
                 // Get the parent cell for this measurement for the discretization level used for distant areas
-                val parentCellAtDistantAreaDiscretizationLevel: String = h3Core.cellToParentAddress(
+                val parentCellForDistantAreaDiscretizationLevel: String = h3Core.cellToParentAddress(
                     measurement.key,
                     ServerApplication.distantAreaDiscretizationLevel.toInt()
                 )
 
                 // The LAMM contains measurements covering the same area with different discretization levels
                 if (measurementsForDistantAreasWithinLamm.contains(
-                        parentCellAtDistantAreaDiscretizationLevel
+                        parentCellForDistantAreaDiscretizationLevel
                     )
                 ) {
                     // Mark the measurement with the lower discretization level for removal
                     val measurementForDistantArea: Measurement =
-                        measurementsForDistantAreasWithinLamm[parentCellAtDistantAreaDiscretizationLevel]!!
+                        measurementsForDistantAreasWithinLamm[parentCellForDistantAreaDiscretizationLevel]!!
                     measurementsToBeRemoved[measurementForDistantArea.cellIdHexString] =
                         measurementForDistantArea
                 }
