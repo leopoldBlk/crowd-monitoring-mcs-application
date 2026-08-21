@@ -7,15 +7,12 @@ import android.util.Log
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.positionalBeacon.PositionalBeaconTO
 import com.leopoldBlk.mobileSensingClients.util.DataStore
 import com.leopoldBlk.mobileSensingClients.util.controller.LogController
-import com.leopoldBlk.mobileSensingClients.util.controller.LoggingDirectoryController
 import com.leopoldBlk.mobileSensingClients.util.controller.TransmissionDecisionController
 import com.leopoldBlk.mobileSensingClients.util.converter.PositionalBeaconConverter
 import crowdDensityLibrary.dataClasses.PositionalBeacon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.io.File
-import java.io.FileWriter
 
 class SubscribingPositionalBeaconSessionCallback : DiscoverySessionCallback() {
     private val className: String = "SubscribingPositionalBeaconSessionCallback"
@@ -23,24 +20,6 @@ class SubscribingPositionalBeaconSessionCallback : DiscoverySessionCallback() {
     // CoroutineScope for handling received positional beacon
     private val coroutineScopeHandleReceivedPositionalBeacon: CoroutineScope =
         CoroutineScope(Dispatchers.IO)
-
-    private val evaluationReceivedPositionalBeaconsLog: File =
-        File(LoggingDirectoryController.getEvaluationD2dCommunicationLogFilePath("ReceivedPositionalBeaconsLog"))
-
-    private lateinit var evaluationReceivedPositionalBeaconsLogFileWriter: FileWriter
-
-    init {
-        // Create directory for the log file if not already existing
-        if (!File(evaluationReceivedPositionalBeaconsLog.parent).exists()) {
-            File(evaluationReceivedPositionalBeaconsLog.parent).mkdirs()
-        }
-
-        // Create file writer which appends new logs to the log file and specifying the logging format
-        evaluationReceivedPositionalBeaconsLogFileWriter =
-            FileWriter(evaluationReceivedPositionalBeaconsLog, true)
-        evaluationReceivedPositionalBeaconsLogFileWriter.write("client id included in the positional beacon; latitude included in the positional beacon; longitude included in the positional beacon; cell id included in the positional beacon; transmission benefit included in the positional beacon; timestamp included in the positional beacon in seconds; timestamp after discovering the service with the positional beacon in milliseconds\n")
-        evaluationReceivedPositionalBeaconsLogFileWriter.flush()
-    }
 
 //    For testing purpose:
 //    private var discoveredServicesCounter: Float = 0.0F
@@ -99,9 +78,6 @@ class SubscribingPositionalBeaconSessionCallback : DiscoverySessionCallback() {
                 // for transmission benefit could have been arrived in the previous step
                 TransmissionDecisionController.updateTransmissionDecision()
 
-                evaluationReceivedPositionalBeaconsLogFileWriter.write("${receivedPositionalBeacon.clientIdHexString}; ${receivedPositionalBeacon.clientPosition.coordinates.latitude}; ${receivedPositionalBeacon.clientPosition.coordinates.longitude}; ${receivedPositionalBeacon.clientPosition.cellIdHexString}; ${receivedPositionalBeacon.clientTransmissionBenefit}; ${receivedPositionalBeacon.beaconCreationTimestamp}; ${timestampServiceWithPositionalBeaconDiscovered}\n")
-                evaluationReceivedPositionalBeaconsLogFileWriter.flush()
-
                 LogController.log(
                     Log.INFO,
                     className,
@@ -109,13 +85,6 @@ class SubscribingPositionalBeaconSessionCallback : DiscoverySessionCallback() {
                 )
             }
         }
-    }
-
-    override fun onSessionTerminated() {
-        super.onSessionTerminated()
-
-        evaluationReceivedPositionalBeaconsLogFileWriter.close()
-        TransmissionDecisionController.closeEvaluationSelectionOfEdgeClientEventLogFileWriter()
     }
 
 //    For testing purpose:
