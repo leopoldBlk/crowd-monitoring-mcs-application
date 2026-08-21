@@ -7,3 +7,9 @@ kubectl delete deployment messaging-topology-operator
 
 # Remove deployments for cert-manager
 kubectl delete --all deployments --namespace=cert-manager
+
+# Remove all resources from the default namespace
+kubectl delete all --all -n default
+
+# Remove all resources from the rabbitmq-system namespace
+kubectl delete all --all -n rabbitmq-system
