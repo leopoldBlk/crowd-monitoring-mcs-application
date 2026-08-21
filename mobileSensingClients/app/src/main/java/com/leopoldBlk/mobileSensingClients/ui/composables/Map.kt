@@ -149,7 +149,7 @@ fun Map(useTestData: Boolean) {
             }
 
             val mapStructures =
-                CellConverter.getMapStructuresForLamm(localAggregatedMeasurementMap, clientPosition.value!!.cellId)
+                CellConverter.getMapStructuresForLamm(localAggregatedMeasurementMap, clientPosition.value!!.cellIdHexString)
 
             // Draw Uber H3 cells
             FillLayer(
