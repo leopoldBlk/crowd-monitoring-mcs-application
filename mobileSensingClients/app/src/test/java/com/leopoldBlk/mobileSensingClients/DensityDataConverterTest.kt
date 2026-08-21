@@ -105,6 +105,9 @@ class DensityDataConverterTest {
                 mutableListOf(reconvertedDensityDataTO)
             )
 
+        // 10 Byte Header + 10 Byte Measurement + 10 Byte Measurement
+        assertEquals(30, densityDataTOAsByteArray.size)
+
         assertEquals(
             localAggregatedMeasurementMapForTestWithoutSplitting.getAllMeasurements().size,
             reconvertedMeasurementMap.getAllMeasurements().size,
@@ -162,6 +165,13 @@ class DensityDataConverterTest {
 
         val reconvertedMeasurementMap: ForeignAggregatedMeasurementMap =
             DensityDataConverter.convertDensityDataTOsToDensityData(reconvertedDensityDataTOs)
+
+        // 10 Byte Header + (24 Measurements a 10 Byte)
+        assertEquals(250, denistyDataTOs[0].getDensityDataTOasByteArray().size)
+        // 10 Byte Header + (24 Measurements a 10 Byte)
+        assertEquals(250, denistyDataTOs[1].getDensityDataTOasByteArray().size)
+        // 10 Byte Header + (1 Measurement a 10 Byte)
+        assertEquals(20, denistyDataTOs[2].getDensityDataTOasByteArray().size)
 
         assertEquals(
             localAggregatedMeasurementMapForTestWithSplitting.getAllMeasurements().size,

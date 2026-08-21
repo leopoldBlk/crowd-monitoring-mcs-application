@@ -22,9 +22,8 @@ import com.leopoldBlk.mobileSensingClients.ui.theme.MCSAppTheme
 import com.leopoldBlk.mobileSensingClients.util.DataStore
 import com.leopoldBlk.mobileSensingClients.util.controller.LogController
 
+// Checked (final)
 class MainActivity : ComponentActivity() {
-    private val isPublisher: Boolean = true
-    private val isSubscriber: Boolean = true
     private val isEvaluation: Boolean = true
 
     private lateinit var trustedTimeClient: TrustedTimeClient
@@ -43,8 +42,6 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        LogController.setActiveLogging(true)
-
         requestPermissions(
             arrayOf(
                 Manifest.permission.ACCESS_WIFI_STATE,
@@ -58,6 +55,8 @@ class MainActivity : ComponentActivity() {
             ), 1
         )
 
+        LogController.setActiveLogging(true)
+
         TrustedTime.createClient(applicationContext).addOnSuccessListener { client ->
             trustedTimeClient = client
             DataStore.trustedTimeClient = trustedTimeClient
@@ -68,9 +67,9 @@ class MainActivity : ComponentActivity() {
                 Settings.Global.getString(contentResolver, Settings.Global.DEVICE_NAME)
 
             when (deviceName) {
-                "Pixel 10 UE1" -> DataStore.updateClientId(byteArrayOf(0, 0, 0, 1))
-                "Pixel 10 UE2" -> DataStore.updateClientId(byteArrayOf(0, 0, 0, 2))
-                "Pixel 10 UE3" -> DataStore.updateClientId(byteArrayOf(0, 0, 0, 3))
+                "Pixel 10 - Device 1" -> DataStore.updateClientId(byteArrayOf(0, 0, 0, 1))
+                "Pixel 10 - Device 2" -> DataStore.updateClientId(byteArrayOf(0, 0, 0, 2))
+                "Pixel 10 - Device 3" -> DataStore.updateClientId(byteArrayOf(0, 0, 0, 3))
             }
         }
 
@@ -98,33 +97,29 @@ class MainActivity : ComponentActivity() {
             )
         )
 
-        if (isSubscriber) {
-            applicationContext.startService(
-                Intent(
-                    applicationContext, WifiAwarePositionalBeaconSubscriberService::class.java
-                )
+        applicationContext.startService(
+            Intent(
+                applicationContext, WifiAwarePositionalBeaconSubscriberService::class.java
             )
+        )
 
-            applicationContext.startService(
-                Intent(
-                    applicationContext, WifiAwareDensityDataSubscriberService::class.java
-                )
+        applicationContext.startService(
+            Intent(
+                applicationContext, WifiAwareDensityDataSubscriberService::class.java
             )
-        }
+        )
 
-        if (isPublisher) {
-            applicationContext.startService(
-                Intent(
-                    applicationContext, WifiAwarePositionalBeaconPublisherService::class.java
-                )
+        applicationContext.startService(
+            Intent(
+                applicationContext, WifiAwarePositionalBeaconPublisherService::class.java
             )
+        )
 
-            applicationContext.startService(
-                Intent(
-                    applicationContext, WifiAwareDensityDataPublisherService::class.java
-                )
+        applicationContext.startService(
+            Intent(
+                applicationContext, WifiAwareDensityDataPublisherService::class.java
             )
-        }
+        )
 
 //        For testing the handling of distant cells:
 //        val lammForTest = LocalAggregatedMeasurementMap()

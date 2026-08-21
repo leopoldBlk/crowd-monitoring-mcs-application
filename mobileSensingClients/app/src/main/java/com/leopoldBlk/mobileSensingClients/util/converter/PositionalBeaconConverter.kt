@@ -6,7 +6,9 @@ import crowdDensityLibrary.dataClasses.Position
 import crowdDensityLibrary.dataClasses.PositionalBeacon
 import java.nio.ByteBuffer
 
+// Checked (final)
 object PositionalBeaconConverter {
+    // Checked (final)
     public fun convertPositionalBeaconToPositionalBeaconTO(positionalBeacon: PositionalBeacon): PositionalBeaconTO {
         val clientId: ByteArray = positionalBeacon.clientIdHexString.hexToByteArray()
 
@@ -44,6 +46,7 @@ object PositionalBeaconConverter {
         return newPositionalBeaconTO
     }
 
+    // Checked (final)
     public fun convertByteArrayToPositionalBeaconTO(byteArray: ByteArray): PositionalBeaconTO {
         // 4 byte for client identifier
         val clientId: ByteArray = byteArray.copyOfRange(0, 4)
@@ -75,6 +78,7 @@ object PositionalBeaconConverter {
         return positionalBeaconTO
     }
 
+    // Checked (final)
     public fun convertPositionalBeaconToToPositionalBeacon(positionalBeaconTO: PositionalBeaconTO): PositionalBeacon {
         val clientId: String = positionalBeaconTO.getClientId().toHexString()
 

@@ -17,6 +17,7 @@ import com.leopoldBlk.mobileSensingClients.util.DataStore
 import com.leopoldBlk.mobileSensingClients.util.converter.PositionalBeaconConverter
 import crowdDensityLibrary.dataClasses.PositionalBeacon
 
+// Checked (final)
 class WifiAwarePositionalBeaconPublisherService : WifiAwareService() {
     private var isWifiAwareSessionInitialized: Boolean = false
     private val wifiAwarePublisherHandlerThread: HandlerThread =
@@ -28,6 +29,7 @@ class WifiAwarePositionalBeaconPublisherService : WifiAwareService() {
     private lateinit var publishingSessionCallbackHandler: Handler
     private lateinit var publishConfig: PublishConfig
 
+    // Checked (final)
     private val clientPositionalBeaconObserver: Observer<PositionalBeacon?> =
         object : Observer<PositionalBeacon?> {
             override fun onChanged(value: PositionalBeacon?) {
@@ -61,18 +63,12 @@ class WifiAwarePositionalBeaconPublisherService : WifiAwareService() {
                                 publishConfig
                             )
                         }
-
-                        val timestampAfterUpdateOfThePublishConfigWithTheNewBeacon: Long =
-                            if (DataStore.trustedTimeClient != null) {
-                                DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!!
-                            } else {
-                                System.currentTimeMillis()
-                            }
                     }
                 }
             }
         }
 
+    // Checked (final)
     private var wifiAwareAttachEventCallback: AttachCallback = object : AttachCallback() {
         override fun onAttached(session: WifiAwareSession?) {
             super.onAttached(session)
@@ -84,6 +80,7 @@ class WifiAwarePositionalBeaconPublisherService : WifiAwareService() {
         }
     }
 
+    // Checked (final)
     override fun onCreate() {
         super.onCreate()
 
@@ -95,11 +92,13 @@ class WifiAwarePositionalBeaconPublisherService : WifiAwareService() {
         DataStore.clientPositionalBeacon.observe(this, clientPositionalBeaconObserver)
     }
 
+    // Checked (final)
     override fun onBind(intent: Intent): IBinder {
         super.onBind(intent)
         TODO("Return the communication channel to the service.")
     }
 
+    // Checked (final)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val superOnStartCommandStatus: Int = super.onStartCommand(intent, flags, startId)
 
@@ -108,11 +107,13 @@ class WifiAwarePositionalBeaconPublisherService : WifiAwareService() {
         return superOnStartCommandStatus
     }
 
+    // Checked (final)
     override fun onDestroy() {
         super.onDestroy()
         isWifiAwareSessionInitialized = false
     }
 
+    // Checked (final)
     private fun updatePublishConfig(updatedPositionalBeacon: PositionalBeacon) {
         val updatedPositionalBeaconAsPositionalBeaconTO: PositionalBeaconTO =
             PositionalBeaconConverter.convertPositionalBeaconToPositionalBeaconTO(

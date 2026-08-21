@@ -31,6 +31,7 @@ import kotlin.time.Duration
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
+// Checked (final)
 class MessagingService : LifecycleService() {
     // Flag to indicate if the client maintains an active connection to the RabbitMQ cluster
     private var isClientConnectedToRabbitMqCluster: Boolean = false
@@ -52,8 +53,14 @@ class MessagingService : LifecycleService() {
     private val coroutineScopeHandleReceivedMessages: CoroutineScope =
         CoroutineScope(Dispatchers.IO)
 
-    // Observer for the transmission benefit of the client
-    private val clientHasLargestTransmissionBenefitOfNearbyClientsObserver: Observer<Boolean?> =
+    private lateinit var connectionFactory: ConnectionFactory
+    private lateinit var connection: Connection
+    private lateinit var channel: Channel
+    private lateinit var globalDensityDataConsumer: Consumer
+
+    // Checked (final)
+    // Observe if the client takes the role as edge client
+    private val isEdgeClientObserver: Observer<Boolean?> =
         object : Observer<Boolean?> {
             override fun onChanged(value: Boolean?) {
                 // If the client has the largest value for transmission benefit consequently
@@ -71,10 +78,9 @@ class MessagingService : LifecycleService() {
                 // If the client has not the largest value for transmission benefit, but was an edge
                 // client previously, the client has to disconnect to the RabbitMQ cluster
                 else if (value != null && !value && isClientConnectedToRabbitMqCluster) {
-                    // TODO: Maybe find a more elegant solution
                     runBlocking {
                         coroutineScope.launch {
-                            //disconnectFromGlobalDensityDataExchange()
+                            disconnectFromGlobalDensityDataExchange()
                             disconnectFromRabbitMqCluster()
                         }
                     }
@@ -82,13 +88,14 @@ class MessagingService : LifecycleService() {
             }
         }
 
+    // Checked (final)
     private val lammAndOrderForMeasurementTransmissionObserver: Observer<Pair<MeasurementMap, List<String>>?> =
         object : Observer<Pair<MeasurementMap, List<String>>?> {
             override fun onChanged(value: Pair<MeasurementMap, List<String>>?) {
                 // Only publish the updated LAMM, if the client is an edge client according to its transmission benefit value AND
                 // the LAMM is not empty
                 if (value != null && value.first.getAllMeasurements()
-                        .isNotEmpty() && isClientConnectedToRabbitMqCluster && DataStore.clientHasLargestTransmissionBenefitOfNearbyClients.value == true
+                        .isNotEmpty() && isClientConnectedToRabbitMqCluster && DataStore.isEdgeClient.value == true
                 ) {
                     coroutineScope.launch {
                         // Serialize the updated LAMM according to the order of transmission to JSON format
@@ -135,31 +142,27 @@ class MessagingService : LifecycleService() {
             }
         }
 
-    private lateinit var connectionFactory: ConnectionFactory
-    private lateinit var connection: Connection
-    private lateinit var channel: Channel
-    private lateinit var globalDensityDataConsumer: Consumer
-
-
+    // Checked (final)
     override fun onBind(intent: Intent): IBinder {
         super.onBind(intent)
         TODO("Return the communication channel to the service.")
     }
 
+    // Checked (final)
     override fun onCreate() {
         super.onCreate()
 
         ScalabilityAnalysisLogController.setupLogFilesAndWriters()
     }
 
+    // Checked (final)
     override fun onDestroy() {
         super.onDestroy()
 
-        // TODO: Maybe find a more elegant solution
         runBlocking {
             if (isClientConnectedToRabbitMqCluster) {
                 coroutineScope.launch {
-                    //disconnectFromGlobalDensityDataExchange()
+                    disconnectFromGlobalDensityDataExchange()
                     disconnectFromRabbitMqCluster()
                 }
             }
@@ -168,10 +171,11 @@ class MessagingService : LifecycleService() {
         ScalabilityAnalysisLogController.stopScalabilityAnalysisLogging()
     }
 
+    // Checked (final)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        DataStore.clientHasLargestTransmissionBenefitOfNearbyClients.observe(
+        DataStore.isEdgeClient.observe(
             this,
-            clientHasLargestTransmissionBenefitOfNearbyClientsObserver
+            isEdgeClientObserver
         )
 
         DataStore.lammAndOrderForMeasurementTransmission.observe(
@@ -179,7 +183,7 @@ class MessagingService : LifecycleService() {
             lammAndOrderForMeasurementTransmissionObserver
         )
 
-        if (DataStore.clientHasLargestTransmissionBenefitOfNearbyClients.value == true && !isClientConnectedToRabbitMqCluster) {
+        if (DataStore.isEdgeClient.value == true && !isClientConnectedToRabbitMqCluster) {
             if (!runningConnectionEstablishingProcessMutex.isLocked) {
                 coroutineScope.launch {
                     connectToRabbitMqCluster()
@@ -191,6 +195,7 @@ class MessagingService : LifecycleService() {
         return super.onStartCommand(intent, flags, startId)
     }
 
+    // Checked (final)
     private suspend fun connectToRabbitMqCluster() {
         runningConnectionEstablishingProcessMutex.withLock {
             connectionFactory = ConnectionFactory()
@@ -200,8 +205,7 @@ class MessagingService : LifecycleService() {
             connectionFactory.username = BuildConfig.RABBIT_MQ_USERNAME
             connectionFactory.password = BuildConfig.RABBIT_MQ_PASSWORD
             connectionFactory.isAutomaticRecoveryEnabled = true
-//
-//        while (!isClientConnectedToRabbitMqCluster) {
+
             try {
                 connection = connectionFactory.newConnection()
                 channel = connection.createChannel()
@@ -222,13 +226,9 @@ class MessagingService : LifecycleService() {
                 )
             }
         }
-
-//
-//            // Retry establishing connection to RabbitMQ Cluster every 5 seconds
-//            delay(5.seconds)
-//        }
     }
 
+    // Checked (final)
     private suspend fun connectToGlobalDensityDataExchange() {
         runningConnectionEstablishingProcessMutex.withLock {
             if (isClientConnectedToRabbitMqCluster) {
@@ -265,6 +265,7 @@ class MessagingService : LifecycleService() {
         }
     }
 
+    // Checked (final)
     private fun installGlobalDensityDataConsumer(channel: Channel) {
         globalDensityDataConsumer = object : DefaultConsumer(channel) {
             override fun handleDelivery(
@@ -330,6 +331,7 @@ class MessagingService : LifecycleService() {
         }
     }
 
+    // Checked (final)
     private fun disconnectFromGlobalDensityDataExchange() {
         channel.queueDelete(globalDensityDataQueue)
         LogController.log(
@@ -339,6 +341,7 @@ class MessagingService : LifecycleService() {
         )
     }
 
+    // Checked (final)
     private fun disconnectFromRabbitMqCluster() {
         channel.close()
         connection.close()

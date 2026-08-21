@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+// Checked (final)
 class SubscribingDensityDataSessionCallback : DiscoverySessionCallback() {
     private val className: String = "SubscribingDensityDataSessionCallback"
 
@@ -24,6 +25,7 @@ class SubscribingDensityDataSessionCallback : DiscoverySessionCallback() {
     // Track ongoing transmission (clientId, TransmissionId, DensityDataTOs of the transmission)
     private lateinit var ongoingTransmission: Triple<String, String, MutableList<DensityDataTO>>
 
+    // Checked (final)
     override fun onSubscribeStarted(session: SubscribeDiscoverySession) {
         super.onSubscribeStarted(session)
 
@@ -34,6 +36,7 @@ class SubscribingDensityDataSessionCallback : DiscoverySessionCallback() {
         )
     }
 
+    // Checked (final)
     override fun onSessionConfigFailed() {
         super.onSessionConfigFailed()
 
@@ -44,16 +47,10 @@ class SubscribingDensityDataSessionCallback : DiscoverySessionCallback() {
         )
     }
 
+    // Checked (final)
     override fun onServiceDiscovered(info: ServiceDiscoveryInfo) {
         // Launch coroutine for handling received density data within the corresponding CoroutineScope
         coroutineScopeHandleReceivedDensityData.launch {
-            val timestampServiceWithDensityDataDiscovered: Long =
-                if (DataStore.trustedTimeClient != null) {
-                    DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!!
-                } else {
-                    System.currentTimeMillis()
-                }
-
             super.onServiceDiscovered(info)
 
             if (info.serviceSpecificInfo != null) {
