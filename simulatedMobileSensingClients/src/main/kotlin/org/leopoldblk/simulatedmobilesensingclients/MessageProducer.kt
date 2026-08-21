@@ -16,6 +16,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import kotlin.random.Random
 
+// Checked (final)
 // Sources:
 // https://www.rabbitmq.com/tutorials/tutorial-one-spring-amqp
 // https://www.svix.com/guides/rabbitmq/rabbitmq-springboot-tutorial/
@@ -24,12 +25,13 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
     private val logger: Logger = LoggerFactory.getLogger("RabbitMqMessageProducer")
 
     // CoroutineScope for updating and publishing the LAMM
-    private val coroutineScopeUpdatePublishLamm: CoroutineScope = CoroutineScope(Dispatchers.IO)
+    private val coroutineScopeUpdateAndPublishLamm: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
+    // Checked (final)
     @Scheduled(fixedRate = 30000)
     fun updateLmm() {
         // Launch coroutine for updating the LMM within the corresponding CoroutineScope
-        coroutineScopeUpdatePublishLamm.launch {
+        coroutineScopeUpdateAndPublishLamm.launch {
             // Generate randomized measurements for the nearby area of the sensing client
             val randomMeasurements: List<Measurement> = Utils.generateRandomMeasurementsForNearbyArea(
                 SimulatedMobileSensingClientsApplication.simulatedClientPosition,
@@ -42,12 +44,12 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
         }
     }
 
+    // Checked (final)
     @Scheduled(fixedRate = 5000)
     fun publishLamm() {
         // Launch coroutine for updating and publishing the LAMM within the corresponding CoroutineScope
-        coroutineScopeUpdatePublishLamm.launch {
-            // Cleanup process to remove entries from the FAMMs which exceeded the ttl
-            // TODO: Is cleanup here really necessary?
+        coroutineScopeUpdateAndPublishLamm.launch {
+            // Cleanup process to remove entries from the FAMMs which exceeded the ttl (additional step)
             SimulatedMobileSensingClientsApplication.measurementManager.removeExceededBeaconsAndMeasurements()
 
             // Generate/update the LAMM and order for transmission
@@ -70,6 +72,7 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
         }
     }
 
+    // Checked (final)
     /**
      * Publishes the given message to the specified exchange.
      * @param exchangeToPublishOn Exchange to send given message to.

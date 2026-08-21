@@ -9,7 +9,7 @@ import com.leopoldBlk.mobileSensingClients.BuildConfig
 import com.leopoldBlk.mobileSensingClients.util.DataStore
 import com.leopoldBlk.mobileSensingClients.util.controller.DiscretizationController
 import com.leopoldBlk.mobileSensingClients.util.controller.LogController
-import com.leopoldBlk.mobileSensingClients.util.controller.LoggingDirectoryController
+import com.leopoldBlk.mobileSensingClients.util.controller.ScalabilityAnalysisLogController
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
@@ -26,9 +26,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.io.File
-import java.io.FileWriter
 import kotlin.random.Random
+import kotlin.time.Duration
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 class MessagingService : LifecycleService() {
     // Flag to indicate if the client maintains an active connection to the RabbitMQ cluster
@@ -50,14 +51,6 @@ class MessagingService : LifecycleService() {
     // CoroutineScope for handling received global density data
     private val coroutineScopeHandleReceivedMessages: CoroutineScope =
         CoroutineScope(Dispatchers.IO)
-
-    private val evaluationPublishedLocalDensityDataLog: File =
-        File(LoggingDirectoryController.getEvaluationInfrastructureBasedCommunicationLogFilePath("PublishedLocalDensityDataLog"))
-    private val evaluationConsumedGlobalDensityDataLog: File =
-        File(LoggingDirectoryController.getEvaluationInfrastructureBasedCommunicationLogFilePath("ConsumedGlobalDensityDataLog"))
-
-    private lateinit var evaluationPublishedLocalDensityDataLogWriter: FileWriter
-    private lateinit var evaluationConsumedGlobalDensityDataLogWriter: FileWriter
 
     // Observer for the transmission benefit of the client
     private val clientHasLargestTransmissionBenefitOfNearbyClientsObserver: Observer<Boolean?> =
@@ -121,15 +114,16 @@ class MessagingService : LifecycleService() {
                             serializedLammToJson.toByteArray()
                         )
 
-                        val timestampAfterPublishedTheNewLamm: Long =
-                            if (DataStore.trustedTimeClient != null) {
+                        if (DataStore.trustedTimeClient != null) {
+                            val timestampAfterLocalDensityDataMessageSent: Long =
                                 DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!!
-                            } else {
-                                System.currentTimeMillis()
-                            }
 
-                        evaluationPublishedLocalDensityDataLogWriter.write("${DataStore.clientIdHexString}; ${messageId.toHexString()}; ${value.first.getAllMeasurements().size}; ${timestampAfterPublishedTheNewLamm}\n")
-                        evaluationPublishedLocalDensityDataLogWriter.flush()
+                            ScalabilityAnalysisLogController.addScalabilityAnalysisLogSentMessagesEntry(
+                                DataStore.clientIdHexString,
+                                messageId.toHexString(),
+                                timestampAfterLocalDensityDataMessageSent.toULong()
+                            )
+                        }
 
                         LogController.log(
                             Log.INFO,
@@ -155,28 +149,11 @@ class MessagingService : LifecycleService() {
     override fun onCreate() {
         super.onCreate()
 
-        // Create directory for the log file if not already existing. One check for both directories
-        // is suffiecient here, as both log files are placed within the same directory
-        if (!File(evaluationPublishedLocalDensityDataLog.parent).exists()) {
-            File(evaluationPublishedLocalDensityDataLog.parent).mkdirs()
-        }
-
-        evaluationPublishedLocalDensityDataLogWriter =
-            FileWriter(evaluationPublishedLocalDensityDataLog, true)
-        evaluationPublishedLocalDensityDataLogWriter.write("client id of sender contained within the header of the sent message; message id contained within the header of the sent message; number of measurements comprising the LAMM sent with the message; timestamp after publishing the message in milliseconds\n")
-        evaluationPublishedLocalDensityDataLogWriter.flush()
-
-        evaluationConsumedGlobalDensityDataLogWriter =
-            FileWriter(evaluationConsumedGlobalDensityDataLog, true)
-        evaluationConsumedGlobalDensityDataLogWriter.write("client id of sender contained within the header of the received message; message id contained within the header of the received message; client id of the consumer; timestamp of message consumption in milliseconds\n")
-        evaluationConsumedGlobalDensityDataLogWriter.flush()
+        ScalabilityAnalysisLogController.setupLogFilesAndWriters()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-
-        evaluationPublishedLocalDensityDataLogWriter.close()
-        evaluationConsumedGlobalDensityDataLogWriter.close()
 
         // TODO: Maybe find a more elegant solution
         runBlocking {
@@ -187,6 +164,8 @@ class MessagingService : LifecycleService() {
                 }
             }
         }
+
+        ScalabilityAnalysisLogController.stopScalabilityAnalysisLogging()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -296,11 +275,13 @@ class MessagingService : LifecycleService() {
             ) {
                 // Launch coroutine for handling received global density data within the corresponding CoroutineScope
                 coroutineScopeHandleReceivedMessages.launch {
-                    val timestampMessageConsumed: Long = if (DataStore.trustedTimeClient != null) {
-                        DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!!
-                    } else {
-                        System.currentTimeMillis()
-                    }
+                    val timestampMessageProcessingStarts: Long? =
+                        if (DataStore.trustedTimeClient != null) {
+                            DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!!
+                        } else {
+                            null
+                        }
+                    val timemarkMessageProcessingStarts: TimeMark = TimeSource.Monotonic.markNow()
 
                     super.handleDelivery(consumerTag, envelope, properties, body)
 
@@ -308,9 +289,6 @@ class MessagingService : LifecycleService() {
                         val messageProducerId: String = properties.headers["ProducerId"].toString()
                         val messageId: String = properties.headers["MessageId"].toString()
                         val messageBodyAsString: String = body.decodeToString()
-
-                        evaluationConsumedGlobalDensityDataLogWriter.write("${messageProducerId}; ${messageId}; ${DataStore.clientIdHexString}; ${timestampMessageConsumed}\n")
-                        evaluationConsumedGlobalDensityDataLogWriter.flush()
 
                         LogController.log(
                             Log.INFO,
@@ -334,6 +312,18 @@ class MessagingService : LifecycleService() {
                             messageProducerId,
                             discretizedMeasurementMap
                         )
+
+                        val durationForProcessingGlobalDensityDataMessage: Duration =
+                            timemarkMessageProcessingStarts.elapsedNow()
+
+                        if (timestampMessageProcessingStarts != null) {
+                            ScalabilityAnalysisLogController.addScalabilityAnalysisLogProcessedMessagesEntry(
+                                DataStore.clientIdHexString,
+                                messageId,
+                                timestampMessageProcessingStarts.toULong(),
+                                durationForProcessingGlobalDensityDataMessage
+                            )
+                        }
                     }
                 }
             }

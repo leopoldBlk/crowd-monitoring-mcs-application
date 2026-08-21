@@ -7,23 +7,103 @@ import crowdDensityLibrary.serializer.MeasurementMapSerializer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.apache.commons.net.ntp.NTPUDPClient
+import org.apache.commons.net.ntp.TimeInfo
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.core.MessageProperties
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
+import java.net.InetAddress
+import kotlin.time.Duration
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
+// Checked (final)
 // Sources:
 // https://www.rabbitmq.com/tutorials/tutorial-one-spring-amqp
 // https://www.svix.com/guides/rabbitmq/rabbitmq-springboot-tutorial/
 @Service
 class MessageConsumer(private val messageProducer: MessageProducer) {
     private val logger: Logger = LoggerFactory.getLogger("RabbitMqMessageConsumer")
+    private val loggerScalabilityAnalysis: Logger =
+        LoggerFactory.getLogger("RabbitMqMessageConsumer - Scalability Analysis")
+    private val ntpClient: NTPUDPClient = NTPUDPClient()
 
     // CoroutineScope for handling received global and local density data
     private val coroutineScopeHandleReceivedMessages: CoroutineScope = CoroutineScope(Dispatchers.IO)
 
+    init {
+        loggerScalabilityAnalysis.info(
+            "identifier of the server processing the message containing local density data; " +
+                    "identifier of processed message containing local density data; " +
+                    "timestamp when starting to process the message containing local density data in milliseconds;" +
+                    " duration the message containing local density data took to process"
+        )
+    }
+
+    // Checked (final)
+    /**
+     * Callback method which handles the local density data sent by the edge clients. As there is one common queue
+     * which is used by all edge clients to publish the local density data, the listener is bound to this predefined queue.
+     * @param receivedMessage Message arrived at the queue containing local density data.
+     */
+    @RabbitListener(queues = arrayOf("rabbit-mq-queue-local-density-data"))
+    fun onReceiveLocalDensityData(receivedMessage: Message) {
+        // Launch coroutine for handling received local density data within the corresponding CoroutineScope
+        coroutineScopeHandleReceivedMessages.launch {
+            val timestampMessageProcessingStarts: Long = getTimestampIncludingNtpOffset(ServerApplication.ntpSource)
+            val timemarkMessageProcessingStarts: TimeMark = TimeSource.Monotonic.markNow()
+
+            val messageProperties: MessageProperties = receivedMessage.messageProperties
+            val messageProducerId: String = messageProperties.getHeader<String>("ProducerId")!!
+            val messageId: String = messageProperties.getHeader<String>("MessageId")!!
+            val messageBody: String = receivedMessage.body.decodeToString()
+
+            logger.info("Received local density data from client (${messageProducerId}) in message (${messageId}): ${messageBody}")
+
+            // Handle received local density data sent by an edge client
+            handleReceivedMessage(messageProducerId, messageBody)
+
+            // Remove exceeded entries from all the FAMMs (additional step)
+            ServerApplication.measurementManager.removeExceededBeaconsAndMeasurements()
+
+            // Update own LAMM and order for transmission
+            val updatedLammAndOrderForTransmission: Pair<MeasurementMap, List<String>> =
+                ServerApplication.measurementManager.updateLammAndOrderForTransmission()
+
+            // Prioritize the measurements with larger discretization level over the ones with lower discretization level
+            // which are covering the same area
+            val lammWithPrioritizedMeasurements: LocalAggregatedMeasurementMap =
+                Utils.measurementPrioritization(updatedLammAndOrderForTransmission.first as LocalAggregatedMeasurementMap)
+
+            // Serialize the updated LAMM according to the order of transmission to JSON format
+            val serializedLammToJson: String = MeasurementMapSerializer.serializeMeasurementMapToJson(
+                lammWithPrioritizedMeasurements,
+                updatedLammAndOrderForTransmission.second
+            )
+
+            val durationForProcessingLocalDensityDataMessage: Duration =
+                timemarkMessageProcessingStarts.elapsedNow()
+
+            loggerScalabilityAnalysis.info(
+                "${ServerApplication.serverIdHexString}; " +
+                        "$messageId; " +
+                        "$timestampMessageProcessingStarts; " +
+                        "$durationForProcessingLocalDensityDataMessage"
+            )
+
+            // Publish updated LAMM as message to the exchange for global density data. This way the global density data
+            // is transmitted to the edge clients and the other server instances for synchronization purposes.
+            messageProducer.publishMessage(
+                "rabbit-mq-exchange-global-density-data",
+                serializedLammToJson
+            )
+        }
+    }
+
+    // Checked (final)
     /**
      * Callback method which handles the global density data sent by other server instances for synchronization purpose.
      * The name of the queue to register the listener is specified using Spring Expression Language. This is because
@@ -50,52 +130,7 @@ class MessageConsumer(private val messageProducer: MessageProducer) {
         }
     }
 
-    /**
-     * Callback method which handles the local density data sent by the edge clients. As there is one common queue
-     * which is used by all edge clients to publish the local density data, the listener is bound to this predefined queue.
-     * @param receivedMessage Message arrived at the queue containing local density data.
-     */
-    @RabbitListener(queues = arrayOf("rabbit-mq-queue-local-density-data"))
-    fun onReceiveLocalDensityData(receivedMessage: Message) {
-        // Launch coroutine for handling received local density data within the corresponding CoroutineScope
-        coroutineScopeHandleReceivedMessages.launch {
-            val messageProperties: MessageProperties = receivedMessage.messageProperties
-            val messageProducerId: String = messageProperties.getHeader<String>("ProducerId")!!
-            val messageId: String = messageProperties.getHeader<String>("MessageId")!!
-            val messageBody: String = receivedMessage.body.decodeToString()
-
-            logger.info("Received local density data from client (${messageProducerId}) in message (${messageId}): ${messageBody}")
-
-            // Handle received local density data sent by an edge client
-            handleReceivedMessage(messageProducerId, messageBody)
-
-            // TODO: Clarify if this cleanUp step is really necessary here
-            ServerApplication.measurementManager.removeExceededBeaconsAndMeasurements()
-
-            // Update own LAMM and order for transmission
-            ServerApplication.measurementManager.updateLammAndOrderForTransmission()
-
-            val updatedLammAndOrderForTransmission: Pair<MeasurementMap, List<String>> =
-                ServerApplication.measurementManager.getCurrentLammAndOrderForTransmission()
-
-            val lamWithPrioritizedMeasurements: LocalAggregatedMeasurementMap =
-                Utils.measurementPrioritization(updatedLammAndOrderForTransmission.first as LocalAggregatedMeasurementMap)
-
-            // Serialize the updated LAMM according to the order of transmission to JSON format
-            val serializedLammToJson: String = MeasurementMapSerializer.serializeMeasurementMapToJson(
-                lamWithPrioritizedMeasurements,
-                updatedLammAndOrderForTransmission.second
-            )
-
-            // Publish updated LAMM as message to the exchange for global density data. This way the global density data
-            // is transmitted to the edge clients and the other server instances for synchronization purposes.
-            messageProducer.publishMessage(
-                "rabbit-mq-exchange-global-density-data",
-                serializedLammToJson
-            )
-        }
-    }
-
+    // Checked (final)
     /**
      * Handling of a measurement map sent by an edge client or another server instance.
      * @param senderMessageReceivedFrom Identifier of the measurement maps sender. This might be an edge client or another server instance.
@@ -111,5 +146,21 @@ class MessageConsumer(private val messageProducer: MessageProducer) {
             senderMessageReceivedFrom,
             deserializedMeasurementMapFromJson as ForeignAggregatedMeasurementMap
         )
+    }
+
+    // Checked (final)
+    /**
+     * Returns an accurate timestamp according to the time provided by a NTP server.
+     * @param timeSource Address of the NTP server to use for obtaining accurate time.
+     */
+    private fun getTimestampIncludingNtpOffset(timeSource: String): Long {
+        ntpClient.open()
+
+        val timeInfo: TimeInfo = ntpClient.getTime(InetAddress.getByName(timeSource))
+        timeInfo.computeDetails()
+        val timestampIncludingNtpOffset: Long = System.currentTimeMillis() + timeInfo.offset
+
+        ntpClient.close()
+        return timestampIncludingNtpOffset
     }
 }
