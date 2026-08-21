@@ -29,6 +29,10 @@ object DataStore {
     public val distantAreaDiscretizationLevel: UShort = 11U
     public val levelToDetermineNearbyArea: UShort = 11U
 
+    public val transmissionBenefitMultiplicationFaktorWifi: Float = 2.817f
+    public val transmissionBenefitMultiplicationFaktorCellular: Float = 1.0f
+    public val transmissionBenefitMultiplicationFaktorNoConnection: Float = 0.0f
+
     public var trustedTimeClient: TrustedTimeClient? = null
 
     public var measurementManager: MeasurementManager =
@@ -38,11 +42,11 @@ object DataStore {
         MutableLiveData(null)
     public var clientTransmissionBenefit: MutableLiveData<Float?> =
         MutableLiveData(null)
+    public var clientPositionalBeacon: MutableLiveData<PositionalBeacon?> = MutableLiveData(null)
 
     // By default, each mobile sensing client does not act as an edge client
-    public var clientHasLargestTransmissionBenefitOfNearbyClients: MutableLiveData<Boolean> =
+    public var isEdgeClient: MutableLiveData<Boolean> =
         MutableLiveData(false)
-    public var clientPositionalBeacon: MutableLiveData<PositionalBeacon?> = MutableLiveData(null)
 
     // TODO: Get initial lamm and order for transmission from measurement manager instead of creating here
     public var lammAndOrderForMeasurementTransmission: MutableLiveData<Pair<MeasurementMap, List<String>>> =

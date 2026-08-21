@@ -1,13 +1,13 @@
 package com.leopoldBlk.mobileSensingClients.util.converter
 
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData.DensityDataTO
-import com.leopoldBlk.mobileSensingClients.util.DataStore
 import crowdDensityLibrary.ForeignAggregatedMeasurementMap
 import crowdDensityLibrary.MeasurementMap
 import crowdDensityLibrary.dataClasses.Measurement
 import java.nio.ByteBuffer
 import kotlin.random.Random
 
+// Checked (final)
 object DensityDataConverter {
     // Length of a total data packet for D2D data transmission in bytes
     // --> for Wifi Aware Service Discovery: 255 byte
@@ -25,6 +25,7 @@ object DensityDataConverter {
     // --> 6 byte cellId (compressed at maximum Uber H3 level 12) + 2 byte measurement value + 2 byte timestamp (reference to timestamp in header)
     private val bytesPerMeasurement: UInt = 6u + 2u + 2u
 
+    // Checked (final)
     public fun convertDensityDataToDensityDataTOs(lammAndOrderForMeasurementTransmission: Pair<MeasurementMap, List<String>>): List<DensityDataTO>? {
         val localAggregatedMeasurementMap: MeasurementMap =
             lammAndOrderForMeasurementTransmission.first
@@ -55,11 +56,7 @@ object DensityDataConverter {
                             ))
                         ) {
                             referenceTimestampOfLastDensityDataTO =
-                                if (DataStore.trustedTimeClient != null) {
-                                    (DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!! / 1000).toULong()
-                                } else {
-                                    (System.currentTimeMillis() / 1000).toULong()
-                                }
+                                (System.currentTimeMillis() / 1000).toULong()
 
                             // Create byte buffer with 8 bytes for storing timestamp as long
                             // --> Remove first 4 bytes since only the lower 4 byte are used as timestamp (seconds)
@@ -83,11 +80,7 @@ object DensityDataConverter {
                     // A DensityDataTO is not yet created for this transmission
                     else {
                         referenceTimestampOfLastDensityDataTO =
-                            if (DataStore.trustedTimeClient != null) {
-                                (DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!! / 1000).toULong()
-                            } else {
-                                (System.currentTimeMillis() / 1000).toULong()
-                            }
+                            (System.currentTimeMillis() / 1000).toULong()
 
                         // Create byte buffer with 8 bytes for storing timestamp as long
                         // --> Remove first 4 bytes since only the lower 4 byte are used as timestamp (seconds)
@@ -119,18 +112,19 @@ object DensityDataConverter {
                     densityDataTOs.last().addDensityData(measurementAsByteArray)
                 }
             }
-
             return densityDataTOs
         }
         return null
     }
 
+    // Checked (final)
     private fun convertMeasurementToByteArray(
         measurement: Measurement,
         referenceTimestampOfLastDensityDataTO: ULong
     ): ByteArray {
         val measurementCellIdByteArray: ByteArray =
-            CellConverter.compressUberH3CellIdHexString(measurement.cellIdHexString).hexToByteArray()
+            CellConverter.compressUberH3CellIdHexString(measurement.cellIdHexString)
+                .hexToByteArray()
 
         val measurementValueByteArray: ByteArray =
             ByteBuffer.allocate(UShort.SIZE_BYTES).putShort(measurement.measurementValue.toShort())
@@ -150,6 +144,7 @@ object DensityDataConverter {
         return byteArrayForTransmission
     }
 
+    // Checked (final)
     public fun convertByteArrayToDensityDataTO(byteArray: ByteArray): DensityDataTO {
         // Extract the different parts composing a DensityDataTO from the byte array
         val transmissionId: ByteArray = byteArray.copyOfRange(0, 1)
@@ -181,6 +176,7 @@ object DensityDataConverter {
         return densityDataTO
     }
 
+    // Checked (final)
     public fun convertDensityDataTOsToDensityData(densityDataTOs: MutableList<DensityDataTO>): ForeignAggregatedMeasurementMap {
         val foreignAggregatedMeasurementMap: ForeignAggregatedMeasurementMap =
             ForeignAggregatedMeasurementMap()
@@ -204,6 +200,7 @@ object DensityDataConverter {
         return foreignAggregatedMeasurementMap
     }
 
+    // Checked (final)
     private fun convertByteArrayToMeasurement(
         senderClientId: String,
         measurementByteArray: ByteArray,

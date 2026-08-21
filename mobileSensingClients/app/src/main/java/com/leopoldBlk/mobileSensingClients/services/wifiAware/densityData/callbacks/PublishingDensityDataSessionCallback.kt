@@ -7,6 +7,7 @@ import android.util.Log
 import com.leopoldBlk.mobileSensingClients.util.controller.LogController
 import kotlinx.coroutines.CompletableDeferred
 
+// Checked (true)
 class PublishingDensityDataSessionCallback : DiscoverySessionCallback() {
     private val className: String = "PublishingDensityDataSessionCallback"
     public val publishDiscoverySessionStarted: CompletableDeferred<Unit> =
@@ -14,6 +15,7 @@ class PublishingDensityDataSessionCallback : DiscoverySessionCallback() {
 
     private lateinit var publishDiscoverySession: PublishDiscoverySession
 
+    // Checked (true)
     override fun onPublishStarted(publishDiscoverySession: PublishDiscoverySession) {
         super.onPublishStarted(publishDiscoverySession)
 
@@ -27,6 +29,7 @@ class PublishingDensityDataSessionCallback : DiscoverySessionCallback() {
         publishDiscoverySessionStarted.complete(Unit)
     }
 
+    // Checked (true)
     override fun onSessionConfigFailed() {
         super.onSessionConfigFailed()
 
@@ -37,17 +40,15 @@ class PublishingDensityDataSessionCallback : DiscoverySessionCallback() {
         )
     }
 
+    // Checked (true)
     override fun onSessionConfigUpdated() {
         super.onSessionConfigUpdated()
 
         LogController.log(Log.INFO, className, "Session config updated successfully!")
     }
 
+    // Checked (true)
     public fun updatePublishConfig(publishConfig: PublishConfig) {
         publishDiscoverySession.updatePublish(publishConfig)
-    }
-
-    public fun stopPublishing(){
-        publishDiscoverySession.close()
     }
 }

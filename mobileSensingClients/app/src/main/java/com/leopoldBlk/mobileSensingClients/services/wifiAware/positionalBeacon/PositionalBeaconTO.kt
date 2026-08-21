@@ -1,5 +1,6 @@
 package com.leopoldBlk.mobileSensingClients.services.wifiAware.positionalBeacon
 
+// Checked (final)
 class PositionalBeaconTO(
     // 4 byte for client identifier
     private val clientId: ByteArray,
@@ -7,11 +8,11 @@ class PositionalBeaconTO(
     private val latitude: ByteArray,
     // 8 byte for longitude value of position
     private val longitude: ByteArray,
-    // 7 byte cell identifier (optimized Uber H3 Level 13 cellIds)
+    // 6 byte cell identifier (optimized Uber H3 cell ids)
     private val cellId: ByteArray,
     // 4 byte transmission benefit value
     private val transmissionBenefit: ByteArray,
-    // 7 byte for unix timestamp (seconds)
+    // 4 byte for unix timestamp (seconds)
     private val timestamp: ByteArray
 ) {
     public fun getPositionalBeaconToAsByteArray(): ByteArray {

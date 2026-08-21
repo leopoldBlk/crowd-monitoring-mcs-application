@@ -21,6 +21,7 @@ import crowdDensityLibrary.dataClasses.Position
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
+// Checked (final)
 class LocationService : Service() {
     private val className: String = "LocationService"
     private var h3Core: H3Core = H3Core.newSystemInstance()
@@ -37,13 +38,12 @@ class LocationService : Service() {
 
             )
 
-            // TODO: Choose proper threshold for location accuracy
             if (p0.accuracy < DataStore.accuracyThresholdForLocationDeterminationInMeters) {
 //              For testing purpose (location is the center of the Marienplatz in Munich):
 //              --------------------------------------------------------------------------
                 var updatedClientPositionCellId: String = h3Core.latLngToCellAddress(
                     48.137371, 11.575328,
-                    12
+                    DataStore.nearbyAreaDiscretizationLevel.toInt()
                 )
 
                 while (updatedClientPositionCellId.length < 16) {
@@ -73,13 +73,13 @@ class LocationService : Service() {
                 LogController.log(
                     Log.INFO,
                     className,
-                    "Updated location (Lat/Long): ${p0.latitude}/${p0.longitude}"
+                    "Updated location of client to (Lat/Long): ${p0.latitude}/${p0.longitude}"
                 )
             } else {
                 LogController.log(
                     Log.INFO,
                     className,
-                    "No updated of client location due to missing accuracy of location update!"
+                    "No update of client location due to missing accuracy of location update!"
                 )
             }
         }

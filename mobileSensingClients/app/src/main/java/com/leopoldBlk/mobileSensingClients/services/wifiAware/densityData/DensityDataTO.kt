@@ -2,6 +2,7 @@ package com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData
 
 import java.nio.ByteBuffer
 
+// Checked (final)
 class DensityDataTO(
     // 1 byte for identifier of the transmission
     private val transmissionId: Byte,
@@ -28,7 +29,7 @@ class DensityDataTO(
     }
 
     public fun getHeaderTimestampAsULong(): ULong {
-        // Add byte to beginning to correspond to byte size of long for successful conversion
+        // Add bytes to beginning to correspond to byte size of long for successful conversion
         return ByteBuffer.wrap(ByteArray(4) + timestamp).getLong().toULong()
     }
 

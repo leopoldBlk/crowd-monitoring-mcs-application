@@ -14,7 +14,7 @@ import com.leopoldBlk.mobileSensingClients.services.wifiAware.WifiAwareService
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData.callbacks.PublishingDensityDataSessionCallback
 import com.leopoldBlk.mobileSensingClients.util.DataStore
 import com.leopoldBlk.mobileSensingClients.util.controller.DiscretizationController
-import com.leopoldBlk.mobileSensingClients.util.controller.TransmissionDecisionController
+import com.leopoldBlk.mobileSensingClients.util.controller.EdgeClientDecisionController
 import com.leopoldBlk.mobileSensingClients.util.converter.DensityDataConverter
 import crowdDensityLibrary.LocalAggregatedMeasurementMap
 import crowdDensityLibrary.MeasurementMap
@@ -42,6 +42,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
     private lateinit var publishConfigs: MutableList<PublishConfig>
     private lateinit var transmittingLammJob: Job
 
+    // Checked (final)
     private var wifiAwareAttachEventCallback: AttachCallback = object : AttachCallback() {
         override fun onAttached(session: WifiAwareSession?) {
             super.onAttached(session)
@@ -53,6 +54,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
         }
     }
 
+    // Checked (final)
     override fun onCreate() {
         super.onCreate()
 
@@ -64,15 +66,16 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
         wifiAwareManager.attach(wifiAwareAttachEventCallback, wifiAwareAttachEventCallbackHandler)
     }
 
+    // Checked (final)
     override fun onBind(intent: Intent): IBinder {
         super.onBind(intent)
         TODO("Return the communication channel to the service.")
     }
 
+    // Checked (final)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val superOnStartCommandStatus: Int = super.onStartCommand(intent, flags, startId)
 
-        // TODO: Find more elegant way to repeat transmittingLammJob than while true
         transmittingLammJob = coroutineScope.launch {
             while (true) {
                 transmitLamm()
@@ -82,6 +85,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
         return superOnStartCommandStatus
     }
 
+    // Checked (final)
     override fun onDestroy() {
         super.onDestroy()
 
@@ -89,6 +93,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
         isWifiAwareSessionInitialized = false
     }
 
+    // Checked (final)
     // Generating/updating the lamm and order for transmission and publish
     private suspend fun transmitLamm() {
         // When not receiving positional beacons or famms from other clients, the nt, lmm and famms will not be updated automatically
@@ -97,9 +102,9 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
         // --> Old beacons and measurements are also removed if no positional beacons or famms from other clients are received
         DataStore.measurementManager.removeExceededBeaconsAndMeasurements()
 
-        // Recalculate transmission decision (check if sensing client has the largest transmission benefit of nearby clients)
+        // Check if client has to take the role of an edge client
         // This might have been changed since nt was cleaned in the step before
-        TransmissionDecisionController.updateTransmissionDecision()
+        EdgeClientDecisionController.performEdgeClientDecision()
 
         // Generate/update the lamm and order for transmission
         val updatedLammAndOrderForTransmission: Pair<MeasurementMap, List<String>> =
@@ -119,7 +124,6 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
         // Generating the publish configs according to the generated and updated lamm and order of transmission
         updatePublishConfig(prioritizedLammAndOrderForTransmission)
 
-        // TODO: Stop publishing, if the LAMM is now empty but was not previously
         if (isWifiAwareSessionInitialized && publishConfigs.isNotEmpty()) {
             // Split the defined transmission interval for a lamm evenly across the DensityDataTOs to send
             val publishingIntervalForEachConfigInMilliseconds: Long =
@@ -145,13 +149,6 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
 
                     publishingDensityDataSessionCallback.publishDiscoverySessionStarted.await()
 
-                    val timestampAfterPublishingConfigUpdated: Long =
-                        if (DataStore.trustedTimeClient != null) {
-                            DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!!
-                        } else {
-                            System.currentTimeMillis()
-                        }
-
                     delay(publishingIntervalForEachConfigInMilliseconds.milliseconds)
 
                     if (publishConfigs.size > 1) {
@@ -161,13 +158,6 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
                             publishingDensityDataSessionCallback.updatePublishConfig(
                                 publishConfig
                             )
-
-                            val timestampAfterPublishingConfigUpdated: Long =
-                                if (DataStore.trustedTimeClient != null) {
-                                    DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!!
-                                } else {
-                                    System.currentTimeMillis()
-                                }
 
                             publishConfigIndexCounter += 1
                             delay(publishingIntervalForEachConfigInMilliseconds.milliseconds)
@@ -183,23 +173,29 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
                             publishConfig
                         )
 
-                        val timestampAfterPublishingConfigUpdated: Long =
-                            if (DataStore.trustedTimeClient != null) {
-                                DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!!
-                            } else {
-                                System.currentTimeMillis()
-                            }
-
                         publishConfigIndexCounter += 1
                         delay(publishingIntervalForEachConfigInMilliseconds.milliseconds)
                     }
                 }
             }
-        } else if (publishConfigs.isEmpty()) {
+        } else if (publishConfigs.isEmpty() && publishingDensityDataSessionCallback.publishDiscoverySessionStarted.isCompleted) {
+            val emptyPublishConfig: PublishConfig =
+                PublishConfig.Builder()
+                    .setServiceName("MCS-DensityData")
+                    .build()
+
+            publishingDensityDataSessionCallback.updatePublishConfig(
+                emptyPublishConfig
+            )
+
+            delay(DataStore.publishLammIntervalInMilliseconds.toLong().milliseconds)
+        }
+        else{
             delay(DataStore.publishLammIntervalInMilliseconds.toLong().milliseconds)
         }
     }
 
+    // Checked (final)
     private fun updatePublishConfig(lammAndOrderForMeasurementTransmission: Pair<MeasurementMap, List<String>>) {
         publishConfigs = mutableListOf<PublishConfig>()
 
