@@ -30,6 +30,7 @@ import org.maplibre.spatialk.geojson.Position
 import org.maplibre.spatialk.geojson.toJson
 import kotlin.time.TimeSource
 
+// Checked (final)
 @Composable
 fun Map(useTestData: Boolean) {
     // Observe client position for update of location puck
@@ -149,11 +150,14 @@ fun Map(useTestData: Boolean) {
             }
 
             val mapStructures =
-                CellConverter.getMapStructuresForLamm(localAggregatedMeasurementMap, clientPosition.value!!.cellIdHexString)
+                CellConverter.getMapStructuresForLamm(
+                    localAggregatedMeasurementMap,
+                    clientPosition.value!!.cellIdHexString
+                )
 
-            // Draw Uber H3 cells
+            // Draw Uber H3 cells contained within the LAMM
             FillLayer(
-                id = "UberH3Cells",
+                id = "Lamm",
                 source = rememberGeoJsonSource(GeoJsonData.JsonString(mapStructures.first.toJson())),
                 color = const(Color.Red),
                 opacity = const(0.2f)
@@ -167,19 +171,8 @@ fun Map(useTestData: Boolean) {
                 opacity = const(0.5f)
             )
 
-            var labelCounter: UInt = 0u
-
-            // Draw labels with measurement values for Uber H3 cells
+            // Draw labels with measurement values for Uber H3 cells contained within the LAMM
             mapStructures.third.forEach { (cellIdPointLevelTriple, measurementValue) ->
-                // Standard zoom level for Uber H3 level 13 cells
-                var minZoom: Float = 18.0f
-
-                // Zoom level if cell level is lower than 13
-                // --> cell covers larger area and therefore the zoom level when the label starts to be displayed has to be decreased
-                if (cellIdPointLevelTriple.third < 13) {
-                    minZoom = 14.0f
-                }
-
                 SymbolLayer(
                     id = "LabelForCellWithCellId:" + cellIdPointLevelTriple.first,
                     source = rememberGeoJsonSource(GeoJsonData.JsonString(cellIdPointLevelTriple.second.toJson())),
@@ -191,9 +184,8 @@ fun Map(useTestData: Boolean) {
                     // Bug that symbol layer gets invisible when specifying text field and standard font is not available on the server
                     // --> therefore specify font here explicitly
                     textFont = const(listOf("Noto Sans Regular")),
-                    minZoom = minZoom
+                    minZoom = 14.0f
                 )
-                labelCounter = labelCounter.inc()
             }
         }
     }

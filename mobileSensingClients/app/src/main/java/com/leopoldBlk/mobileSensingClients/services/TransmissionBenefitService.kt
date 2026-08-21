@@ -14,10 +14,13 @@ import android.os.BatteryManager
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import com.leopoldBlk.mobileSensingClients.util.DataStore
-import com.leopoldBlk.mobileSensingClients.util.controller.TransmissionDecisionController
+import com.leopoldBlk.mobileSensingClients.util.controller.EdgeClientDecisionController
+import com.leopoldBlk.mobileSensingClients.util.controller.LogController
 
+// Checked (final)
 class TransmissionBenefitService : Service() {
     private val className: String = "TransmissionBenefitService"
     private var clientBatteryLevel: Int? = null
@@ -29,20 +32,9 @@ class TransmissionBenefitService : Service() {
     private lateinit var networkUpdateHandler: Handler
     private lateinit var batteryUpdateHandler: Handler
 
+    // Checked (final)
     private val networkCallback: ConnectivityManager.NetworkCallback =
         object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                super.onAvailable(network)
-
-//                LogController.log(
-//                    Log.DEBUG,
-//                    className,
-//                    "networkUpdateHandler onAvailable - Thread-ID: ${
-//                        Thread.currentThread().threadId()
-//                    }"
-//                )
-            }
-
             override fun onCapabilitiesChanged(
                 network: Network,
                 networkCapabilities: NetworkCapabilities
@@ -54,7 +46,7 @@ class TransmissionBenefitService : Service() {
                 val hasTransportCellular: Boolean =
                     networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
 
-                // Connection switched to wifi
+                // Connection switched to Wifi
                 if (hasTransportWifi && clientConnectionState != NetworkCapabilities.TRANSPORT_WIFI) {
                     clientConnectionState = NetworkCapabilities.TRANSPORT_WIFI
 
@@ -66,10 +58,17 @@ class TransmissionBenefitService : Service() {
 
                     updateTransmissionBenefit()
                 }
+
+                LogController.log(
+                    Log.INFO,
+                    className,
+                    "Update in connection state received!"
+                )
             }
         }
 
-    val batteryChangeBroadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
+    // Checked (final)
+    private val batteryChangeBroadcastReceiver: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(
             context: Context?,
             intent: Intent?
@@ -77,69 +76,59 @@ class TransmissionBenefitService : Service() {
             batteryUpdateHandler.post {
                 if (intent != null) {
                     clientBatteryLevel = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0)
-//
-//                    LogController.log(
-//                        Log.DEBUG,
-//                        className,
-//                        "batteryUpdateHandler onReceive - Thread-ID: ${
-//                            Thread.currentThread().threadId()
-//                        }"
-//                    )
-
                     updateTransmissionBenefit()
                 }
             }
+
+            LogController.log(
+                Log.INFO,
+                className,
+                "Update in battery level received!"
+            )
         }
     }
 
+    // Checked (final)
     private fun updateTransmissionBenefit() {
         if (clientBatteryLevel != null && clientConnectionState != null) {
-            var updatedTransmissionBenefit: Float = 0.0f
-            var clientConnectionStateAsString: String = ""
-
-            if (clientConnectionState == NetworkCapabilities.TRANSPORT_WIFI) {
-                updatedTransmissionBenefit = clientBatteryLevel!! * 2.817f
-                clientConnectionStateAsString = "wifi"
-            } else if (clientConnectionState == NetworkCapabilities.TRANSPORT_CELLULAR) {
-                updatedTransmissionBenefit = clientBatteryLevel!! * 1.0f
-                clientConnectionStateAsString = "cellular"
-            } else {
-                updatedTransmissionBenefit = clientBatteryLevel!! * 0.0f
-                clientConnectionStateAsString = "no connection"
-            }
-
-            DataStore.clientTransmissionBenefit.postValue(updatedTransmissionBenefit)
-            val timestampAfterUpdateOfTransmissionBenefitValue: Long =
-                if (DataStore.trustedTimeClient != null) {
-                    DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!!
+            val updatedTransmissionBenefit: Float =
+                if (clientConnectionState == NetworkCapabilities.TRANSPORT_WIFI) {
+                    clientBatteryLevel!! * DataStore.transmissionBenefitMultiplicationFaktorWifi
+                } else if (clientConnectionState == NetworkCapabilities.TRANSPORT_CELLULAR) {
+                    clientBatteryLevel!! * DataStore.transmissionBenefitMultiplicationFaktorCellular
                 } else {
-                    System.currentTimeMillis()
+                    clientBatteryLevel!! * DataStore.transmissionBenefitMultiplicationFaktorNoConnection
                 }
 
-            // Recalculate transmission decision (check if sensing client has the largest transmission benefit of nearby clients)
+            DataStore.clientTransmissionBenefit.postValue(updatedTransmissionBenefit)
+
+            LogController.log(
+                Log.INFO,
+                className,
+                "Updated transmission benefit to: $updatedTransmissionBenefit"
+            )
+
+            // Decide if the client has to take the role of an edge client.
             // This might have been changed since the value for transmission benefit for this client was updated in the previous step
-            TransmissionDecisionController.updateTransmissionDecision()
+            EdgeClientDecisionController.performEdgeClientDecision()
         }
     }
 
+    // Checked (final)
     override fun onCreate() {
         super.onCreate()
-
-//        LogController.log(
-//            Log.DEBUG,
-//            className,
-//            "onCreate - Thread-ID: ${Thread.currentThread().threadId()}"
-//        )
 
         networkBatteryUpdateHandlerThread.start()
         networkUpdateHandler = Handler(networkBatteryUpdateHandlerThread.looper)
         batteryUpdateHandler = Handler(networkBatteryUpdateHandlerThread.looper)
     }
 
+    // Checked (final)
     override fun onBind(intent: Intent): IBinder {
         TODO("Return the communication channel to the service.")
     }
 
+    // Checked (final)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val superOnStartCommandStatus: Int = super.onStartCommand(intent, flags, startId)
 
@@ -166,6 +155,7 @@ class TransmissionBenefitService : Service() {
         return superOnStartCommandStatus
     }
 
+    // Checked (final)
     override fun onDestroy() {
         super.onDestroy()
 

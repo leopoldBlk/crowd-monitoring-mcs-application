@@ -13,6 +13,7 @@ import androidx.core.app.ActivityCompat
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.WifiAwareService
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.positionalBeacon.callbacks.SubscribingPositionalBeaconSessionCallback
 
+// Checked (final)
 class WifiAwarePositionalBeaconSubscriberService : WifiAwareService() {
     private var subscribeConfig: SubscribeConfig =
         SubscribeConfig.Builder().setServiceName("MCS-PositionalBeacon").build()
@@ -22,6 +23,7 @@ class WifiAwarePositionalBeaconSubscriberService : WifiAwareService() {
     lateinit var wifiAwareAttachEventCallbackHandler: Handler
     lateinit var subscribingSessionCallbackHandler: Handler
 
+    // Checked (final)
     private var wifiAwareAttachEventCallback: AttachCallback = object : AttachCallback() {
         override fun onAttached(session: WifiAwareSession?) {
             super.onAttached(session)
@@ -49,6 +51,7 @@ class WifiAwarePositionalBeaconSubscriberService : WifiAwareService() {
         }
     }
 
+    // Checked (final)
     override fun onCreate() {
         super.onCreate()
 
@@ -58,11 +61,13 @@ class WifiAwarePositionalBeaconSubscriberService : WifiAwareService() {
         subscribingSessionCallbackHandler = Handler(wifiAwareSubscriberHandlerThread.looper)
     }
 
+    // Checked (final)
     override fun onBind(intent: Intent): IBinder {
         super.onBind(intent)
         TODO("Return the communication channel to the service.")
     }
 
+    // Checked (final)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val superOnStartCommandStatus: Int = super.onStartCommand(intent, flags, startId)
 
@@ -71,6 +76,7 @@ class WifiAwarePositionalBeaconSubscriberService : WifiAwareService() {
         return superOnStartCommandStatus
     }
 
+    // Checked (final)
     override fun onDestroy() {
         super.onDestroy()
 

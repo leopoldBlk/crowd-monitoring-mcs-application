@@ -2,50 +2,18 @@ package com.leopoldBlk.mobileSensingClients.util.controller
 
 import android.util.Log
 import com.leopoldBlk.mobileSensingClients.util.DataStore
-import com.leopoldBlk.mobileSensingClients.util.converter.CellConverter
+import com.leopoldBlk.mobileSensingClients.util.converter.CellConverter.addLeadingZerosToCellId
 import com.uber.h3core.H3Core
 import crowdDensityLibrary.ForeignAggregatedMeasurementMap
 import crowdDensityLibrary.LocalAggregatedMeasurementMap
 import crowdDensityLibrary.dataClasses.Measurement
 
+// Checked (final)
 object DiscretizationController {
     // No initialization at the beginning, because h3-lib is not accessible at the beginning
     private lateinit var h3Core: H3Core
 
-    // Checked
-    // Generates a list of the identifiers of the cells comprising the nearby environment of the client
-    // at the discretization level used for nearby environments
-    public fun getNearbyAreaForClient(
-        clientCellId: String,
-        nearbyAreaDiscretizationLevel: UShort,
-        levelToDetermineNearbyArea: UShort
-    ): List<String> {
-        if (!::h3Core.isInitialized) {
-            h3Core = H3Core.newSystemInstance()
-        }
-
-        // Get the parent cell the client is located in along with its neighborhood for the level which is used
-        // to determine the nearby area of a sensing client
-        val nearbyAreaForClientParentCellWithNeighborhood: List<String> =
-            getParentCellWithNeighborhood(clientCellId, levelToDetermineNearbyArea)
-
-        val nearbyAreaForClient: MutableList<String> = mutableListOf()
-
-        // Iterate over the parent cell and its neighborhood and add all their child cells at the level
-        // used to discretize the nearby area of the sensing client
-        for (cellId in nearbyAreaForClientParentCellWithNeighborhood) {
-            nearbyAreaForClient.addAll(
-                h3Core.cellToChildren(
-                    cellId,
-                    nearbyAreaDiscretizationLevel.toInt()
-                )
-            )
-        }
-
-        return nearbyAreaForClient
-    }
-
-    // Checked
+    // Checked (final)
     // Generates a list containing the identifier of the parent cell the client is located in along with its neighborhood
     // for the specified discretization level
     public fun getParentCellWithNeighborhood(
@@ -66,7 +34,7 @@ object DiscretizationController {
         return listOf<String>(parentCellId).plus(neighborhoodCellIds)
     }
 
-    // Checked logic & fits to algorithm of thesis
+    // Checked (final)
     // Check the received FAMM if this contains measurements for distant areas where the discretization
     // level has to be adapted consequently
     public fun adaptionOfDiscretizationLevel(receivedFamm: ForeignAggregatedMeasurementMap): ForeignAggregatedMeasurementMap {
@@ -85,11 +53,11 @@ object DiscretizationController {
 
             // Iterate over all measurements contained within the FAMM
             for (measurement in receivedFamm.getAllMeasurements()) {
-                val measurementCellIdLevel: Int = h3Core.getResolution(measurement.key)
+                val measurementDiscretizationLevel: Int = h3Core.getResolution(measurement.key)
 
                 // Check if the discretization level of the measurement is equal to the discretization level
                 // for nearby areas. Only these can be adapted in discretization level!
-                if (measurementCellIdLevel.toUShort() == DataStore.nearbyAreaDiscretizationLevel) {
+                if (measurementDiscretizationLevel.toUShort() == DataStore.nearbyAreaDiscretizationLevel) {
                     // Get the parent cell where the measurement is located in at the level for determining
                     // the nearby area
                     val parentCellForLevelToDetermineNearbyArea: String =
@@ -98,8 +66,7 @@ object DiscretizationController {
                             DataStore.levelToDetermineNearbyArea.toInt()
                         )
 
-                    // Discretization of the cell level has to be done if there parentCellForLevelToDetermineNearbyArea
-                    // is not within the nearby area of the sensing client
+                    // The cell is not located within the clients nearby area
                     if (!getParentCellWithNeighborhood(
                             DataStore.clientPosition.value!!.cellIdHexString,
                             DataStore.levelToDetermineNearbyArea
@@ -119,13 +86,13 @@ object DiscretizationController {
                             // Set the original measurement included within the FAMM with the changed cell
                             // identifier in the map for the new measurements
                             val newMeasurement: Measurement = measurement.value
-                            newMeasurement.cellIdHexString = CellConverter.addLeadingZerosToCellId(
+                            newMeasurement.cellIdHexString = addLeadingZerosToCellId(
                                 parentCellForLevelToDiscretizeDistantAreas
                             )
                             newMeasurements[parentCellForLevelToDiscretizeDistantAreas] =
                                 newMeasurement
                         }
-                        // This measurement is not the first one processes from this FAMM which belongs to this
+                        // This measurement is not the first one processed from this FAMM which belongs to this
                         // parentCellForLevelToDiscretizeDistantAreas
                         else {
                             val newMeasurement: Measurement =
@@ -180,11 +147,10 @@ object DiscretizationController {
         return receivedFamm
     }
 
-    // Checked logic & fits to algorithm of thesis (see TODO below)
+    // Checked (final)
     // Check the LAMM if this contains two measurements for the same area each with another discretization level.
     // If this is the case, the measurement with the higher discretization level is chosen as this offers a
     // more detailed information about the crowd density for the corresponding area.
-    // TODO: Adapt the description of this algorithm in the thesis (no CDAM, but for-loop, measurementsForDistantAreas) --> More like pseudo code in thesis
     public fun measurementPrioritization(lamm: LocalAggregatedMeasurementMap): LocalAggregatedMeasurementMap {
         if (!::h3Core.isInitialized) {
             h3Core = H3Core.newSystemInstance()
@@ -196,50 +162,49 @@ object DiscretizationController {
         val measurementsForDistantAreasWithinLamm: MutableMap<String, Measurement> =
             mutableMapOf<String, Measurement>()
 
-        // Iterate over the entries within the LAMM, to find measurements for distant areas with a
-        // lower discretization level contained within the LAMM
+        // Iterate over the entries within the LAMM, to find measurements for distant areas contained within the LAMM
         for (measurement in lamm.getAllMeasurements()) {
             if (h3Core.getResolution(measurement.value.cellIdHexString) == DataStore.distantAreaDiscretizationLevel.toInt()) {
                 measurementsForDistantAreasWithinLamm[measurement.key] = measurement.value
             }
         }
 
-        // Iterate over the entries within the LAMM, to find measurements which correspond to the same are but have
+        // Iterate over the entries within the LAMM, to find measurements which correspond to the same area but have
         // different discretization levels
         for (measurement in lamm.getAllMeasurements()) {
             // Get discretization level of the current measurement
-            val measurementCellIdLevel: Int = h3Core.getResolution(measurement.value.cellIdHexString)
+            val measurementDiscretizationLevel: Int =
+                h3Core.getResolution(measurement.value.cellIdHexString)
 
             // Find measurements having the discretization level of nearby areas
-            if (measurementCellIdLevel == DataStore.nearbyAreaDiscretizationLevel.toInt()) {
+            if (measurementDiscretizationLevel == DataStore.nearbyAreaDiscretizationLevel.toInt()) {
                 // Get the parent cell for this measurement for the discretization level used for distant areas
-                val parentCellAtDistantAreaDiscretizationLevel: String =
-                    CellConverter.addLeadingZerosToCellId(
-                        h3Core.cellToParentAddress(
-                            measurement.key,
-                            DataStore.distantAreaDiscretizationLevel.toInt()
-                        )
+                val parentCellForDistantAreaDiscretizationLevel: String = addLeadingZerosToCellId(
+                    h3Core.cellToParentAddress(
+                        measurement.key,
+                        DataStore.distantAreaDiscretizationLevel.toInt()
                     )
+                )
 
                 // The LAMM contains measurements covering the same area with different discretization levels
                 if (measurementsForDistantAreasWithinLamm.contains(
-                        parentCellAtDistantAreaDiscretizationLevel
+                        parentCellForDistantAreaDiscretizationLevel
                     )
                 ) {
                     // Mark the measurement with the lower discretization level for removal
                     val measurementForDistantArea: Measurement =
-                        measurementsForDistantAreasWithinLamm[parentCellAtDistantAreaDiscretizationLevel]!!
+                        measurementsForDistantAreasWithinLamm[parentCellForDistantAreaDiscretizationLevel]!!
                     measurementsToBeRemoved[measurementForDistantArea.cellIdHexString] =
                         measurementForDistantArea
                 }
             }
         }
 
-//        LogController.log(
-//            Log.INFO,
-//            "DiscretizationController",
-//            "Number of measurements for distant areas to be removed because of more accurate data is present within the LAMM: ${measurementsToBeRemoved.size}"
-//        )
+        LogController.log(
+            Log.INFO,
+            "DiscretizationController",
+            "Number of measurements for distant areas to be removed because of more accurate data is present within the LAMM: ${measurementsToBeRemoved.size}"
+        )
 
         // Remove the measurements for which a measurement covering the same area with a larger
         // discretization level is present from the copy of the LAMM

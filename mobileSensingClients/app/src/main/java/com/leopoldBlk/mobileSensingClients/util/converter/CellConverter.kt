@@ -5,17 +5,18 @@ import com.leopoldBlk.mobileSensingClients.util.controller.DiscretizationControl
 import com.uber.h3core.H3Core
 import com.uber.h3core.util.LatLng
 import crowdDensityLibrary.LocalAggregatedMeasurementMap
-import crowdDensityLibrary.dataClasses.Measurement
 import org.maplibre.spatialk.geojson.GeometryCollection
 import org.maplibre.spatialk.geojson.Point
 import org.maplibre.spatialk.geojson.Polygon
 import org.maplibre.spatialk.geojson.Position
 import java.math.BigInteger
 
+// Checked (final)
 object CellConverter {
     // No initialization at the beginning, because h3-lib is not accessible at the beginning
     private lateinit var h3Core: H3Core
 
+    // Checked (final)
     // Get the vertices of the Uber H3 cell with the given cellId
     // --> Necessary for generating the cell on the map
     private fun getVerticesForUberH3Cell(uberH3CellIdsHexString: String): MutableList<LatLng> {
@@ -28,6 +29,7 @@ object CellConverter {
         return verticesForUberH3Cell
     }
 
+    // Checked (final)
     // Get the vertices of the Uber H3 cell with the given cellId
     // --> Necessary for printing the label of the measurement value within the center of the corresponding map
     private fun getCentrePointForUberH3Cell(uberH3CellIdsHexString: String): LatLng {
@@ -39,128 +41,27 @@ object CellConverter {
         return centrePointForUberH3Cell
     }
 
-    // Returns the list of Uber H3 cellIds which are defined as proximate area as hexadecimal strings
-    private fun getProximateParentCellAndNeighborhoodCells(
-        clientPositionCellIdHexString: String,
-        cellLevelProximate: UShort
-    ): List<String> {
-        // Get cellId of parent cell the client is located in
-        val clientPositionProximateParentCellIdHexString: String =
-            h3Core.cellToParentAddress(clientPositionCellIdHexString, cellLevelProximate.toInt())
-        // Get cellIds of the neighboring cells surrounding the parent cell
-        val clientPositionProximateParentNeighborhoodCellIdsHexString: List<String> =
-            h3Core.gridRing(clientPositionProximateParentCellIdHexString, 1)
-
-        return listOf<String>(clientPositionProximateParentCellIdHexString).plus(
-            clientPositionProximateParentNeighborhoodCellIdsHexString
-        )
-    }
-
-    // This shall be called, if a lamm is received from a server
-    public fun convertDistantCells(localAggregatedMeasurementMap: LocalAggregatedMeasurementMap): LocalAggregatedMeasurementMap {
-        if (!::h3Core.isInitialized) {
-            h3Core = H3Core.newSystemInstance()
-        }
-
-        val copyOfLocalAggregatedMeasurementMap: LocalAggregatedMeasurementMap =
-            LocalAggregatedMeasurementMap()
-
-        // Copy to not change the given lamm
-        localAggregatedMeasurementMap.getAllMeasurements().forEach { (cellId, measurement) ->
-            copyOfLocalAggregatedMeasurementMap.setMeasurement(measurement)
-        }
-
-        // Cell level for parent cell and its surrounding neighbors which are defined as proximate area
-        val cellLevelToDetermineProximity: UShort = 10u
-        val clientPosition: crowdDensityLibrary.dataClasses.Position? =
-            DataStore.clientPosition.value
-
-        // For testing the handling of distant cells:
-        // val clientPosition = 1
-
-        if (clientPosition != null) {
-            // Get the list of Uber H3 cellIds which are defined as proximate area as hexadecimal strings
-            val proximateParentAndNeighborhoodCellIdsHexString: List<String> =
-                getProximateParentCellAndNeighborhoodCells(
-                    clientPosition.cellIdHexString,
-                    // For testing the handling of distant cells:
-                    // "08d1f8d7a498c0bf",
-                    cellLevelToDetermineProximity
-                )
-
-            // List of cellIds for which the measurement has to be removed from the lamm because it has been converted to a lower level (larger cell)
-            val cellIdsToRemoveMeasurementFor: MutableList<String> = mutableListOf<String>()
-            // List of new measurements resulting from the conversion process
-            val convertedCellMeasurements: MutableMap<String, Measurement> =
-                mutableMapOf<String, Measurement>()
-
-            copyOfLocalAggregatedMeasurementMap.getAllMeasurements()
-                .forEach { (cellId, measurement) ->
-                    val parentCellId: String =
-                        h3Core.cellToParentAddress(cellId, cellLevelToDetermineProximity.toInt())
-
-                    // The parent cell of the cell the measurement belongs to is not within the proximate area
-                    // --> use lower discretization level (equal to cell with larger coverage are) for this area
-                    if (!proximateParentAndNeighborhoodCellIdsHexString.contains(parentCellId)) {
-                        // If there is no measurement for the corresponding parent cell
-                        if (!convertedCellMeasurements.containsKey(parentCellId)) {
-                            val measurement: Measurement = Measurement(
-                                parentCellId,
-                                measurement.measurementValue,
-                                measurement.clientIdHexString,
-                                measurement.measurementCreationTimestamp
-                            )
-
-                            convertedCellMeasurements.set(parentCellId, measurement)
-                        }
-                        // If there is already a measurement for the corresponding parent cell
-                        // --> update the measurement (sum measurement values and take the newer measurement timestamp)
-                        // --> will lead to overestimation of density but safer than underestimation in this case and density doesnt have to be that accurate for distant areas
-                        else {
-                            val existingMeasurement: Measurement =
-                                convertedCellMeasurements.get(parentCellId)!!
-
-                            val newMeasurement: Measurement = Measurement(
-                                parentCellId,
-                                (existingMeasurement.measurementValue + measurement.measurementValue).toUShort(),
-                                existingMeasurement.clientIdHexString,
-                                if (existingMeasurement.measurementCreationTimestamp < measurement.measurementCreationTimestamp) measurement.measurementCreationTimestamp.toULong() else existingMeasurement.measurementCreationTimestamp.toULong()
-                            )
-
-                            convertedCellMeasurements.set(parentCellId, newMeasurement)
-                        }
-
-                        cellIdsToRemoveMeasurementFor.add(cellId)
-                    }
-                }
-
-            // Remove the cells from lamm which have been converted into cell with lower level
-            cellIdsToRemoveMeasurementFor.forEach { cellIdsToRemoveMeasurementFor ->
-                copyOfLocalAggregatedMeasurementMap.removeMeasurementForCellId(
-                    cellIdsToRemoveMeasurementFor
-                )
-            }
-
-            // Insert the newly generated cells due to conversion into cells with lower level into the lamm
-            convertedCellMeasurements.forEach { (cellId, measurement) ->
-                copyOfLocalAggregatedMeasurementMap.setMeasurement(measurement)
-            }
-        }
-
-        return copyOfLocalAggregatedMeasurementMap
-    }
-
+    // Checked (final)
     // Get the map structures of the local aggregated measurement map, which are printed to the map visible to the user
-    // --> Returns geometry collection of polygons for the cells and a map of the cells centroids as points to the measurement value of the corresponding
-    // cell for printing the measurement value to the map visible to the user
-    public fun getMapStructuresForLamm(localAggregatedMeasurementMap: LocalAggregatedMeasurementMap, clientPositionCellId: String): Triple<GeometryCollection<Polygon>, GeometryCollection<Polygon>, MutableMap<Triple<String, Point, Int>, UShort>> {
-        val polygonsForUberH3Cells: MutableList<Polygon> = mutableListOf<Polygon>()
-        val labelsForUberH3Cells: MutableMap<Triple<String, Point, Int>, UShort> =
-            mutableMapOf<Triple<String, Point, Int>, UShort>()
+    // --> Returns triple consisting of
+    // 1) Geometry collection of polygons for the cells contained within the LAMM
+    // 2) Geometry collection of cells comprising the nearby area of the sensing client
+    // 3) Map of the triple (cellId, point of the cell, discretization level of the cell) to the
+    // measurement value corresponding to the cell for all the cells contained within the LAMM
+    public fun getMapStructuresForLamm(
+        localAggregatedMeasurementMap: LocalAggregatedMeasurementMap,
+        clientPositionCellId: String
+    ): Triple<GeometryCollection<Polygon>, GeometryCollection<Polygon>, MutableMap<Triple<String, Point, Int>, UShort>> {
+        val polygonsForLamm: MutableList<Polygon> = mutableListOf<Polygon>()
         val polygonsForNearbyArea: MutableList<Polygon> = mutableListOf<Polygon>()
+        val labelsForLammPolygons: MutableMap<Triple<String, Point, Int>, UShort> =
+            mutableMapOf<Triple<String, Point, Int>, UShort>()
 
-        val parentCellWithNeighborhoodComprisingNearbyArea: List<String> = DiscretizationController.getParentCellWithNeighborhood(clientPositionCellId,
-            DataStore.levelToDetermineNearbyArea)
+        val parentCellWithNeighborhoodComprisingNearbyArea: List<String> =
+            DiscretizationController.getParentCellWithNeighborhood(
+                clientPositionCellId,
+                DataStore.levelToDetermineNearbyArea
+            )
 
         parentCellWithNeighborhoodComprisingNearbyArea.forEach { cellId ->
             val verticesForUberH3Cell: MutableList<LatLng> = getVerticesForUberH3Cell(cellId)
@@ -191,23 +92,28 @@ object CellConverter {
                 }
 
                 val polygon: Polygon = Polygon(verticesOfUberH3CellAsPositions)
-                polygonsForUberH3Cells.add(polygon)
+                polygonsForLamm.add(polygon)
                 val point: Point = Point(centrePointForUberH3Cell.lng, centrePointForUberH3Cell.lat)
                 val cellLevel: Int = h3Core.getResolution(cellId)
 
-                labelsForUberH3Cells[Triple(cellId, point, cellLevel)] =
+                labelsForLammPolygons[Triple(cellId, point, cellLevel)] =
                     measurement.measurementValue
             }
         }
 
         val polygonGeometryCollection: GeometryCollection<Polygon> =
-            GeometryCollection<Polygon>(polygonsForUberH3Cells)
+            GeometryCollection<Polygon>(polygonsForLamm)
         val polygonNearbyAreaGeometryCollection: GeometryCollection<Polygon> =
             GeometryCollection<Polygon>(polygonsForNearbyArea)
 
-        return Triple(polygonGeometryCollection, polygonNearbyAreaGeometryCollection, labelsForUberH3Cells)
+        return Triple(
+            polygonGeometryCollection,
+            polygonNearbyAreaGeometryCollection,
+            labelsForLammPolygons
+        )
     }
 
+    // Checked (final)
     public fun compressUberH3CellIdHexString(decompressedUberH3CellIdHexString: String): String {
         // Convert hexadecimal string to binary string
         var decompressedUberH3CellIdBinaryString: String =
@@ -237,6 +143,7 @@ object CellConverter {
         return compressedUberH3CellIdHexString
     }
 
+    // Checked (final)
     public fun decompressUberH3CellIdHexString(compressedUberH3CellIdHexString: String): String {
         // Convert hexadecimal string to binary string
         var compressedUberH3CellIdBinaryString: String =
@@ -263,6 +170,7 @@ object CellConverter {
         return decompressedUberH3CellIdHexString
     }
 
+    // Checked (final)
     // Adds leading zeros to cell identifier string, as Uber H3 cuts leading zeros off when generating
     // cell identifiers
     public fun addLeadingZerosToCellId(cellId: String): String {

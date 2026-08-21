@@ -6,14 +6,15 @@ import android.net.wifi.aware.SubscribeDiscoverySession
 import android.util.Log
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.positionalBeacon.PositionalBeaconTO
 import com.leopoldBlk.mobileSensingClients.util.DataStore
+import com.leopoldBlk.mobileSensingClients.util.controller.EdgeClientDecisionController
 import com.leopoldBlk.mobileSensingClients.util.controller.LogController
-import com.leopoldBlk.mobileSensingClients.util.controller.TransmissionDecisionController
 import com.leopoldBlk.mobileSensingClients.util.converter.PositionalBeaconConverter
 import crowdDensityLibrary.dataClasses.PositionalBeacon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+// Checked (final)
 class SubscribingPositionalBeaconSessionCallback : DiscoverySessionCallback() {
     private val className: String = "SubscribingPositionalBeaconSessionCallback"
 
@@ -26,6 +27,7 @@ class SubscribingPositionalBeaconSessionCallback : DiscoverySessionCallback() {
 //    private var discoveredServicesPerSecond: Float = 0.0F
 //    private lateinit var startingSubscribingTimestamp: LocalDateTime
 
+    // Checked (final)
     override fun onSubscribeStarted(session: SubscribeDiscoverySession) {
         super.onSubscribeStarted(session)
 
@@ -39,6 +41,7 @@ class SubscribingPositionalBeaconSessionCallback : DiscoverySessionCallback() {
         )
     }
 
+    // Checked (final)
     override fun onSessionConfigFailed() {
         super.onSessionConfigFailed()
 
@@ -49,16 +52,10 @@ class SubscribingPositionalBeaconSessionCallback : DiscoverySessionCallback() {
         )
     }
 
+    // Checked (final)
     override fun onServiceDiscovered(info: ServiceDiscoveryInfo) {
         // Launch coroutine for handling received positional beacon within the corresponding CoroutineScope
         coroutineScopeHandleReceivedPositionalBeacon.launch {
-            val timestampServiceWithPositionalBeaconDiscovered: Long =
-                if (DataStore.trustedTimeClient != null) {
-                    DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!!
-                } else {
-                    System.currentTimeMillis()
-                }
-
             super.onServiceDiscovered(info)
 //        For testing purpose:
 //        calculateDiscoveredServicesPerSecond()
@@ -73,10 +70,10 @@ class SubscribingPositionalBeaconSessionCallback : DiscoverySessionCallback() {
 
                 DataStore.measurementManager.handleReceivedPositionalBeacon(receivedPositionalBeacon)
 
-                // Recalculate transmission decision (check if sensing client has the largest transmission benefit of nearby clients)
+                // Check if client has to take the role of an edge client or has to take of the role of an edge client
                 // This might have been changed since a positional beacon containing a larger value
                 // for transmission benefit could have been arrived in the previous step
-                TransmissionDecisionController.updateTransmissionDecision()
+                EdgeClientDecisionController.performEdgeClientDecision()
 
                 LogController.log(
                     Log.INFO,
