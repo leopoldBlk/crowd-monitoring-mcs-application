@@ -41,7 +41,7 @@ class PositionalBeaconConverterTest {
                 byteArrayForTestReconvertedToPositionalBeaconTO
             )
 
-        assertTrue(positionalBeaconForTest.clientId contentEquals positionalBeaconTOReconvertedToPositionalBeacon.clientId)
+        assertTrue(positionalBeaconForTest.clientIdHexString contentEquals positionalBeaconTOReconvertedToPositionalBeacon.clientIdHexString)
         assertEquals(
             positionalBeaconForTest.clientPosition.coordinates.latitude,
             positionalBeaconTOReconvertedToPositionalBeacon.clientPosition.coordinates.latitude,
@@ -53,8 +53,8 @@ class PositionalBeaconConverterTest {
             0.0
         )
         assertEquals(
-            positionalBeaconForTest.clientPosition.cellId,
-            positionalBeaconTOReconvertedToPositionalBeacon.clientPosition.cellId
+            positionalBeaconForTest.clientPosition.cellIdHexString,
+            positionalBeaconTOReconvertedToPositionalBeacon.clientPosition.cellIdHexString
         )
         assertEquals(
             positionalBeaconForTest.clientTransmissionBenefit,

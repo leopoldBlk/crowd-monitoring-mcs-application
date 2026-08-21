@@ -6,6 +6,7 @@ import org.springframework.amqp.core.QueueBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
+// Checked (final)
 // Source: https://www.rabbitmq.com/tutorials/tutorial-one-spring-amqp
 @Configuration
 class RabbitMQConfiguration {
@@ -25,7 +26,7 @@ class RabbitMQConfiguration {
 
     // Bind queue for receiving global density data to the corresponding exchange
     @Bean
-    fun globalDensityDataBinding(queue: Queue): Binding {
+    fun globalDensityDataBinding(): Binding {
         return Binding(queueName, Binding.DestinationType.QUEUE, exchangeName, "", null)
     }
 }

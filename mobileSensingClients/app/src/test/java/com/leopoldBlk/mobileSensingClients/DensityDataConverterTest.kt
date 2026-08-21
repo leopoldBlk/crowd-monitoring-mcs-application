@@ -119,13 +119,13 @@ class DensityDataConverterTest {
         localAggregatedMeasurementMapForTestWithoutSplitting.getAllMeasurements()
             .forEach { (cellId, measurement) ->
                 assertEquals(
-                    localAggregatedMeasurementMapForTestWithoutSplitting.getMeasurement(cellId)!!.cellId,
-                    reconvertedMeasurementMap.getMeasurement(cellId)!!.cellId
+                    localAggregatedMeasurementMapForTestWithoutSplitting.getMeasurement(cellId)!!.cellIdHexString,
+                    reconvertedMeasurementMap.getMeasurement(cellId)!!.cellIdHexString
                 )
 
                 assertEquals(
-                    localAggregatedMeasurementMapForTestWithoutSplitting.getMeasurement(cellId)!!.clientId,
-                    reconvertedMeasurementMap.getMeasurement(cellId)!!.clientId
+                    localAggregatedMeasurementMapForTestWithoutSplitting.getMeasurement(cellId)!!.clientIdHexString,
+                    reconvertedMeasurementMap.getMeasurement(cellId)!!.clientIdHexString
                 )
 
                 assertEquals(
@@ -177,13 +177,13 @@ class DensityDataConverterTest {
         localAggregatedMeasurementMapForTestWithSplitting.getAllMeasurements()
             .forEach { (cellId, measurement) ->
                 assertEquals(
-                    localAggregatedMeasurementMapForTestWithSplitting.getMeasurement(cellId)!!.cellId,
-                    reconvertedMeasurementMap.getMeasurement(cellId)!!.cellId
+                    localAggregatedMeasurementMapForTestWithSplitting.getMeasurement(cellId)!!.cellIdHexString,
+                    reconvertedMeasurementMap.getMeasurement(cellId)!!.cellIdHexString
                 )
 
                 assertEquals(
-                    localAggregatedMeasurementMapForTestWithSplitting.getMeasurement(cellId)!!.clientId,
-                    reconvertedMeasurementMap.getMeasurement(cellId)!!.clientId
+                    localAggregatedMeasurementMapForTestWithSplitting.getMeasurement(cellId)!!.clientIdHexString,
+                    reconvertedMeasurementMap.getMeasurement(cellId)!!.clientIdHexString
                 )
 
                 assertEquals(
