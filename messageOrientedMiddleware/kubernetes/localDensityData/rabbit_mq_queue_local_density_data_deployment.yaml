@@ -8,5 +8,6 @@ spec:
   type: quorum
   durable: true
   autoDelete: false
+  exclusive: false
   rabbitmqClusterReference:
     name: rabbit-mq-cluster
