@@ -115,7 +115,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
         // --> Problem: Old beacons and measurements remain in the clients managed entities and are not removed in the absence of other sensing clients
         // --> Solution: Own cleanup process to get rid of data exceeded the ttl (not defined in concept!)
         // --> Old beacons and measurements are also removed if no positional beacons or famms from other clients are received
-        DataStore.measurementManager.cleanUp()
+        DataStore.measurementManager.removeExceededBeaconsAndMeasurements()
 
         // Recalculate transmission decision (check if sensing client has the largest transmission benefit of nearby clients)
         // This might have been changed since nt was cleaned in the step before
