@@ -2,29 +2,9 @@ package com.leopoldBlk.mobileSensingClients.util.controller
 
 import com.leopoldBlk.mobileSensingClients.util.DataStore
 import crowdDensityLibrary.dataClasses.PositionalBeacon
-import java.io.File
-import java.io.FileWriter
 import java.nio.ByteBuffer
 
 object TransmissionDecisionController {
-    private val evaluationSelectionOfEdgeClientEventLog: File =
-        File(LoggingDirectoryController.getEvaluationSelectionOfEdgeClientsLogFilePath("SelectionOfEdgeClientEventLog"))
-
-    private lateinit var evaluationSelectionOfEdgeClientEventLogFileWriter: FileWriter
-
-    init {
-        // Create directory for the log file if not already existing
-        if (!File(evaluationSelectionOfEdgeClientEventLog.parent).exists()) {
-            File(evaluationSelectionOfEdgeClientEventLog.parent).mkdirs()
-        }
-
-        // Create file writer which appends new logs to the log file and specifying the logging format
-        evaluationSelectionOfEdgeClientEventLogFileWriter =
-            FileWriter(evaluationSelectionOfEdgeClientEventLog, true)
-        evaluationSelectionOfEdgeClientEventLogFileWriter.write("client id; was previous edge client; is new edge client; timestamp after update of the edge client role in milliseconds\n")
-        evaluationSelectionOfEdgeClientEventLogFileWriter.flush()
-    }
-
     public fun updateTransmissionDecision() {
         val newValueForNeighborWithLargerTransmissionBenefitExists: Boolean =
             neighborWithLargerTransmissionBenefitExists()
@@ -38,15 +18,6 @@ object TransmissionDecisionController {
             } else {
                 System.currentTimeMillis()
             }
-
-        if (oldValueForNeighborWithLargerTransmissionBenefitExists != newValueForNeighborWithLargerTransmissionBenefitExists) {
-            evaluationSelectionOfEdgeClientEventLogFileWriter.write("${DataStore.clientIdHexString}; ${!oldValueForNeighborWithLargerTransmissionBenefitExists}; ${!newValueForNeighborWithLargerTransmissionBenefitExists}; ${timestampAfterUpdateOfTheEdgeClientRole}\n")
-            evaluationSelectionOfEdgeClientEventLogFileWriter.flush()
-        }
-    }
-
-    public fun closeEvaluationSelectionOfEdgeClientEventLogFileWriter() {
-        evaluationSelectionOfEdgeClientEventLogFileWriter.close()
     }
 
     private fun neighborWithLargerTransmissionBenefitExists(): Boolean {

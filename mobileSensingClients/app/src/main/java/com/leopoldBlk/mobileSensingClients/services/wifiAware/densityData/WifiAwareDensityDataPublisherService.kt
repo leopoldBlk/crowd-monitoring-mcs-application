@@ -14,7 +14,6 @@ import com.leopoldBlk.mobileSensingClients.services.wifiAware.WifiAwareService
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData.callbacks.PublishingDensityDataSessionCallback
 import com.leopoldBlk.mobileSensingClients.util.DataStore
 import com.leopoldBlk.mobileSensingClients.util.controller.DiscretizationController
-import com.leopoldBlk.mobileSensingClients.util.controller.LoggingDirectoryController
 import com.leopoldBlk.mobileSensingClients.util.controller.TransmissionDecisionController
 import com.leopoldBlk.mobileSensingClients.util.converter.DensityDataConverter
 import crowdDensityLibrary.LocalAggregatedMeasurementMap
@@ -24,8 +23,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.io.File
-import java.io.FileWriter
 import kotlin.time.Duration.Companion.milliseconds
 
 class WifiAwareDensityDataPublisherService : WifiAwareService() {
@@ -35,8 +32,6 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
     private val publishingDensityDataSessionCallback: PublishingDensityDataSessionCallback =
         PublishingDensityDataSessionCallback()
     private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO)
-    private val evaluationBroadcastedDensityDataLog: File =
-        File(LoggingDirectoryController.getEvaluationD2dCommunicationLogFilePath("BroadcastedDensityDataLog"))
 
     private var lammAsDensityDataTOs: List<DensityDataTO>? = null
     private val maximumDataPacketsToBroadcastPerPublishingInterval: ULong =
@@ -46,7 +41,6 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
     private lateinit var publishingSessionCallbackHandler: Handler
     private lateinit var publishConfigs: MutableList<PublishConfig>
     private lateinit var transmittingLammJob: Job
-    private lateinit var evaluationBroadcastedDensityDataLogFileWriter: FileWriter
 
     private var wifiAwareAttachEventCallback: AttachCallback = object : AttachCallback() {
         override fun onAttached(session: WifiAwareSession?) {
@@ -61,17 +55,6 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
 
     override fun onCreate() {
         super.onCreate()
-
-        // Create directory for the log file if not already existing
-        if (!File(evaluationBroadcastedDensityDataLog.parent).exists()) {
-            File(evaluationBroadcastedDensityDataLog.parent).mkdirs()
-        }
-
-        // Create file writer which appends new logs to the log file and specifying the logging format
-        evaluationBroadcastedDensityDataLogFileWriter =
-            FileWriter(evaluationBroadcastedDensityDataLog, true)
-        evaluationBroadcastedDensityDataLogFileWriter.write("transmission id; packet id; client id of the broadcaster; number of measurements within the data packet; packet size in bytes (header + measurement map); timestamp within packet header in seconds; timestamp after updating publish config in milliseconds\n")
-        evaluationBroadcastedDensityDataLogFileWriter.flush()
 
         wifiAwarePublisherHandlerThread.start()
 
@@ -101,9 +84,6 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
 
     override fun onDestroy() {
         super.onDestroy()
-
-        evaluationBroadcastedDensityDataLogFileWriter.close()
-        TransmissionDecisionController.closeEvaluationSelectionOfEdgeClientEventLogFileWriter()
 
         transmittingLammJob.cancel()
         isWifiAwareSessionInitialized = false
@@ -172,22 +152,6 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
                             System.currentTimeMillis()
                         }
 
-                    evaluationBroadcastedDensityDataLogFileWriter.write(
-                        "${lammAsDensityDataTOs!!.first().getTransmissionIdAsHexString()}; " +
-                                "${lammAsDensityDataTOs!!.first().getPacketId()}; " +
-                                "${lammAsDensityDataTOs!!.first().getClientIdAsHexString()}; " +
-                                "${lammAsDensityDataTOs!!.first().getDensityDataLength()}; " +
-                                "${
-                                    lammAsDensityDataTOs!!.first()
-                                        .getDensityDataTOasByteArray().size
-                                }; " +
-                                "${
-                                    lammAsDensityDataTOs!!.first().getHeaderTimestampAsULong()
-                                }; " +
-                                "${timestampAfterPublishingConfigUpdated}\n"
-                    )
-                    evaluationBroadcastedDensityDataLogFileWriter.flush()
-
                     delay(publishingIntervalForEachConfigInMilliseconds.milliseconds)
 
                     if (publishConfigs.size > 1) {
@@ -204,22 +168,6 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
                                 } else {
                                     System.currentTimeMillis()
                                 }
-
-                            evaluationBroadcastedDensityDataLogFileWriter.write(
-                                "${lammAsDensityDataTOs!![publishConfigIndexCounter].getTransmissionIdAsHexString()}; " +
-                                        "${lammAsDensityDataTOs!![publishConfigIndexCounter].getPacketId()}; " +
-                                        "${lammAsDensityDataTOs!![publishConfigIndexCounter].getClientIdAsHexString()}; " +
-                                        "${lammAsDensityDataTOs!![publishConfigIndexCounter].getDensityDataLength()}; " +
-                                        "${
-                                            lammAsDensityDataTOs!![publishConfigIndexCounter]
-                                                .getDensityDataTOasByteArray().size
-                                        }; " +
-                                        "${
-                                            lammAsDensityDataTOs!![publishConfigIndexCounter].getHeaderTimestampAsULong()
-                                        }; " +
-                                        "${timestampAfterPublishingConfigUpdated}\n"
-                            )
-                            evaluationBroadcastedDensityDataLogFileWriter.flush()
 
                             publishConfigIndexCounter += 1
                             delay(publishingIntervalForEachConfigInMilliseconds.milliseconds)
@@ -241,22 +189,6 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
                             } else {
                                 System.currentTimeMillis()
                             }
-
-                        evaluationBroadcastedDensityDataLogFileWriter.write(
-                            "${lammAsDensityDataTOs!![publishConfigIndexCounter].getTransmissionIdAsHexString()}; " +
-                                    "${lammAsDensityDataTOs!![publishConfigIndexCounter].getPacketId()}; " +
-                                    "${lammAsDensityDataTOs!![publishConfigIndexCounter].getClientIdAsHexString()}; " +
-                                    "${lammAsDensityDataTOs!![publishConfigIndexCounter].getDensityDataLength()}; " +
-                                    "${
-                                        lammAsDensityDataTOs!![publishConfigIndexCounter]
-                                            .getDensityDataTOasByteArray().size
-                                    }; " +
-                                    "${
-                                        lammAsDensityDataTOs!![publishConfigIndexCounter].getHeaderTimestampAsULong()
-                                    }; " +
-                                    "${timestampAfterPublishingConfigUpdated}\n"
-                        )
-                        evaluationBroadcastedDensityDataLogFileWriter.flush()
 
                         publishConfigIndexCounter += 1
                         delay(publishingIntervalForEachConfigInMilliseconds.milliseconds)
