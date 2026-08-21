@@ -16,20 +16,24 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.milliseconds
 
+// Checked (final)
 class PositionalBeaconService : LifecycleService() {
     private val className: String = "PositionalBeaconService"
     private val coroutineScopeUpdatePositionalBeacon: CoroutineScope =
         CoroutineScope(Dispatchers.Default)
 
+    // Checked (final)
     override fun onCreate() {
         super.onCreate()
     }
 
+    // Checked (final)
     override fun onBind(intent: Intent): IBinder {
         super.onBind(intent)
         TODO("Return the communication channel to the service.")
     }
 
+    // Checked (final)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val superOnStartCommandStatus: Int = super.onStartCommand(intent, flags, startId)
 
@@ -43,12 +47,14 @@ class PositionalBeaconService : LifecycleService() {
         return superOnStartCommandStatus
     }
 
+    // Checked (final)
     override fun onDestroy() {
         super.onDestroy()
 
         coroutineScopeUpdatePositionalBeacon.cancel()
     }
 
+    // Checked (final)
     private fun updatePositionalBeacon() {
         val currentClientPosition: Position? = DataStore.clientPosition.value
         val currentClientTransmissionBenefit: Float? = DataStore.clientTransmissionBenefit.value
