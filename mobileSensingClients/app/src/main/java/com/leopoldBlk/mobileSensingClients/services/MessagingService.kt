@@ -86,9 +86,9 @@ class MessagingService : LifecycleService() {
         }
 
     // Checked (final)
-    private val lammAndOrderForMeasurementTransmissionObserver: Observer<Pair<MeasurementMap, List<String>>?> =
-        object : Observer<Pair<MeasurementMap, List<String>>?> {
-            override fun onChanged(value: Pair<MeasurementMap, List<String>>?) {
+    private val lammAndOrderForMeasurementTransmissionObserver: Observer<Triple<MeasurementMap, List<String>, Long?>?> =
+        object : Observer<Triple<MeasurementMap, List<String>, Long?>?> {
+            override fun onChanged(value: Triple<MeasurementMap, List<String>, Long?>?) {
                 // Only publish the updated LAMM, if the client is an edge client according to its transmission benefit value AND
                 // the LAMM is not empty
                 if (value != null && value.first.getAllMeasurements()
@@ -109,6 +109,13 @@ class MessagingService : LifecycleService() {
                         messageHeaders["ProducerId"] = DataStore.clientIdHexString
                         messageHeaders["MessageId"] = messageId.toHexString()
 
+                        val timestampLammAndMessageGenerationsEnds: Long? =
+                            if (DataStore.trustedTimeClient != null) {
+                                DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!!
+                            } else {
+                                null
+                            }
+
                         // Publish the serialized LAMM along with the message headers containing
                         // the producer and message identifier
                         channel.basicPublish(
@@ -118,13 +125,23 @@ class MessagingService : LifecycleService() {
                             serializedLammToJson.toByteArray()
                         )
 
-                        if (DataStore.trustedTimeClient != null) {
-                            val timestampAfterLocalDensityDataMessageSent: Long =
+                        val timestampAfterLocalDensityDataMessageSent: Long? =
+                            if (DataStore.trustedTimeClient != null) {
                                 DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!!
+                            } else {
+                                null
+                            }
+
+                        if (timestampAfterLocalDensityDataMessageSent != null && value.third != null && timestampLammAndMessageGenerationsEnds != null) {
+                            val timeToGenerateLammAndMessage: Long =
+                                timestampLammAndMessageGenerationsEnds - value.third!!
 
                             ScalabilityAnalysisLogController.addScalabilityAnalysisLogSentMessagesEntry(
                                 DataStore.clientIdHexString,
                                 messageId.toHexString(),
+                                value.third!!.toULong(),
+                                timestampLammAndMessageGenerationsEnds.toULong(),
+                                timeToGenerateLammAndMessage.toULong(),
                                 timestampAfterLocalDensityDataMessageSent.toULong()
                             )
                         }

@@ -49,8 +49,8 @@ object DataStore {
         MutableLiveData(false)
 
     // TODO: Get initial lamm and order for transmission from measurement manager instead of creating here
-    public var lammAndOrderForMeasurementTransmission: MutableLiveData<Pair<MeasurementMap, List<String>>> =
-        MutableLiveData(Pair(LocalAggregatedMeasurementMap(), mutableListOf<String>()))
+    public var lammAndOrderForMeasurementTransmission: MutableLiveData<Triple<MeasurementMap, List<String>, Long?>> =
+        MutableLiveData(Triple(LocalAggregatedMeasurementMap(), mutableListOf<String>(), null))
 
     public fun updateClientId(newClientId: ByteArray) {
         clientId = newClientId
