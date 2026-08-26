@@ -38,7 +38,7 @@ fun Map(useTestData: Boolean) {
         DataStore.clientPosition.observeAsState()
 
     // Observe local aggregated measurement map for update of fill and symbol layer to show cells with corresponding measurement value
-    val lammAndOrderForMeasurementTransmission: State<Pair<MeasurementMap, List<String>>?> =
+    val lammAndOrderForMeasurementTransmission: State<Triple<MeasurementMap, List<String>, Long?>?> =
         DataStore.lammAndOrderForMeasurementTransmission.observeAsState()
 
     // Local aggregated measurement map to be drawn

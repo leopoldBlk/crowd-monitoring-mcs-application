@@ -96,15 +96,18 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
     // Checked (final)
     // Generating/updating the lamm and order for transmission and publish
     private suspend fun transmitLamm() {
+        val timestampLammAndMessageGenerationsStarts: Long? =
+            if (DataStore.trustedTimeClient != null) {
+                DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!!
+            } else {
+                null
+            }
+
         // When not receiving positional beacons or famms from other clients, the nt, lmm and famms will not be updated automatically
         // --> Problem: Old beacons and measurements remain in the clients managed entities and are not removed in the absence of other sensing clients
         // --> Solution: Own cleanup process to get rid of data exceeded the ttl (not defined in concept!)
         // --> Old beacons and measurements are also removed if no positional beacons or famms from other clients are received
         DataStore.measurementManager.removeExceededBeaconsAndMeasurements()
-
-        // Check if client has to take the role of an edge client
-        // This might have been changed since nt was cleaned in the step before
-        EdgeClientDecisionController.performEdgeClientDecision()
 
         // Generate/update the lamm and order for transmission
         val updatedLammAndOrderForTransmission: Pair<MeasurementMap, List<String>> =
@@ -114,15 +117,28 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
             DiscretizationController.measurementPrioritization(updatedLammAndOrderForTransmission.first as LocalAggregatedMeasurementMap)
 
         val prioritizedLammAndOrderForTransmission =
-            Pair(lammWithPrioritizedMeasurements, updatedLammAndOrderForTransmission.second)
+            Triple(
+                lammWithPrioritizedMeasurements,
+                updatedLammAndOrderForTransmission.second,
+                timestampLammAndMessageGenerationsStarts
+            )
 
         // Post generated/updated lamm so map can update the displayed data
         DataStore.lammAndOrderForMeasurementTransmission.postValue(
             prioritizedLammAndOrderForTransmission
         )
 
+        // Check if client has to take the role of an edge client
+        // This might have been changed since nt was cleaned in the step before
+        EdgeClientDecisionController.performEdgeClientDecision()
+
         // Generating the publish configs according to the generated and updated lamm and order of transmission
-        updatePublishConfig(prioritizedLammAndOrderForTransmission)
+        updatePublishConfig(
+            Pair(
+                prioritizedLammAndOrderForTransmission.first,
+                prioritizedLammAndOrderForTransmission.second
+            )
+        )
 
         if (isWifiAwareSessionInitialized && publishConfigs.isNotEmpty()) {
             // Split the defined transmission interval for a lamm evenly across the DensityDataTOs to send
@@ -189,8 +205,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
             )
 
             delay(DataStore.publishLammIntervalInMilliseconds.toLong().milliseconds)
-        }
-        else{
+        } else {
             delay(DataStore.publishLammIntervalInMilliseconds.toLong().milliseconds)
         }
     }
