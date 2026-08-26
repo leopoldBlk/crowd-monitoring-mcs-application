@@ -27,9 +27,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.random.Random
-import kotlin.time.Duration
-import kotlin.time.TimeMark
-import kotlin.time.TimeSource
 
 // Checked (final)
 class MessagingService : LifecycleService() {
@@ -282,7 +279,6 @@ class MessagingService : LifecycleService() {
                         } else {
                             null
                         }
-                    val timemarkMessageProcessingStarts: TimeMark = TimeSource.Monotonic.markNow()
 
                     super.handleDelivery(consumerTag, envelope, properties, body)
 
@@ -290,12 +286,6 @@ class MessagingService : LifecycleService() {
                         val messageProducerId: String = properties.headers["ProducerId"].toString()
                         val messageId: String = properties.headers["MessageId"].toString()
                         val messageBodyAsString: String = body.decodeToString()
-
-                        LogController.log(
-                            Log.INFO,
-                            "MessagingService",
-                            "Received global density data from server (${messageProducerId}) in message (${messageId}): ${messageBodyAsString}"
-                        )
 
                         // Deserialize the received measurement map as this is in JSON format
                         val deserializedMeasurementMapFromJson: MeasurementMap =
@@ -314,17 +304,31 @@ class MessagingService : LifecycleService() {
                             discretizedMeasurementMap
                         )
 
-                        val durationForProcessingGlobalDensityDataMessage: Duration =
-                            timemarkMessageProcessingStarts.elapsedNow()
+                        val timestampMessageProcessingEnds: Long? =
+                            if (DataStore.trustedTimeClient != null) {
+                                DataStore.trustedTimeClient!!.computeCurrentUnixEpochMillis()!!
+                            } else {
+                                null
+                            }
 
-                        if (timestampMessageProcessingStarts != null) {
+                        if (timestampMessageProcessingStarts != null && timestampMessageProcessingEnds != null) {
+                            val durationForProcessingGlobalDensityDataMessage: Long =
+                                timestampMessageProcessingEnds - timestampMessageProcessingStarts
+
                             ScalabilityAnalysisLogController.addScalabilityAnalysisLogProcessedMessagesEntry(
                                 DataStore.clientIdHexString,
                                 messageId,
                                 timestampMessageProcessingStarts.toULong(),
-                                durationForProcessingGlobalDensityDataMessage
+                                timestampMessageProcessingEnds.toULong(),
+                                durationForProcessingGlobalDensityDataMessage.toULong()
                             )
                         }
+
+                        LogController.log(
+                            Log.INFO,
+                            "MessagingService",
+                            "Received global density data from server (${messageProducerId}) in message (${messageId}): ${messageBodyAsString}"
+                        )
                     }
                 }
             }

@@ -5,7 +5,6 @@ import com.leopoldBlk.mobileSensingClients.util.DataStore
 import java.io.File
 import java.io.FileWriter
 import java.time.LocalDateTime
-import kotlin.time.Duration
 
 // Checked (final)
 object ScalabilityAnalysisLogController {
@@ -59,10 +58,11 @@ object ScalabilityAnalysisLogController {
             FileWriter(scalabilityAnalysisLogProcessedMessagesFile, true)
 
         scalabilityAnalysisLogProcessedMessagesFileWriter.write(
-            "identifier of the client processing the message containing global density data; " +
-                    "identifier of processed message containing global density data; " +
-                    "timestamp when starting to process the message containing global density data in milliseconds; " +
-                    "duration the message containing global density data took to process\n"
+            "identifier of the client processing the message containing a FAMM with global density data; " +
+                    "identifier of processed message containing a FAMM with global density data; " +
+                    "timestamp when starting to process the message containing a FAMM with global density data in milliseconds; " +
+                    "timestamp when finishing to process the message containing a FAMM with global density data in milliseconds; " +
+                    "duration the message containing a FAMM with global density data took to process in milliseconds\n"
         )
         scalabilityAnalysisLogProcessedMessagesFileWriter.flush()
     }
@@ -87,13 +87,15 @@ object ScalabilityAnalysisLogController {
         clientIdHexString: String,
         messageIdHexString: String,
         timestampWhenStartingToProcessMessageInMilliseconds: ULong,
-        durationTheMessageTookToProcess: Duration
+        timestampWhenEndingToProcessMessageInMilliseconds: ULong,
+        durationTheMessageTookToProcessInMilliseconds: ULong
     ) {
         scalabilityAnalysisLogProcessedMessagesFileWriter.write(
             "$clientIdHexString; " +
                     "$messageIdHexString; " +
                     "$timestampWhenStartingToProcessMessageInMilliseconds; " +
-                    "$durationTheMessageTookToProcess\n"
+                    "$timestampWhenEndingToProcessMessageInMilliseconds; " +
+                    "$durationTheMessageTookToProcessInMilliseconds\n"
         )
         scalabilityAnalysisLogProcessedMessagesFileWriter.flush()
     }
