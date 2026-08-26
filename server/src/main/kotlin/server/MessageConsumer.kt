@@ -1,7 +1,6 @@
 package server
 
 import crowdDensityLibrary.ForeignAggregatedMeasurementMap
-import crowdDensityLibrary.LocalAggregatedMeasurementMap
 import crowdDensityLibrary.MeasurementMap
 import crowdDensityLibrary.serializer.MeasurementMapSerializer
 import kotlinx.coroutines.CoroutineScope
@@ -16,16 +15,13 @@ import org.springframework.amqp.core.MessageProperties
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
 import java.net.InetAddress
-import kotlin.time.Duration
-import kotlin.time.TimeMark
-import kotlin.time.TimeSource
 
 // Checked (final)
 // Sources:
 // https://www.rabbitmq.com/tutorials/tutorial-one-spring-amqp
 // https://www.svix.com/guides/rabbitmq/rabbitmq-springboot-tutorial/
 @Service
-class MessageConsumer(private val messageProducer: MessageProducer) {
+class MessageConsumer() {
     private val logger: Logger = LoggerFactory.getLogger("RabbitMqMessageConsumer")
     private val loggerScalabilityAnalysis: Logger =
         LoggerFactory.getLogger("RabbitMqMessageConsumer - Scalability Analysis")
@@ -36,10 +32,11 @@ class MessageConsumer(private val messageProducer: MessageProducer) {
 
     init {
         loggerScalabilityAnalysis.info(
-            "identifier of the server processing the message containing local density data; " +
-                    "identifier of processed message containing local density data; " +
-                    "timestamp when starting to process the message containing local density data in milliseconds;" +
-                    " duration the message containing local density data took to process"
+            "identifier of the server processing the message containing a FAMM with local density data; " +
+                    "identifier of processed message containing a FAMM with local density data; " +
+                    "timestamp when starting to process the message containing a FAMM with local density data in milliseconds; " +
+                    "timestamp when finishing to process the message containing a FAMM with local density data in milliseconds; " +
+                    "duration the message containing a FAMM with local density data took to process in milliseconds"
         )
     }
 
@@ -54,52 +51,28 @@ class MessageConsumer(private val messageProducer: MessageProducer) {
         // Launch coroutine for handling received local density data within the corresponding CoroutineScope
         coroutineScopeHandleReceivedMessages.launch {
             val timestampMessageProcessingStarts: Long = getTimestampIncludingNtpOffset(ServerApplication.ntpSource)
-            val timemarkMessageProcessingStarts: TimeMark = TimeSource.Monotonic.markNow()
 
             val messageProperties: MessageProperties = receivedMessage.messageProperties
             val messageProducerId: String = messageProperties.getHeader<String>("ProducerId")!!
             val messageId: String = messageProperties.getHeader<String>("MessageId")!!
             val messageBody: String = receivedMessage.body.decodeToString()
 
-            logger.info("Received local density data from client (${messageProducerId}) in message (${messageId}): ${messageBody}")
-
             // Handle received local density data sent by an edge client
             handleReceivedMessage(messageProducerId, messageBody)
 
-            // Remove exceeded entries from all the FAMMs (additional step)
-            ServerApplication.measurementManager.removeExceededBeaconsAndMeasurements()
-
-            // Update own LAMM and order for transmission
-            val updatedLammAndOrderForTransmission: Pair<MeasurementMap, List<String>> =
-                ServerApplication.measurementManager.updateLammAndOrderForTransmission()
-
-            // Prioritize the measurements with larger discretization level over the ones with lower discretization level
-            // which are covering the same area
-            val lammWithPrioritizedMeasurements: LocalAggregatedMeasurementMap =
-                Utils.measurementPrioritization(updatedLammAndOrderForTransmission.first as LocalAggregatedMeasurementMap)
-
-            // Serialize the updated LAMM according to the order of transmission to JSON format
-            val serializedLammToJson: String = MeasurementMapSerializer.serializeMeasurementMapToJson(
-                lammWithPrioritizedMeasurements,
-                updatedLammAndOrderForTransmission.second
-            )
-
-            val durationForProcessingLocalDensityDataMessage: Duration =
-                timemarkMessageProcessingStarts.elapsedNow()
+            val timestampMessageProcessingEnds: Long = getTimestampIncludingNtpOffset(ServerApplication.ntpSource)
+            val durationForProcessingLocalDensityDataMessage: Long =
+                timestampMessageProcessingEnds - timestampMessageProcessingStarts
 
             loggerScalabilityAnalysis.info(
                 "${ServerApplication.serverIdHexString}; " +
                         "$messageId; " +
                         "$timestampMessageProcessingStarts; " +
+                        "$timestampMessageProcessingEnds; " +
                         "$durationForProcessingLocalDensityDataMessage"
             )
 
-            // Publish updated LAMM as message to the exchange for global density data. This way the global density data
-            // is transmitted to the edge clients and the other server instances for synchronization purposes.
-            messageProducer.publishMessage(
-                "rabbit-mq-exchange-global-density-data",
-                serializedLammToJson
-            )
+            logger.info("Received local density data from client (${messageProducerId}) in message (${messageId}): ${messageBody}")
         }
     }
 
