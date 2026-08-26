@@ -40,10 +40,14 @@ object ScalabilityAnalysisLogController {
             FileWriter(scalabilityAnalysisLogSentMessagesFile, true)
 
         scalabilityAnalysisLogSentMessagesFileWriter.write(
-            "identifier of the client sent message containing local density data; " +
-                    "identifier of sent message containing local density data; " +
-                    "timestamp after sending the message containing local density data in milliseconds\n"
+            "identifier of the client sent the message containing the LAMM with local density data; " +
+                    "identifier of sent message containing the LAMM with local density data; " +
+                    "timestamp when starting to generate the LAMM and the message containing the LAMM with local density data in milliseconds; " +
+                    "timestamp when finishing to generate the LAMM and the message containing the LAMM with local density data in milliseconds; " +
+                    "time to to generate the LAMM and the message containing the LAMM with local density data in milliseconds; " +
+                    "timestamp after sending the message containing the LAMM with local density data in milliseconds"
         )
+
         scalabilityAnalysisLogSentMessagesFileWriter.flush()
 
         val scalabilityAnalysisLogProcessedMessagesFileName: String =
@@ -71,12 +75,18 @@ object ScalabilityAnalysisLogController {
     public fun addScalabilityAnalysisLogSentMessagesEntry(
         clientIdHexString: String,
         messageIdHexString: String,
-        timestampAfterMessageSentInMilliseconds: ULong
+        timestampLammAndMessageGenerationsStarts: ULong,
+        timestampLammAndMessageGenerationsEnds: ULong,
+        timeToGenerateLammAndMessage: ULong,
+        timestampAfterLocalDensityDataMessageSent: ULong
     ) {
         scalabilityAnalysisLogSentMessagesFileWriter.write(
             "$clientIdHexString; " +
                     "$messageIdHexString; " +
-                    "$timestampAfterMessageSentInMilliseconds\n"
+                    "$timestampLammAndMessageGenerationsStarts; " +
+                    "$timestampLammAndMessageGenerationsEnds; " +
+                    "$timeToGenerateLammAndMessage; " +
+                    "$timestampAfterLocalDensityDataMessageSent\n"
         )
         scalabilityAnalysisLogSentMessagesFileWriter.flush()
 
