@@ -3,10 +3,12 @@ package server
 import crowdDensityLibrary.MeasurementManager
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
+import org.springframework.scheduling.annotation.EnableScheduling
 import kotlin.random.Random
 
 // Checked (final)
 @SpringBootApplication
+@EnableScheduling
 class ServerApplication {
     companion object {
         // Self-generated identifier of the server

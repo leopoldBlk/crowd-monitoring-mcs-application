@@ -5,7 +5,6 @@ import com.leopoldBlk.mobileSensingClients.util.DataStore
 import java.io.File
 import java.io.FileWriter
 import java.time.LocalDateTime
-import kotlin.time.Duration
 
 // Checked (final)
 object ScalabilityAnalysisLogController {
@@ -41,10 +40,14 @@ object ScalabilityAnalysisLogController {
             FileWriter(scalabilityAnalysisLogSentMessagesFile, true)
 
         scalabilityAnalysisLogSentMessagesFileWriter.write(
-            "identifier of the client sent message containing local density data; " +
-                    "identifier of sent message containing local density data; " +
-                    "timestamp after sending the message containing local density data in milliseconds\n"
+            "identifier of the client sent the message containing the LAMM with local density data; " +
+                    "identifier of sent message containing the LAMM with local density data; " +
+                    "timestamp when starting to generate the LAMM and the message containing the LAMM with local density data in milliseconds; " +
+                    "timestamp when finishing to generate the LAMM and the message containing the LAMM with local density data in milliseconds; " +
+                    "time to to generate the LAMM and the message containing the LAMM with local density data in milliseconds; " +
+                    "timestamp after sending the message containing the LAMM with local density data in milliseconds"
         )
+
         scalabilityAnalysisLogSentMessagesFileWriter.flush()
 
         val scalabilityAnalysisLogProcessedMessagesFileName: String =
@@ -59,10 +62,11 @@ object ScalabilityAnalysisLogController {
             FileWriter(scalabilityAnalysisLogProcessedMessagesFile, true)
 
         scalabilityAnalysisLogProcessedMessagesFileWriter.write(
-            "identifier of the client processing the message containing global density data; " +
-                    "identifier of processed message containing global density data; " +
-                    "timestamp when starting to process the message containing global density data in milliseconds; " +
-                    "duration the message containing global density data took to process\n"
+            "identifier of the client processing the message containing a FAMM with global density data; " +
+                    "identifier of processed message containing a FAMM with global density data; " +
+                    "timestamp when starting to process the message containing a FAMM with global density data in milliseconds; " +
+                    "timestamp when finishing to process the message containing a FAMM with global density data in milliseconds; " +
+                    "duration the message containing a FAMM with global density data took to process in milliseconds\n"
         )
         scalabilityAnalysisLogProcessedMessagesFileWriter.flush()
     }
@@ -71,12 +75,18 @@ object ScalabilityAnalysisLogController {
     public fun addScalabilityAnalysisLogSentMessagesEntry(
         clientIdHexString: String,
         messageIdHexString: String,
-        timestampAfterMessageSentInMilliseconds: ULong
+        timestampLammAndMessageGenerationsStarts: ULong,
+        timestampLammAndMessageGenerationsEnds: ULong,
+        timeToGenerateLammAndMessage: ULong,
+        timestampAfterLocalDensityDataMessageSent: ULong
     ) {
         scalabilityAnalysisLogSentMessagesFileWriter.write(
             "$clientIdHexString; " +
                     "$messageIdHexString; " +
-                    "$timestampAfterMessageSentInMilliseconds\n"
+                    "$timestampLammAndMessageGenerationsStarts; " +
+                    "$timestampLammAndMessageGenerationsEnds; " +
+                    "$timeToGenerateLammAndMessage; " +
+                    "$timestampAfterLocalDensityDataMessageSent\n"
         )
         scalabilityAnalysisLogSentMessagesFileWriter.flush()
 
@@ -87,13 +97,15 @@ object ScalabilityAnalysisLogController {
         clientIdHexString: String,
         messageIdHexString: String,
         timestampWhenStartingToProcessMessageInMilliseconds: ULong,
-        durationTheMessageTookToProcess: Duration
+        timestampWhenEndingToProcessMessageInMilliseconds: ULong,
+        durationTheMessageTookToProcessInMilliseconds: ULong
     ) {
         scalabilityAnalysisLogProcessedMessagesFileWriter.write(
             "$clientIdHexString; " +
                     "$messageIdHexString; " +
                     "$timestampWhenStartingToProcessMessageInMilliseconds; " +
-                    "$durationTheMessageTookToProcess\n"
+                    "$timestampWhenEndingToProcessMessageInMilliseconds; " +
+                    "$durationTheMessageTookToProcessInMilliseconds\n"
         )
         scalabilityAnalysisLogProcessedMessagesFileWriter.flush()
     }
