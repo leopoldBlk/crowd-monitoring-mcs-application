@@ -266,4 +266,9 @@ class MeasurementManager(
             orderForMeasurementTransmission
         )
     }
+
+    // Checked (final)
+    public fun getCurrentLmm(): LocalMeasurementMap {
+        return localMeasurementMap
+    }
 }
