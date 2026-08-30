@@ -44,9 +44,9 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
             SimulatedMobileSensingClientsApplication.measurementManager.clearLmmAndSetNewMeasurements(randomMeasurements)
 
             logger.info(
-                "[FR2] Updated LAMM to: ${
+                "[FR2] [NFR3-C1] Updated LMM to: ${
                     Json { prettyPrint = true }.encodeToString(
-                        SimulatedMobileSensingClientsApplication.measurementManager.getCurrentLammAndOrderForTransmission().first
+                        SimulatedMobileSensingClientsApplication.measurementManager.getCurrentLmm()
                     )
                 }"
             )
@@ -103,6 +103,6 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
             message
         )
 
-        logger.info("Published following message with the id (${messageId.toHexString()}) as producer with the id (${SimulatedMobileSensingClientsApplication.clientIdHexString}): ${messageToBePublished}")
+        logger.info("[NFR3-C1] Published message ${messageId.toHexString()} as producer ${SimulatedMobileSensingClientsApplication.clientIdHexString} to exchange $exchangeToPublishOn")
     }
 }
