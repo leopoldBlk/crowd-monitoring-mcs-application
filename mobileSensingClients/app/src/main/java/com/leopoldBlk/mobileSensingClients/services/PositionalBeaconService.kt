@@ -39,7 +39,14 @@ class PositionalBeaconService : LifecycleService() {
 
         coroutineScopeUpdatePositionalBeacon.launch {
             while (true) {
-                updatePositionalBeacon()
+                val updatedPostionalBeacon: PositionalBeacon? = updatePositionalBeacon()
+
+                if (updatedPostionalBeacon != null) {
+                    DataStore.measurementManager.handleReceivedPositionalBeacon(
+                        updatedPostionalBeacon
+                    )
+                }
+
                 delay(DataStore.publishPositionalBeaconIntervalInMilliseconds.toLong().milliseconds)
             }
         }
@@ -55,7 +62,7 @@ class PositionalBeaconService : LifecycleService() {
     }
 
     // Checked (final)
-    private fun updatePositionalBeacon() {
+    private fun updatePositionalBeacon(): PositionalBeacon? {
         val currentClientPosition: Position? = DataStore.clientPosition.value
         val currentClientTransmissionBenefit: Float? = DataStore.clientTransmissionBenefit.value
 
@@ -78,6 +85,8 @@ class PositionalBeaconService : LifecycleService() {
                     )
                 }",
             )
+
+            return updatedPositionalBeacon
         } else if (currentClientPosition == null) {
             LogController.log(
                 Log.INFO,
@@ -91,5 +100,7 @@ class PositionalBeaconService : LifecycleService() {
                 "Positional beacon was not updated, due to currentClientTransmissionBenefit is null!"
             )
         }
+
+        return null
     }
 }
