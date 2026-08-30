@@ -131,6 +131,16 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
             prioritizedLammAndOrderForTransmission
         )
 
+        LogController.logGeneralFunctionalityEvaluation(
+            Log.INFO,
+            "WifiAwareDensityDataPublisherService",
+            "[FR1-C8] [FR3-C1] [FR3-C2] Updated LAMM to the following: ${
+                Json {
+                    prettyPrint = true
+                }.encodeToString(prioritizedLammAndOrderForTransmission.first.getAllMeasurements())
+            }"
+        )
+
         // Check if client has to take the role of an edge client
         // This might have been changed since nt was cleaned in the step before
         EdgeClientDecisionController.performEdgeClientDecision()
