@@ -7,6 +7,7 @@ import crowdDensityLibrary.serializer.MeasurementMapSerializer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.core.Message
@@ -41,6 +42,14 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
 
             // Use the generated measurements for the nearby area as local measurement map of the sensing client
             SimulatedMobileSensingClientsApplication.measurementManager.clearLmmAndSetNewMeasurements(randomMeasurements)
+
+            logger.info(
+                "[FR2] Updated LAMM to: ${
+                    Json { prettyPrint = true }.encodeToString(
+                        SimulatedMobileSensingClientsApplication.measurementManager.getCurrentLammAndOrderForTransmission().first
+                    )
+                }"
+            )
         }
     }
 
