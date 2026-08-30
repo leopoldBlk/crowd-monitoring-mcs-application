@@ -332,14 +332,8 @@ class MessagingService : LifecycleService() {
                             LogController.logGeneralFunctionalityEvaluation(
                                 Log.INFO,
                                 "MessagingService",
-                                "[FR1-C8] Received message $messageId from producer $messageProducerId from queue $globalDensityDataQueue" +
+                                "[FR1-C8] [FR2] Received message $messageId from producer $messageProducerId from queue $globalDensityDataQueue" +
                                         "containing the FAMM: ${Json{prettyPrint=true}.encodeToString(deserializedMeasurementMapFromJson)}"
-                            )
-
-                            LogController.logGeneralFunctionalityEvaluation(
-                                Log.INFO,
-                                "MessagingService",
-                                "[FR2] Contained global density data in message $messageId: $deserializedMeasurementMapFromJson"
                             )
 
                             var allMeasurementsInGlobalDensityDataHaveDiscretizationLevelForNearbyArea: Boolean =
