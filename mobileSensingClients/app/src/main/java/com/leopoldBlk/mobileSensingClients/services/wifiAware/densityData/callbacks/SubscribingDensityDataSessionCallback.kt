@@ -95,7 +95,7 @@ class SubscribingDensityDataSessionCallback : DiscoverySessionCallback() {
                     LogController.logGeneralFunctionalityEvaluation(
                         Log.INFO,
                         "SubscribingDensityDataSessionCallback",
-                        "[FR1-C7] Handling received FAMM from client ${ongoingTransmission.first}: ${
+                        "[FR1-C7] [NFR2-C3] Handling received FAMM from client ${ongoingTransmission.first}: ${
                             Json {
                                 prettyPrint = true
                             }.encodeToString(discretizedMeasurementMap)

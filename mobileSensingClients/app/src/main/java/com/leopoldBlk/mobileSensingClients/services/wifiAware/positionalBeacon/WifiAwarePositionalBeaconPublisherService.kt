@@ -132,7 +132,7 @@ class WifiAwarePositionalBeaconPublisherService : WifiAwareService() {
         LogController.logGeneralFunctionalityEvaluation(
             Log.INFO,
             "WifiAwarePositionalBeaconPublisherService",
-            "[FR1-C6] Updated positional beacon to: ${
+            "[FR1-C6] [NFR2-C3] Updated positional beacon to: ${
                 Json { prettyPrint = true }.encodeToString(
                     updatedPositionalBeaconAsPositionalBeaconTO
                 )

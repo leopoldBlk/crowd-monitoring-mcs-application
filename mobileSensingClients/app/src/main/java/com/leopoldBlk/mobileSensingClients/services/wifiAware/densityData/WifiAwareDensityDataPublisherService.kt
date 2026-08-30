@@ -134,7 +134,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
         LogController.logGeneralFunctionalityEvaluation(
             Log.INFO,
             "WifiAwareDensityDataPublisherService",
-            "[FR1-C8] [FR3-C1] [FR3-C2] Updated LAMM to the following: ${
+            "[FR1-C8] [FR3-C1] [FR3-C2] [NFR2-C3] Updated LAMM to the following: ${
                 Json {
                     prettyPrint = true
                 }.encodeToString(prioritizedLammAndOrderForTransmission.first.getAllMeasurements())
@@ -179,7 +179,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
                     LogController.logGeneralFunctionalityEvaluation(
                         Log.INFO,
                         "WifiAwareDensityDataPublisherService",
-                        "[FR1-C7] Updated data packet for LAMM"
+                        "[FR1-C7] [NFR2-C3] Updated data packet for LAMM"
                     )
 
                     publishingDensityDataSessionCallback.publishDiscoverySessionStarted.await()
@@ -197,7 +197,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
                             LogController.logGeneralFunctionalityEvaluation(
                                 Log.INFO,
                                 "WifiAwareDensityDataPublisherService",
-                                "[FR1-C7] Updated data packet for LAMM"
+                                "[FR1-C7] [NFR2-C3] Updated data packet for LAMM"
                             )
 
                             publishConfigIndexCounter += 1
@@ -217,7 +217,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
                         LogController.logGeneralFunctionalityEvaluation(
                             Log.INFO,
                             "WifiAwareDensityDataPublisherService",
-                            "[FR1-C7] Updated data packet for LAMM"
+                            "[FR1-C7] [NFR2-C3] Updated data packet for LAMM"
                         )
 
                         publishConfigIndexCounter += 1
