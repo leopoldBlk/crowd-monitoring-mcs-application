@@ -14,10 +14,10 @@ object EdgeClientDecisionController {
         val isEdgeClient: Boolean = !neighborWithLargerTransmissionBenefitExists()
         DataStore.isEdgeClient.postValue(isEdgeClient)
 
-        LogController.log(
+        LogController.logGeneralFunctionalityEvaluation(
             Log.INFO,
             className,
-            "Performed decision if to take the role as edge client, result: $isEdgeClient"
+            "[FR1-C2] [FR1-C3] Performed edge client check -> is edge client: $isEdgeClient"
         )
     }
 

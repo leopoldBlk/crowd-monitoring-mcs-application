@@ -146,10 +146,10 @@ class MessagingService : LifecycleService() {
                             )
                         }
 
-                        LogController.log(
+                        LogController.logGeneralFunctionalityEvaluation(
                             Log.INFO,
                             "MessagingService",
-                            "Published following message with the id (${messageId.toHexString()}) as producer with the id (${DataStore.clientIdHexString}): ${serializedLammToJson}"
+                            "[FR1-C2] [FR1-C3] Published message ${messageId.toHexString()} as producer ${DataStore.clientIdHexString} to exchange $localDensityDataExchange"
                         )
                     }
                 }
@@ -303,6 +303,12 @@ class MessagingService : LifecycleService() {
                         val messageProducerId: String = properties.headers["ProducerId"].toString()
                         val messageId: String = properties.headers["MessageId"].toString()
                         val messageBodyAsString: String = body.decodeToString()
+
+                        LogController.logGeneralFunctionalityEvaluation(
+                            Log.INFO,
+                            "MessagingService",
+                            "[FR1-C2] [FR1-C3] Received message $messageId from producer $messageProducerId from queue $globalDensityDataQueue"
+                        )
 
                         // Deserialize the received measurement map as this is in JSON format
                         val deserializedMeasurementMapFromJson: MeasurementMap =

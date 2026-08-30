@@ -102,10 +102,10 @@ class TransmissionBenefitService : Service() {
 
             DataStore.clientTransmissionBenefit.postValue(updatedTransmissionBenefit)
 
-            LogController.log(
+            LogController.logGeneralFunctionalityEvaluation(
                 Log.INFO,
                 className,
-                "Updated transmission benefit to: $updatedTransmissionBenefit"
+                "[FR1-C1] [FR1-C3] Updated transmission benefit to: $updatedTransmissionBenefit (connection state: $clientConnectionState; battery level: $clientBatteryLevel)"
             )
 
             // Decide if the client has to take the role of an edge client.
