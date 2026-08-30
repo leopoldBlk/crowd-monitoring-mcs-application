@@ -332,7 +332,7 @@ class MessagingService : LifecycleService() {
                             LogController.logGeneralFunctionalityEvaluation(
                                 Log.INFO,
                                 "MessagingService",
-                                "[FR1-C8] [FR2] Received message $messageId from producer $messageProducerId from queue $globalDensityDataQueue" +
+                                "[FR1-C8] [FR2] [NFR3-C1] Received message $messageId from producer $messageProducerId from queue $globalDensityDataQueue" +
                                         "containing the FAMM: ${Json{prettyPrint=true}.encodeToString(deserializedMeasurementMapFromJson)}"
                             )
 
@@ -410,12 +410,6 @@ class MessagingService : LifecycleService() {
                                 durationForProcessingGlobalDensityDataMessage.toULong()
                             )
                         }
-
-                        LogController.log(
-                            Log.INFO,
-                            "MessagingService",
-                            "Received global density data from server (${messageProducerId}) in message (${messageId}): ${messageBodyAsString}"
-                        )
                     }
                 }
             }
