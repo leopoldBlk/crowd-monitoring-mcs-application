@@ -27,6 +27,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.json.Json
 import kotlin.random.Random
 
 // Checked (final)
@@ -153,6 +154,13 @@ class MessagingService : LifecycleService() {
                             Log.INFO,
                             "MessagingService",
                             "[FR1-C2] [FR1-C3] Published message ${messageId.toHexString()} as producer ${DataStore.clientIdHexString} to exchange $localDensityDataExchange"
+                        )
+
+                        LogController.logGeneralFunctionalityEvaluation(
+                            Log.INFO,
+                            "MessagingService",
+                            "[FR1-C8] Published message ${messageId.toHexString()} as producer ${DataStore.clientIdHexString} to exchange $localDensityDataExchange " +
+                                    "containing the LAMM: ${Json{prettyPrint=true}.parseToJsonElement(serializedLammToJson)}"
                         )
                     }
                 }
@@ -307,25 +315,33 @@ class MessagingService : LifecycleService() {
                         val messageId: String = properties.headers["MessageId"].toString()
                         val messageBodyAsString: String = body.decodeToString()
 
-                        LogController.logGeneralFunctionalityEvaluation(
-                            Log.INFO,
-                            "MessagingService",
-                            "[FR1-C2] [FR1-C3] Received message $messageId from producer $messageProducerId from queue $globalDensityDataQueue"
-                        )
-
                         // Deserialize the received measurement map as this is in JSON format
                         val deserializedMeasurementMapFromJson: MeasurementMap =
                             MeasurementMapSerializer.deserializeJsonToMeasurementMap(
                                 messageBodyAsString
                             )
 
-                        LogController.logGeneralFunctionalityEvaluation(
-                            Log.INFO,
-                            "MessagingService",
-                            "[FR2] Contained global density data in message $messageId: $deserializedMeasurementMapFromJson"
-                        )
-
                         if (DataStore.isGeneralFunctionalityEvaluation) {
+                            LogController.logGeneralFunctionalityEvaluation(
+                                Log.INFO,
+                                "MessagingService",
+                                "[FR1-C2] [FR1-C3] Received message $messageId from producer $messageProducerId from queue $globalDensityDataQueue"
+                            )
+
+
+                            LogController.logGeneralFunctionalityEvaluation(
+                                Log.INFO,
+                                "MessagingService",
+                                "[FR1-C8] Received message $messageId from producer $messageProducerId from queue $globalDensityDataQueue" +
+                                        "containing the FAMM: ${Json{prettyPrint=true}.encodeToString(deserializedMeasurementMapFromJson)}"
+                            )
+
+                            LogController.logGeneralFunctionalityEvaluation(
+                                Log.INFO,
+                                "MessagingService",
+                                "[FR2] Contained global density data in message $messageId: $deserializedMeasurementMapFromJson"
+                            )
+
                             var allMeasurementsInGlobalDensityDataHaveDiscretizationLevelForNearbyArea: Boolean =
                                 true
 
