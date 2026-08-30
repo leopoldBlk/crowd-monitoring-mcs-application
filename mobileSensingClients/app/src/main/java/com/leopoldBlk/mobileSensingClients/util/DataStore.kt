@@ -10,18 +10,20 @@ import crowdDensityLibrary.dataClasses.PositionalBeacon
 import kotlin.random.Random
 
 object DataStore {
+    public var isGeneralFunctionalityEvaluation = false
+
     public var clientId: ByteArray = Random.nextBytes(ByteArray(4))
     public var clientIdHexString: String = clientId.toHexString()
 
     // TTL for NT and MMs
     public val timeToLiveNeighborhoodTableInMilliseconds: ULong = 5000u
-    public val timeToLiveMeasurementMapInMilliseconds: ULong = 15000u
+    public val timeToLiveMeasurementMapInMilliseconds: ULong = 60000u
 
     public val publishLammIntervalInMilliseconds: ULong = 5000u
     public val lowerLimitForPublishingIntervalPerDataPacketInMilliseconds: ULong = 500u
     public val publishPositionalBeaconIntervalInMilliseconds: ULong = 1000u
 
-    public val accuracyThresholdForLocationDeterminationInMeters: Float = 10.0f
+    public var accuracyThresholdForLocationDeterminationInMeters: Float = 10.0f
 
     // Uber H3 cell levels used for discretizing nearby area, discretizing distant area and to determine the nearby
     // area of the client
@@ -36,7 +38,11 @@ object DataStore {
     public var trustedTimeClient: TrustedTimeClient? = null
 
     public var measurementManager: MeasurementManager =
-        MeasurementManager(clientIdHexString, timeToLiveNeighborhoodTableInMilliseconds, timeToLiveMeasurementMapInMilliseconds)
+        MeasurementManager(
+            clientIdHexString,
+            timeToLiveNeighborhoodTableInMilliseconds,
+            timeToLiveMeasurementMapInMilliseconds
+        )
 
     public var clientPosition: MutableLiveData<Position> =
         MutableLiveData(null)
@@ -56,6 +62,10 @@ object DataStore {
         clientId = newClientId
         clientIdHexString = newClientId.toHexString()
 
-        measurementManager = MeasurementManager(clientIdHexString, timeToLiveNeighborhoodTableInMilliseconds, timeToLiveMeasurementMapInMilliseconds)
+        measurementManager = MeasurementManager(
+            clientIdHexString,
+            timeToLiveNeighborhoodTableInMilliseconds,
+            timeToLiveMeasurementMapInMilliseconds
+        )
     }
 }
