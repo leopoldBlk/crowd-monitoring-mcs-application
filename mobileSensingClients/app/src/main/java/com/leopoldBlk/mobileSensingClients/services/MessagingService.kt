@@ -160,7 +160,11 @@ class MessagingService : LifecycleService() {
                             Log.INFO,
                             "MessagingService",
                             "[FR1-C8] Published message ${messageId.toHexString()} as producer ${DataStore.clientIdHexString} to exchange $localDensityDataExchange " +
-                                    "containing the LAMM: ${Json{prettyPrint=true}.parseToJsonElement(serializedLammToJson)}"
+                                    "containing the LAMM: ${
+                                        Json {
+                                            prettyPrint = true
+                                        }.parseToJsonElement(serializedLammToJson)
+                                    }"
                         )
                     }
                 }
@@ -334,7 +338,11 @@ class MessagingService : LifecycleService() {
                                 Log.INFO,
                                 "MessagingService",
                                 "[FR1-C8] [FR2] [NFR3-C1] Received message $messageId from producer $messageProducerId from queue $globalDensityDataQueue" +
-                                        "containing the FAMM: ${Json{prettyPrint=true}.encodeToString(deserializedMeasurementMapFromJson)}"
+                                        "containing the FAMM: ${
+                                            Json {
+                                                prettyPrint = true
+                                            }.encodeToString(deserializedMeasurementMapFromJson as ForeignAggregatedMeasurementMap)
+                                        }"
                             )
 
                             var allMeasurementsInGlobalDensityDataHaveDiscretizationLevelForNearbyArea: Boolean =
@@ -363,7 +371,8 @@ class MessagingService : LifecycleService() {
                             )
 
                         if (DataStore.isGeneralFunctionalityEvaluation && DataStore.clientPosition.value != null) {
-                            var allMeasurementsForDistantAreasWereAdaptedInDiscretization: Boolean = true
+                            var allMeasurementsForDistantAreasWereAdaptedInDiscretization: Boolean =
+                                true
 
                             discretizedMeasurementMap.getAllMeasurements()
                                 .forEach { (string, measurement) ->
@@ -373,7 +382,8 @@ class MessagingService : LifecycleService() {
                                                 DataStore.nearbyAreaDiscretizationLevel
                                             ).contains(measurement.cellIdHexString)
                                         ) {
-                                            allMeasurementsForDistantAreasWereAdaptedInDiscretization = false
+                                            allMeasurementsForDistantAreasWereAdaptedInDiscretization =
+                                                false
                                         }
                                     }
                                 }
