@@ -13,6 +13,7 @@ import crowdDensityLibrary.dataClasses.PositionalBeacon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 
 // Checked (final)
 class SubscribingPositionalBeaconSessionCallback : DiscoverySessionCallback() {
@@ -75,10 +76,14 @@ class SubscribingPositionalBeaconSessionCallback : DiscoverySessionCallback() {
                 // for transmission benefit could have been arrived in the previous step
                 EdgeClientDecisionController.performEdgeClientDecision()
 
-                LogController.log(
+                LogController.logGeneralFunctionalityEvaluation(
                     Log.INFO,
-                    className,
-                    "Received positional beacon from client (${receivedPositionalBeacon.clientIdHexString}): ${receivedPositionalBeacon}"
+                    "WifiAwarePositionalBeaconPublisherService",
+                    "[FC1-C6] Received positional beacon from client ${receivedPositionalBeacon.clientIdHexString}: ${
+                        Json {
+                            prettyPrint = true
+                        }.encodeToString(receivedPositionalBeaconTO)
+                    }"
                 )
             }
         }
