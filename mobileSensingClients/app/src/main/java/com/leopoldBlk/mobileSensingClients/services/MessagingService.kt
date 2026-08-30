@@ -17,6 +17,7 @@ import com.rabbitmq.client.ConnectionFactory
 import com.rabbitmq.client.Consumer
 import com.rabbitmq.client.DefaultConsumer
 import com.rabbitmq.client.Envelope
+import com.uber.h3core.H3Core
 import crowdDensityLibrary.ForeignAggregatedMeasurementMap
 import crowdDensityLibrary.MeasurementMap
 import crowdDensityLibrary.serializer.MeasurementMapSerializer
@@ -32,6 +33,8 @@ import kotlin.random.Random
 class MessagingService : LifecycleService() {
     // Flag to indicate if the client maintains an active connection to the RabbitMQ cluster
     private var isClientConnectedToRabbitMqCluster: Boolean = false
+
+    private var h3Core: H3Core = H3Core.newSystemInstance()
 
     // Mutex to indicate if there is an ongoing process for establishing connection to the RabbitMQ cluster
     private val runningConnectionEstablishingProcessMutex: Mutex = Mutex(false)
@@ -315,6 +318,27 @@ class MessagingService : LifecycleService() {
                             MeasurementMapSerializer.deserializeJsonToMeasurementMap(
                                 messageBodyAsString
                             )
+
+                        if (DataStore.isGeneralFunctionalityEvaluation) {
+                            var allMeasurementsInGlobalDensityDataHaveDiscretizationLevelForNearbyArea: Boolean =
+                                true
+
+                            deserializedMeasurementMapFromJson.getAllMeasurements()
+                                .forEach { (string, measurement) ->
+                                    if (h3Core.getResolution(measurement.cellIdHexString) != DataStore.nearbyAreaDiscretizationLevel.toInt()) {
+                                        allMeasurementsInGlobalDensityDataHaveDiscretizationLevelForNearbyArea =
+                                            false
+                                    }
+                                }
+
+                            LogController.logGeneralFunctionalityEvaluation(
+                                Log.INFO,
+                                "MessagingService",
+                                "[FR1-C4] All measurements contained in global density data" +
+                                        " message ${messageId} have discretization level specified " +
+                                        "for nearby area (${DataStore.nearbyAreaDiscretizationLevel}): $allMeasurementsInGlobalDensityDataHaveDiscretizationLevelForNearbyArea"
+                            )
+                        }
 
                         val discretizedMeasurementMap: ForeignAggregatedMeasurementMap =
                             DiscretizationController.adaptionOfDiscretizationLevel(
