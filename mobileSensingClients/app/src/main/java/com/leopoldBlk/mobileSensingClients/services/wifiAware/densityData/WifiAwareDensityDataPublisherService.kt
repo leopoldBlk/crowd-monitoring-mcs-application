@@ -9,12 +9,14 @@ import android.net.wifi.aware.WifiAwareSession
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.WifiAwareService
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData.callbacks.PublishingDensityDataSessionCallback
 import com.leopoldBlk.mobileSensingClients.util.DataStore
 import com.leopoldBlk.mobileSensingClients.util.controller.DiscretizationController
 import com.leopoldBlk.mobileSensingClients.util.controller.EdgeClientDecisionController
+import com.leopoldBlk.mobileSensingClients.util.controller.LogController
 import com.leopoldBlk.mobileSensingClients.util.converter.DensityDataConverter
 import crowdDensityLibrary.LocalAggregatedMeasurementMap
 import crowdDensityLibrary.MeasurementMap
@@ -23,6 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.milliseconds
 
 class WifiAwareDensityDataPublisherService : WifiAwareService() {
@@ -163,6 +166,12 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
                         publishingSessionCallbackHandler
                     )
 
+                    LogController.logGeneralFunctionalityEvaluation(
+                        Log.INFO,
+                        "WifiAwareDensityDataPublisherService",
+                        "[FR1-C7] Updated data packet for LAMM"
+                    )
+
                     publishingDensityDataSessionCallback.publishDiscoverySessionStarted.await()
 
                     delay(publishingIntervalForEachConfigInMilliseconds.milliseconds)
@@ -173,6 +182,12 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
                         publishConfigs.drop(1).forEach { publishConfig ->
                             publishingDensityDataSessionCallback.updatePublishConfig(
                                 publishConfig
+                            )
+
+                            LogController.logGeneralFunctionalityEvaluation(
+                                Log.INFO,
+                                "WifiAwareDensityDataPublisherService",
+                                "[FR1-C7] Updated data packet for LAMM"
                             )
 
                             publishConfigIndexCounter += 1
@@ -187,6 +202,12 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
                     publishConfigs.forEach { publishConfig ->
                         publishingDensityDataSessionCallback.updatePublishConfig(
                             publishConfig
+                        )
+
+                        LogController.logGeneralFunctionalityEvaluation(
+                            Log.INFO,
+                            "WifiAwareDensityDataPublisherService",
+                            "[FR1-C7] Updated data packet for LAMM"
                         )
 
                         publishConfigIndexCounter += 1
@@ -214,10 +235,34 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
     private fun updatePublishConfig(lammAndOrderForMeasurementTransmission: Pair<MeasurementMap, List<String>>) {
         publishConfigs = mutableListOf<PublishConfig>()
 
+        LogController.logGeneralFunctionalityEvaluation(
+            Log.INFO,
+            "WifiAwareDensityDataPublisherService",
+            "[FR1-C7] Setup PublishConfigs for the following LAMM: ${
+                Json {
+                    prettyPrint = true
+                }.encodeToString(lammAndOrderForMeasurementTransmission.first.getAllMeasurements())
+            }"
+        )
+
+        LogController.logGeneralFunctionalityEvaluation(
+            Log.INFO,
+            "WifiAwareDensityDataPublisherService",
+            "[FR1-C7] Number of measurements in LAMM to be transmitted: ${lammAndOrderForMeasurementTransmission.first.getAllMeasurements().size}"
+        )
+
         lammAsDensityDataTOs =
             DensityDataConverter.convertDensityDataToDensityDataTOs(
                 lammAndOrderForMeasurementTransmission
             )
+
+        if (!lammAsDensityDataTOs.isNullOrEmpty()) {
+            LogController.logGeneralFunctionalityEvaluation(
+                Log.INFO,
+                "WifiAwareDensityDataPublisherService",
+                "[FR1-C7] Number of data packets needed to transmit LAMM: ${lammAsDensityDataTOs!!.size}"
+            )
+        }
 
         if (lammAsDensityDataTOs != null) {
             var lammDensityDataToCounter: ULong = 0u
@@ -234,6 +279,67 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
                             lammDensityDataTO.getDensityDataTOasByteArray()
                         )
                         .build()
+
+                if (DataStore.isGeneralFunctionalityEvaluation) {
+                    LogController.logGeneralFunctionalityEvaluation(
+                        Log.INFO,
+                        "WifiAwareDensityDataPublisherService",
+                        "[FR1-C7] Created PublishConfig for data packet: ${
+                            Json {
+                                prettyPrint = true
+                            }.encodeToString(lammDensityDataTO)
+                        }"
+                    )
+
+                    val totalSizeOfLammDensityDataTOInBytes: Int =
+                        lammDensityDataTO.getDensityDataTOasByteArray().size
+
+                    LogController.logGeneralFunctionalityEvaluation(
+                        Log.INFO,
+                        "WifiAwareDensityDataPublisherService",
+                        "[FR1-C7] Total size of the data packet in bytes: ${totalSizeOfLammDensityDataTOInBytes}"
+                    )
+
+                    if (totalSizeOfLammDensityDataTOInBytes > 255) {
+                        LogController.logGeneralFunctionalityEvaluation(
+                            Log.ERROR,
+                            "WifiAwareDensityDataPublisherService",
+                            "[FR1-C7] Total size of the data packet above 255 bytes"
+                        )
+                    }
+
+                    val amountOfMeasurementsIncludedInLammDensityDataTo: Int =
+                        lammDensityDataTO.getDensityData().size
+
+                    LogController.logGeneralFunctionalityEvaluation(
+                        Log.INFO,
+                        "WifiAwareDensityDataPublisherService",
+                        "[FR1-C7] Amount of the measurements contained in the data packet: ${amountOfMeasurementsIncludedInLammDensityDataTo}"
+                    )
+
+                    if (amountOfMeasurementsIncludedInLammDensityDataTo > 24) {
+                        LogController.logGeneralFunctionalityEvaluation(
+                            Log.ERROR,
+                            "WifiAwareDensityDataPublisherService",
+                            "[FR1-C7] More than 24 measurements contained in data packet"
+                        )
+                    }
+
+                    var eachMeasurementHasCorrectLength: Boolean = true
+
+                    lammDensityDataTO.getDensityData().forEach { measurementAsByteArray ->
+                        if (measurementAsByteArray.size != 10) eachMeasurementHasCorrectLength =
+                            false
+                    }
+
+                    if (!eachMeasurementHasCorrectLength) {
+                        LogController.logGeneralFunctionalityEvaluation(
+                            Log.ERROR,
+                            "WifiAwareDensityDataPublisherService",
+                            "[FR1-C7] One or more measurements do not have the specified length of 10 bytes"
+                        )
+                    }
+                }
 
                 publishConfigs.add(publishConfigForTO)
                 lammDensityDataToCounter += 1u

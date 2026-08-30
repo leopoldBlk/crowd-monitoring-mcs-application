@@ -13,6 +13,7 @@ import crowdDensityLibrary.ForeignAggregatedMeasurementMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 
 // Checked (final)
 class SubscribingDensityDataSessionCallback : DiscoverySessionCallback() {
@@ -89,6 +90,16 @@ class SubscribingDensityDataSessionCallback : DiscoverySessionCallback() {
                     DataStore.measurementManager.handleReceivedFamm(
                         ongoingTransmission.first,
                         discretizedMeasurementMap
+                    )
+
+                    LogController.logGeneralFunctionalityEvaluation(
+                        Log.INFO,
+                        "SubscribingDensityDataSessionCallback",
+                        "[FR1-C7] Handling received FAMM from client ${ongoingTransmission.first}: ${
+                            Json {
+                                prettyPrint = true
+                            }.encodeToString(discretizedMeasurementMap)
+                        }"
                     )
 
                     ongoingTransmission =
