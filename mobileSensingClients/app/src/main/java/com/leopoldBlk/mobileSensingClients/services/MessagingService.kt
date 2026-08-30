@@ -319,6 +319,12 @@ class MessagingService : LifecycleService() {
                                 messageBodyAsString
                             )
 
+                        LogController.logGeneralFunctionalityEvaluation(
+                            Log.INFO,
+                            "MessagingService",
+                            "[FR2] Contained global density data in message $messageId: $deserializedMeasurementMapFromJson"
+                        )
+
                         if (DataStore.isGeneralFunctionalityEvaluation) {
                             var allMeasurementsInGlobalDensityDataHaveDiscretizationLevelForNearbyArea: Boolean =
                                 true
@@ -344,6 +350,30 @@ class MessagingService : LifecycleService() {
                             DiscretizationController.adaptionOfDiscretizationLevel(
                                 deserializedMeasurementMapFromJson as ForeignAggregatedMeasurementMap
                             )
+
+                        if (DataStore.isGeneralFunctionalityEvaluation && DataStore.clientPosition.value != null) {
+                            var allMeasurementsForDistantAreasWereAdaptedInDiscretization: Boolean = true
+
+                            discretizedMeasurementMap.getAllMeasurements()
+                                .forEach { (string, measurement) ->
+                                    if (h3Core.getResolution(measurement.cellIdHexString) == DataStore.nearbyAreaDiscretizationLevel.toInt()) {
+                                        if (!DiscretizationController.getParentCellWithNeighborhood(
+                                                DataStore.clientPosition.value!!.cellIdHexString,
+                                                DataStore.nearbyAreaDiscretizationLevel
+                                            ).contains(measurement.cellIdHexString)
+                                        ) {
+                                            allMeasurementsForDistantAreasWereAdaptedInDiscretization = false
+                                        }
+                                    }
+                                }
+
+                            LogController.logGeneralFunctionalityEvaluation(
+                                Log.INFO,
+                                "MessagingService",
+                                "[FR1-C5] All measurements for distant areas contained in global density data message ${messageId} " +
+                                        "were adapted in terms of discretization level: $allMeasurementsForDistantAreasWereAdaptedInDiscretization"
+                            )
+                        }
 
                         // Handover the servers identifier and the received density data to the measurement manager for further processing
                         DataStore.measurementManager.handleReceivedFamm(

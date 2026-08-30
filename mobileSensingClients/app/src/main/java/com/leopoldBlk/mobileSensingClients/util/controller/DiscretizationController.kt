@@ -7,6 +7,7 @@ import com.uber.h3core.H3Core
 import crowdDensityLibrary.ForeignAggregatedMeasurementMap
 import crowdDensityLibrary.LocalAggregatedMeasurementMap
 import crowdDensityLibrary.dataClasses.Measurement
+import kotlinx.serialization.json.Json
 
 // Checked (final)
 object DiscretizationController {
@@ -41,6 +42,16 @@ object DiscretizationController {
         if (!::h3Core.isInitialized) {
             h3Core = H3Core.newSystemInstance()
         }
+
+        LogController.logGeneralFunctionalityEvaluation(
+            Log.INFO,
+            "DiscretizationController",
+            "[FR1-C5] FAMM to be discretized: ${
+                Json { prettyPrint = true }.encodeToString(
+                    receivedFamm
+                )
+            }"
+        )
 
         // The adaption of the measurements discretization level depends on the location of the sensing client.
         // Therefore, a location value is mandatory!
@@ -91,12 +102,26 @@ object DiscretizationController {
                             )
                             newMeasurements[parentCellForLevelToDiscretizeDistantAreas] =
                                 newMeasurement
+
+                            LogController.logGeneralFunctionalityEvaluation(
+                                Log.INFO,
+                                "DiscretizationController",
+                                "[FR1-C5] Create new measurement for parent cell ${newMeasurement.cellIdHexString} derived from child cell ${measurement.value.cellIdHexString} " +
+                                        "with measurement value ${newMeasurement.measurementValue}"
+                            )
                         }
                         // This measurement is not the first one processed from this FAMM which belongs to this
                         // parentCellForLevelToDiscretizeDistantAreas
                         else {
                             val newMeasurement: Measurement =
                                 newMeasurements[parentCellForLevelToDiscretizeDistantAreas]!!
+
+                            LogController.logGeneralFunctionalityEvaluation(
+                                Log.INFO,
+                                "DiscretizationController",
+                                "[FR1-C5] Summing measurement values of parent cell ${newMeasurement.cellIdHexString} and child cell ${measurement.value.cellIdHexString}: " +
+                                        "${newMeasurement.measurementValue} + ${measurement.value.measurementValue} = ${newMeasurement.measurementValue + measurement.value.measurementValue}"
+                            )
 
                             // Add the measurement value of the already existing new measurement and the currently
                             // discretized measurement
@@ -119,25 +144,35 @@ object DiscretizationController {
                 }
             }
 
-            LogController.log(
+            LogController.logGeneralFunctionalityEvaluation(
                 Log.INFO,
                 "DiscretizationController",
-                "Number of measurements to be removed due to discretization of distant areas: ${measurementsToBeRemoved.size}"
+                "[FR1-C5] Number of measurements to be removed due to discretization of distant areas: ${measurementsToBeRemoved.size}"
             )
 
             // Remove the measurements form which the discretization level has been adapted from the copy of the received FAMM
             adaptedDiscretizationFamm.removeMeasurementsForCellIds(measurementsToBeRemoved.keys.toList())
 
-            LogController.log(
+            LogController.logGeneralFunctionalityEvaluation(
                 Log.INFO,
                 "DiscretizationController",
-                "Number of newly created measurements to be added due to discretization of distant areas: ${measurementsToBeRemoved.size}"
+                "[FR1-C5] Number of newly created measurements to be added due to discretization of distant areas: ${newMeasurements.size}"
             )
 
             // Add all the new measurements resulting from the adaption of the discretization level the copy of the received FAMM
             newMeasurements.values.forEach { newMeasurement ->
                 adaptedDiscretizationFamm.setMeasurement(newMeasurement)
             }
+
+            LogController.logGeneralFunctionalityEvaluation(
+                Log.INFO,
+                "DiscretizationController",
+                "[FR1-C5] FAMM after discretization: ${
+                    Json { prettyPrint = true }.encodeToString(
+                        adaptedDiscretizationFamm
+                    )
+                }"
+            )
 
             // Return the FAMM with the discretized measurements
             return adaptedDiscretizationFamm
