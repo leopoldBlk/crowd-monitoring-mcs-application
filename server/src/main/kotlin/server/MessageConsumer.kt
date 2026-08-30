@@ -75,7 +75,7 @@ class MessageConsumer(private val globalDensityDataQueue: Queue) {
             )
 
             logger.info(
-                "[FR1-C8] Received message $messageId from producer $messageProducerId from queue rabbit-mq-queue-local-density-data " +
+                "[FR1-C8] [NFR2-C1] Received message $messageId from producer $messageProducerId from queue rabbit-mq-queue-local-density-data " +
                     "containing the FAMM: ${Json { prettyPrint = true }.parseToJsonElement(messageBody)}"
             )
         }
@@ -100,7 +100,7 @@ class MessageConsumer(private val globalDensityDataQueue: Queue) {
             // Only handle received global density data sent by other server instances
             if (messageProducerId != ServerApplication.serverIdHexString) {
                 logger.info(
-                    "[FR1-C8] Received message $messageId from producer $messageProducerId from queue ${globalDensityDataQueue.name} " +
+                    "[FR1-C8] [NFR2-C1] Received message $messageId from producer $messageProducerId from queue ${globalDensityDataQueue.name} " +
                         "containing the FAMM: ${Json { prettyPrint = true }.parseToJsonElement(messageBody)}"
                 )
 
