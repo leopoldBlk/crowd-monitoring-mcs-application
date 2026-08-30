@@ -232,7 +232,8 @@ class MessagingService : LifecycleService() {
             connectionFactory.isAutomaticRecoveryEnabled = true
 
             try {
-                connection = connectionFactory.newConnection()
+                connection =
+                    connectionFactory.newConnection("physical mobile sensing client ${DataStore.clientIdHexString}")
                 channel = connection.createChannel()
                 installGlobalDensityDataConsumer(channel)
 
