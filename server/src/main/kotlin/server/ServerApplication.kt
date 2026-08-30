@@ -19,7 +19,7 @@ class ServerApplication {
 
         // TTL for NT and MMs
         public val timeToLiveNeighborhoodTableInMilliseconds: ULong = 5000u
-        public val timeToLiveMeasurementMapInMilliseconds: ULong = 15000u
+        public val timeToLiveMeasurementMapInMilliseconds: ULong = 60000u
 
         // Uber H3 cell levels used for discretizing nearby area, discretizing distant area and to determine the nearby
         // area of the client
