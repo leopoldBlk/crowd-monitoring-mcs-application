@@ -27,10 +27,19 @@ object DiscretizationController {
 
         // Get identifier of the parent cell the client is located in for the specified cell level
         val parentCellId: String =
-            h3Core.cellToParentAddress(clientCellId, levelOfParentCellAndNeighborhood.toInt())
+            addLeadingZerosToCellId(
+                h3Core.cellToParentAddress(
+                    clientCellId,
+                    levelOfParentCellAndNeighborhood.toInt()
+                )
+            )
 
         // Get the identifier of the neighboring cells surrounding the parent cell
-        val neighborhoodCellIds: List<String> = h3Core.gridRing(parentCellId, 1)
+        val neighborhoodCellIds: MutableList<String> = mutableListOf()
+
+        for (neighborCellId in h3Core.gridRing(parentCellId, 1)) {
+            neighborhoodCellIds.add(addLeadingZerosToCellId(neighborCellId))
+        }
 
         return listOf<String>(parentCellId).plus(neighborhoodCellIds)
     }
@@ -56,7 +65,12 @@ object DiscretizationController {
         // The adaption of the measurements discretization level depends on the location of the sensing client.
         // Therefore, a location value is mandatory!
         if (DataStore.clientPosition.value != null) {
-            val adaptedDiscretizationFamm: ForeignAggregatedMeasurementMap = receivedFamm
+            val adaptedDiscretizationFamm: ForeignAggregatedMeasurementMap =
+                ForeignAggregatedMeasurementMap()
+            receivedFamm.getAllMeasurements().forEach { (string, measurement) ->
+                adaptedDiscretizationFamm.setMeasurement(measurement)
+            }
+
             val newMeasurements: MutableMap<String, Measurement> =
                 mutableMapOf<String, Measurement>()
             val measurementsToBeRemoved: MutableMap<String, Measurement> =
@@ -72,9 +86,11 @@ object DiscretizationController {
                     // Get the parent cell where the measurement is located in at the level for determining
                     // the nearby area
                     val parentCellForLevelToDetermineNearbyArea: String =
-                        h3Core.cellToParentAddress(
-                            measurement.key,
-                            DataStore.levelToDetermineNearbyArea.toInt()
+                        addLeadingZerosToCellId(
+                            h3Core.cellToParentAddress(
+                                measurement.key,
+                                DataStore.levelToDetermineNearbyArea.toInt()
+                            )
                         )
 
                     // The cell is not located within the clients nearby area
@@ -86,9 +102,11 @@ object DiscretizationController {
                         // Get the parent cell the measurement is located in for the discretization level used
                         // to discretize distant areas
                         val parentCellForLevelToDiscretizeDistantAreas: String =
-                            h3Core.cellToParentAddress(
-                                measurement.key,
-                                DataStore.distantAreaDiscretizationLevel.toInt()
+                            addLeadingZerosToCellId(
+                                h3Core.cellToParentAddress(
+                                    measurement.key,
+                                    DataStore.distantAreaDiscretizationLevel.toInt()
+                                )
                             )
 
                         // This measurement is the first one processes from this FAMM which belongs to this
@@ -191,7 +209,12 @@ object DiscretizationController {
             h3Core = H3Core.newSystemInstance()
         }
 
-        val prioritizedMeasurementsLamm: LocalAggregatedMeasurementMap = lamm
+        val prioritizedMeasurementsLamm: LocalAggregatedMeasurementMap =
+            LocalAggregatedMeasurementMap()
+        lamm.getAllMeasurements().forEach { (string, measurement) ->
+            prioritizedMeasurementsLamm.setMeasurement(measurement)
+        }
+
         val measurementsToBeRemoved: MutableMap<String, Measurement> =
             mutableMapOf<String, Measurement>()
         val measurementsForDistantAreasWithinLamm: MutableMap<String, Measurement> =
