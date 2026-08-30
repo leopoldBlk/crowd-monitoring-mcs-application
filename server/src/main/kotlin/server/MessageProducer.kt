@@ -6,6 +6,7 @@ import crowdDensityLibrary.serializer.MeasurementMapSerializer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import org.apache.commons.net.ntp.NTPUDPClient
 import org.apache.commons.net.ntp.TimeInfo
 import org.slf4j.Logger
@@ -100,7 +101,10 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
                         "$timestampAfterGlobalDensityDataMessageSent"
             )
 
-            logger.info("Published following message with the id (${messageId.toHexString()}) as producer with the id (${ServerApplication.serverIdHexString}): ${serializedLammToJson}")
+            logger.info(
+                "[FR1-C8] Published message ${messageId.toHexString()} as producer ${ServerApplication.serverIdHexString} to exchange rabbit-mq-exchange-global-density-data " +
+                    "containing the LAMM: ${Json { prettyPrint = true }.parseToJsonElement(serializedLammToJson)}"
+            )
         }
     }
 

@@ -6,12 +6,14 @@ import crowdDensityLibrary.serializer.MeasurementMapSerializer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import org.apache.commons.net.ntp.NTPUDPClient
 import org.apache.commons.net.ntp.TimeInfo
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.core.MessageProperties
+import org.springframework.amqp.core.Queue
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
 import java.net.InetAddress
@@ -21,7 +23,7 @@ import java.net.InetAddress
 // https://www.rabbitmq.com/tutorials/tutorial-one-spring-amqp
 // https://www.svix.com/guides/rabbitmq/rabbitmq-springboot-tutorial/
 @Service
-class MessageConsumer() {
+class MessageConsumer(private val globalDensityDataQueue: Queue) {
     private val logger: Logger = LoggerFactory.getLogger("RabbitMqMessageConsumer")
     private val loggerScalabilityAnalysis: Logger =
         LoggerFactory.getLogger("RabbitMqMessageConsumer - Scalability Analysis")
@@ -72,7 +74,10 @@ class MessageConsumer() {
                         "$durationForProcessingLocalDensityDataMessage"
             )
 
-            logger.info("Received local density data from client (${messageProducerId}) in message (${messageId}): ${messageBody}")
+            logger.info(
+                "[FR1-C8] Received message $messageId from producer $messageProducerId from queue rabbit-mq-queue-local-density-data " +
+                    "containing the FAMM: ${Json { prettyPrint = true }.parseToJsonElement(messageBody)}"
+            )
         }
     }
 
@@ -94,11 +99,12 @@ class MessageConsumer() {
 
             // Only handle received global density data sent by other server instances
             if (messageProducerId != ServerApplication.serverIdHexString) {
-                logger.info("Received global density data for synchronization purposes from server (${messageProducerId}) in message (${messageId}): ${messageBody}")
+                logger.info(
+                    "[FR1-C8] Received message $messageId from producer $messageProducerId from queue ${globalDensityDataQueue.name} " +
+                        "containing the FAMM: ${Json { prettyPrint = true }.parseToJsonElement(messageBody)}"
+                )
 
                 handleReceivedMessage(messageProducerId, messageBody)
-            } else {
-                logger.info("Received own synchronization message, global density data wont be handled!")
             }
         }
     }
