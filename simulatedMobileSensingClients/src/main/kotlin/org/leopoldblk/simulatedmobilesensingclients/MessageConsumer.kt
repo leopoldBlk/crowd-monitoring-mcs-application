@@ -10,6 +10,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.core.Message
 import org.springframework.amqp.core.MessageProperties
+import org.springframework.amqp.core.Queue
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
 
@@ -18,7 +19,7 @@ import org.springframework.stereotype.Service
 // https://www.rabbitmq.com/tutorials/tutorial-one-spring-amqp
 // https://www.svix.com/guides/rabbitmq/rabbitmq-springboot-tutorial/
 @Service
-class MessageConsumer {
+class MessageConsumer(private val globalDensityDataQueue: Queue) {
     private val logger: Logger = LoggerFactory.getLogger("RabbitMqMessageConsumer")
 
     // CoroutineScope for handling received global density data
@@ -55,7 +56,7 @@ class MessageConsumer {
                 discretizedMeasurementMap
             )
 
-            logger.info("Received global density data from server (${messageProducerId}) in message (${messageId}): ${messageBody}")
+            logger.info("[NFR3-C1] Received message $messageId from producer $messageProducerId from queue $globalDensityDataQueue")
         }
     }
 }
