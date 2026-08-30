@@ -102,7 +102,7 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
             )
 
             logger.info(
-                "[FR1-C8] [NFR2-C1] [NFR2-C2] Published message ${messageId.toHexString()} as producer ${ServerApplication.serverIdHexString} to exchange rabbit-mq-exchange-global-density-data " +
+                "[FR1-C8] [NFR2-C1] [NFR2-C2] [NFR3-C2] Published message ${messageId.toHexString()} as producer ${ServerApplication.serverIdHexString} to exchange rabbit-mq-exchange-global-density-data " +
                     "containing the LAMM: ${Json { prettyPrint = true }.parseToJsonElement(serializedLammToJson)}"
             )
         }
