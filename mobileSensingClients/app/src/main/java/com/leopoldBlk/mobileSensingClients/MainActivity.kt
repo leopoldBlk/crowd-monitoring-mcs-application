@@ -24,7 +24,8 @@ import com.leopoldBlk.mobileSensingClients.util.controller.LogController
 
 // Checked (final)
 class MainActivity : ComponentActivity() {
-    private val isEvaluation: Boolean = true
+    private val isGeneralFunctionalityEvaluation: Boolean = true
+    private val isScalabilityAnalysis: Boolean = false
 
     private lateinit var trustedTimeClient: TrustedTimeClient
 
@@ -55,14 +56,14 @@ class MainActivity : ComponentActivity() {
             ), 1
         )
 
-        LogController.setActiveLogging(true)
+        LogController.setActiveLogging(false)
 
         TrustedTime.createClient(applicationContext).addOnSuccessListener { client ->
             trustedTimeClient = client
             DataStore.trustedTimeClient = trustedTimeClient
         }
 
-        if (isEvaluation) {
+        if (isGeneralFunctionalityEvaluation || isScalabilityAnalysis) {
             val deviceName: String =
                 Settings.Global.getString(contentResolver, Settings.Global.DEVICE_NAME)
 
@@ -71,6 +72,10 @@ class MainActivity : ComponentActivity() {
                 "Pixel 10 - Device 2" -> DataStore.updateClientId(byteArrayOf(0, 0, 0, 2))
                 "Pixel 10 - Device 3" -> DataStore.updateClientId(byteArrayOf(0, 0, 0, 3))
             }
+
+            DataStore.isGeneralFunctionalityEvaluation = isGeneralFunctionalityEvaluation
+            DataStore.accuracyThresholdForLocationDeterminationInMeters = 1000.0f
+            LogController.setActiveLoggingGeneralFunctionalityEvaluation(isGeneralFunctionalityEvaluation)
         }
 
         applicationContext.startService(
