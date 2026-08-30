@@ -1,7 +1,9 @@
 package com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData
 
+import kotlinx.serialization.Serializable
 import java.nio.ByteBuffer
 
+@Serializable
 // Checked (final)
 class DensityDataTO(
     // 1 byte for identifier of the transmission
@@ -22,10 +24,6 @@ class DensityDataTO(
 
     public fun getClientIdAsHexString(): String {
         return clientId.toHexString()
-    }
-
-    public fun getPacketId(): UShort {
-        return numberOfDensityDataToWithinTransmission.toUShort()
     }
 
     public fun getHeaderTimestampAsULong(): ULong {

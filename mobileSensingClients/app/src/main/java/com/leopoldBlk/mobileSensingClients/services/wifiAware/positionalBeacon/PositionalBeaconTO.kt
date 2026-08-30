@@ -1,5 +1,8 @@
 package com.leopoldBlk.mobileSensingClients.services.wifiAware.positionalBeacon
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 // Checked (final)
 class PositionalBeaconTO(
     // 4 byte for client identifier
