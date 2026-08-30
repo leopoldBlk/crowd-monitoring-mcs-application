@@ -153,7 +153,7 @@ class MessagingService : LifecycleService() {
                         LogController.logGeneralFunctionalityEvaluation(
                             Log.INFO,
                             "MessagingService",
-                            "[FR1-C2] [FR1-C3] Published message ${messageId.toHexString()} as producer ${DataStore.clientIdHexString} to exchange $localDensityDataExchange"
+                            "[FR1-C2] [FR1-C3] [NFR2-C1] Published message ${messageId.toHexString()} as producer ${DataStore.clientIdHexString} to exchange $localDensityDataExchange"
                         )
 
                         LogController.logGeneralFunctionalityEvaluation(
@@ -325,7 +325,7 @@ class MessagingService : LifecycleService() {
                             LogController.logGeneralFunctionalityEvaluation(
                                 Log.INFO,
                                 "MessagingService",
-                                "[FR1-C2] [FR1-C3] Received message $messageId from producer $messageProducerId from queue $globalDensityDataQueue"
+                                "[FR1-C2] [FR1-C3] [NFR2-C1] Received message $messageId from producer $messageProducerId from queue $globalDensityDataQueue"
                             )
 
 
