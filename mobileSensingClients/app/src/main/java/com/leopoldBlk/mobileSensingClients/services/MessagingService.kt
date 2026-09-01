@@ -162,7 +162,7 @@ class MessagingService : LifecycleService() {
                             "[FR1-C8] Published message ${messageId.toHexString()} as producer ${DataStore.clientIdHexString} to exchange $localDensityDataExchange " +
                                     "containing the LAMM: ${
                                         Json {
-                                            prettyPrint = true
+                                      //      prettyPrint = true
                                         }.parseToJsonElement(serializedLammToJson)
                                     }"
                         )
@@ -340,7 +340,7 @@ class MessagingService : LifecycleService() {
                                 "[FR1-C8] [FR2] [NFR3-C1] Received message $messageId from producer $messageProducerId from queue $globalDensityDataQueue" +
                                         "containing the FAMM: ${
                                             Json {
-                                                prettyPrint = true
+                                                //prettyPrint = true
                                             }.encodeToString(deserializedMeasurementMapFromJson as ForeignAggregatedMeasurementMap)
                                         }"
                             )

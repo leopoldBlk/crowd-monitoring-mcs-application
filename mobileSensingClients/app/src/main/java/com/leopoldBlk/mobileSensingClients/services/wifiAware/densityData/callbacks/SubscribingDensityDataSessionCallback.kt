@@ -107,7 +107,7 @@ class SubscribingDensityDataSessionCallback : DiscoverySessionCallback() {
                             "SubscribingDensityDataSessionCallback",
                             "[FR1-C7] [NFR2-C3] Handling received FAMM from client ${ongoingTransmission.first}: ${
                                 Json {
-                                    prettyPrint = true
+                                //    prettyPrint = true
                                 }.encodeToString(discretizedMeasurementMap)
                             }"
                         )

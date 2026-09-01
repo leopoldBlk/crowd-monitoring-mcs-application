@@ -136,7 +136,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
             "WifiAwareDensityDataPublisherService",
             "[FR1-C8] [FR3-C1] [FR3-C2] [NFR2-C3] Updated LAMM to the following: ${
                 Json {
-                    prettyPrint = true
+                    //prettyPrint = true
                 }.encodeToString(prioritizedLammAndOrderForTransmission.first.getAllMeasurements())
             }"
         )
@@ -250,7 +250,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
             "WifiAwareDensityDataPublisherService",
             "[FR1-C7] Setup PublishConfigs for the following LAMM: ${
                 Json {
-                    prettyPrint = true
+                    //prettyPrint = true
                 }.encodeToString(lammAndOrderForMeasurementTransmission.first.getAllMeasurements())
             }"
         )
@@ -296,7 +296,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
                         "WifiAwareDensityDataPublisherService",
                         "[FR1-C7] Created PublishConfig for data packet: ${
                             Json {
-                                prettyPrint = true
+                                //prettyPrint = true
                             }.encodeToString(lammDensityDataTO)
                         }"
                     )

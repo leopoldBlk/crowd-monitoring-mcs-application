@@ -21,19 +21,20 @@ object LogController {
 
     fun logGeneralFunctionalityEvaluation(logLevel: Int, tag: String, message: String) {
         if (activeLoggingGeneralFunctionalityEvaluation) {
-            if (message.toByteArray().size > 4000) {
+            if (message.length > 4000) {
+
+                val messageChunks = message.chunked(4000)
                 var chunkNumber: Int = 0
 
-                message.chunked(message.length/3).forEach { chunk ->
+                for (chunk in messageChunks){
                     when (logLevel) {
-                        Log.DEBUG -> Log.d(tag, "[Chunk $chunkNumber]" + chunk)
-                        Log.INFO -> Log.i(tag, "[Chunk $chunkNumber]" + chunk)
-                        Log.ERROR -> Log.e(tag, "[Chunk $chunkNumber]"  + chunk)
-                        Log.VERBOSE -> Log.v(tag, "[Chunk $chunkNumber]" + chunk)
-                        Log.WARN -> Log.w(tag, "[Chunk $chunkNumber]" + chunk)
+                        Log.DEBUG -> Log.d(tag, "[Chunk $chunkNumber] $chunk")
+                        Log.INFO -> Log.i(tag, "[Chunk $chunkNumber] $chunk")
+                        Log.ERROR -> Log.e(tag, "[Chunk $chunkNumber] $chunk")
+                        Log.VERBOSE -> Log.v(tag, "[Chunk $chunkNumber] $chunk")
+                        Log.WARN -> Log.w(tag, "[Chunk $chunkNumber] $chunk")
                     }
-
-                    chunkNumber += 1
+                    chunkNumber = chunkNumber + 1
                 }
             } else {
                 when (logLevel) {
