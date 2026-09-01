@@ -16,12 +16,12 @@ object DataStore {
     public var clientIdHexString: String = clientId.toHexString()
 
     // TTL for NT and MMs
-    public val timeToLiveNeighborhoodTableInMilliseconds: ULong = 5000u
+    public val timeToLiveNeighborhoodTableInMilliseconds: ULong = 10000u
     public val timeToLiveMeasurementMapInMilliseconds: ULong = 60000u
 
     public val publishLammIntervalInMilliseconds: ULong = 5000u
     public val lowerLimitForPublishingIntervalPerDataPacketInMilliseconds: ULong = 500u
-    public val publishPositionalBeaconIntervalInMilliseconds: ULong = 1000u
+    public val publishPositionalBeaconIntervalInMilliseconds: ULong = 5000u
 
     public var accuracyThresholdForLocationDeterminationInMeters: Float = 10.0f
 
