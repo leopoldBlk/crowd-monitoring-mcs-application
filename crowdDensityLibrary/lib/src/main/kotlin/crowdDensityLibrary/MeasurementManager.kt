@@ -237,10 +237,9 @@ class MeasurementManager(
                 neighborhoodTable.getExceededNtEntries(timeToLiveNeighborhoodTableInMilliseconds)
 
             exceededPositionalBeacons.forEach { (clientIdHexString, positionalBeacon) ->
+                localMeasurementMap.decrementLmmMeasurementValue(positionalBeacon.clientPosition.cellIdHexString)
                 neighborhoodTable.removeNtEntry(clientIdHexString)
             }
-
-            localMeasurementMap.removeExceededMmEntries(timeToLiveMeasurementMapInMilliseconds)
 
             foreignAggregatedMeasurementMaps.forEach { (clientIdHexString, famm) ->
                 famm.removeExceededMmEntries(timeToLiveMeasurementMapInMilliseconds)
