@@ -22,7 +22,7 @@ class SimulatedMobileSensingClientsApplication {
         private val clientId: ByteArray = Random.nextBytes(ByteArray(4))
 
         // TTL for NT and MMs
-        public val timeToLiveNeighborhoodTableInMilliseconds: ULong = 5000u
+        public val timeToLiveNeighborhoodTableInMilliseconds: ULong = 10000u
         public val timeToLiveMeasurementMapInMilliseconds: ULong = 60000u
 
         // Definition of the coordinates of the top left and the bottom right corner of the geographical square
