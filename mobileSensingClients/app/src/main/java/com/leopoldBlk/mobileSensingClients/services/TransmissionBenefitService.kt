@@ -19,6 +19,7 @@ import androidx.core.app.ActivityCompat
 import com.leopoldBlk.mobileSensingClients.util.DataStore
 import com.leopoldBlk.mobileSensingClients.util.controller.EdgeClientDecisionController
 import com.leopoldBlk.mobileSensingClients.util.controller.LogController
+import java.math.BigDecimal
 
 // Checked (final)
 class TransmissionBenefitService : Service() {
@@ -90,14 +91,19 @@ class TransmissionBenefitService : Service() {
 
     // Checked (final)
     private fun updateTransmissionBenefit() {
-        if (clientBatteryLevel != null && clientConnectionState != null) {
+        if (clientBatteryLevel != null) {
             val updatedTransmissionBenefit: Float =
-                if (clientConnectionState == NetworkCapabilities.TRANSPORT_WIFI) {
-                    clientBatteryLevel!! * DataStore.transmissionBenefitMultiplicationFaktorWifi
+                if (clientConnectionState == null) {
+                    BigDecimal(clientBatteryLevel!!).multiply(BigDecimal(DataStore.transmissionBenefitMultiplicationFaktorNoConnection.toString()))
+                        .toFloat()
+                } else if (clientConnectionState == NetworkCapabilities.TRANSPORT_WIFI) {
+                    BigDecimal(clientBatteryLevel!!).multiply(BigDecimal(DataStore.transmissionBenefitMultiplicationFaktorWifi.toString()))
+                        .toFloat()
                 } else if (clientConnectionState == NetworkCapabilities.TRANSPORT_CELLULAR) {
-                    clientBatteryLevel!! * DataStore.transmissionBenefitMultiplicationFaktorCellular
+                    BigDecimal(clientBatteryLevel!!).multiply(BigDecimal(DataStore.transmissionBenefitMultiplicationFaktorCellular.toString()))
+                        .toFloat()
                 } else {
-                    clientBatteryLevel!! * DataStore.transmissionBenefitMultiplicationFaktorNoConnection
+                    0.0f
                 }
 
             DataStore.clientTransmissionBenefit.postValue(updatedTransmissionBenefit)
