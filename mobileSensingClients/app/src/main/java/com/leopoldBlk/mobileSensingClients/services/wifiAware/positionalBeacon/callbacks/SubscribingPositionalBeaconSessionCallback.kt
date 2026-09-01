@@ -79,7 +79,7 @@ class SubscribingPositionalBeaconSessionCallback : DiscoverySessionCallback() {
                 LogController.logGeneralFunctionalityEvaluation(
                     Log.INFO,
                     "WifiAwarePositionalBeaconPublisherService",
-                    "[FC1-C6] [NFR2-C3] Received positional beacon from client ${receivedPositionalBeacon.clientIdHexString}: ${
+                    "[FR1-C6] [NFR2-C3] Received positional beacon from client ${receivedPositionalBeacon.clientIdHexString}: ${
                         Json {
                             prettyPrint = true
                         }.encodeToString(receivedPositionalBeaconTO)

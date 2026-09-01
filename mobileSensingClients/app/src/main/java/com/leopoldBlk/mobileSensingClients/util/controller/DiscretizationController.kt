@@ -56,7 +56,7 @@ object DiscretizationController {
             Log.INFO,
             "DiscretizationController",
             "[FR1-C5] FAMM to be discretized: ${
-                Json { prettyPrint = true }.encodeToString(
+                Json { /*prettyPrint = true*/ }.encodeToString(
                     receivedFamm
                 )
             }"
@@ -186,7 +186,7 @@ object DiscretizationController {
                 Log.INFO,
                 "DiscretizationController",
                 "[FR1-C5] FAMM after discretization: ${
-                    Json { prettyPrint = true }.encodeToString(
+                    Json { /*prettyPrint = true*/ }.encodeToString(
                         adaptedDiscretizationFamm
                     )
                 }"
