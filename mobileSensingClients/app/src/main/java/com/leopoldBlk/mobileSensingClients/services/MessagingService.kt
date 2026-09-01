@@ -81,7 +81,7 @@ class MessagingService : LifecycleService() {
                 else if (value != null && !value && isClientConnectedToRabbitMqCluster) {
                     runBlocking {
                         coroutineScope.launch {
-                            disconnectFromGlobalDensityDataExchange()
+                            //disconnectFromGlobalDensityDataExchange()
                             disconnectFromRabbitMqCluster()
                         }
                     }
@@ -191,7 +191,7 @@ class MessagingService : LifecycleService() {
         runBlocking {
             if (isClientConnectedToRabbitMqCluster) {
                 coroutineScope.launch {
-                    disconnectFromGlobalDensityDataExchange()
+                   // disconnectFromGlobalDensityDataExchange()
                     disconnectFromRabbitMqCluster()
                 }
             }
@@ -233,7 +233,7 @@ class MessagingService : LifecycleService() {
             connectionFactory.port = BuildConfig.RABBIT_MQ_PORT.toInt()
             connectionFactory.username = BuildConfig.RABBIT_MQ_USERNAME
             connectionFactory.password = BuildConfig.RABBIT_MQ_PASSWORD
-            connectionFactory.isAutomaticRecoveryEnabled = true
+            connectionFactory.isAutomaticRecoveryEnabled = false
 
             try {
                 connection =
