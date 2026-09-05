@@ -26,7 +26,6 @@ class MessageConsumer(private val globalDensityDataQueue: Queue) {
     //private val logger: Logger = LoggerFactory.getLogger("RabbitMqMessageConsumer")
     private val loggerScalabilityAnalysis: Logger =
         LoggerFactory.getLogger("RabbitMqMessageConsumer - Scalability Analysis")
-    private val ntpClient: NTPUDPClient = NTPUDPClient()
 
     // CoroutineScope for handling received global and local density data
     private val coroutineScopeHandleReceivedMessages: CoroutineScope = CoroutineScope(Dispatchers.IO)
@@ -39,8 +38,6 @@ class MessageConsumer(private val globalDensityDataQueue: Queue) {
                     "timestamp when finishing to process the message containing a FAMM with local density data in milliseconds; " +
                     "duration the message containing a FAMM with local density data took to process in milliseconds"
         )
-
-        ntpClient.open()
     }
 
     // Checked (final)
@@ -134,10 +131,14 @@ class MessageConsumer(private val globalDensityDataQueue: Queue) {
      * @param timeSource Address of the NTP server to use for obtaining accurate time.
      */
     private fun getTimestampIncludingNtpOffset(timeSource: String): Long {
+        val ntpClient: NTPUDPClient = NTPUDPClient()
+        ntpClient.open()
+
         val timeInfo: TimeInfo = ntpClient.getTime(InetAddress.getByName(timeSource))
         timeInfo.computeDetails()
         val timestampIncludingNtpOffset: Long = System.currentTimeMillis() + timeInfo.offset
 
+        ntpClient.close()
         return timestampIncludingNtpOffset
     }
 }
