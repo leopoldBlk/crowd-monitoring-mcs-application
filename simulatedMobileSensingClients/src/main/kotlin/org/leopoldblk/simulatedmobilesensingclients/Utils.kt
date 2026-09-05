@@ -95,12 +95,14 @@ object Utils {
         // Iterate over the parent cell and its neighborhood and add all their child cells at the level
         // used to discretize the nearby area of the sensing client
         for (cellId in nearbyAreaForClientParentCellWithNeighborhood) {
-            nearbyAreaForClient.addAll(
-                h3Core.cellToChildren(
-                    cellId,
-                    nearbyAreaDiscretizationLevel.toInt()
-                )
+            val nearbyAreaChildCells: List<String> = h3Core.cellToChildren(
+                cellId,
+                nearbyAreaDiscretizationLevel.toInt()
             )
+
+            nearbyAreaChildCells.forEach { cellIdHexString ->
+                nearbyAreaForClient.add(addLeadingZerosToCellId(cellIdHexString))
+            }
         }
 
         return nearbyAreaForClient
@@ -115,10 +117,14 @@ object Utils {
     ): List<String> {
         // Get identifier of the parent cell the client is located in for the specified cell level
         val parentCellId: String =
-            h3Core.cellToParentAddress(clientCellId, levelOfParentCellAndNeighborhood.toInt())
+            addLeadingZerosToCellId(h3Core.cellToParentAddress(clientCellId, levelOfParentCellAndNeighborhood.toInt()))
 
         // Get the identifier of the neighboring cells surrounding the parent cell
-        val neighborhoodCellIds: List<String> = h3Core.gridRing(parentCellId, 1)
+        val neighborhoodCellIds: MutableList<String> = mutableListOf()
+
+        for(neighborCellId in h3Core.gridRing(parentCellId, 1)){
+            neighborhoodCellIds.add(addLeadingZerosToCellId(neighborCellId))
+        }
 
         return listOf<String>(parentCellId).plus(neighborhoodCellIds)
     }
@@ -146,10 +152,10 @@ object Utils {
                     // Get the parent cell where the measurement is located in at the level for determining
                     // the nearby area
                     val parentCellForLevelToDetermineNearbyArea: String =
-                        h3Core.cellToParentAddress(
+                        addLeadingZerosToCellId(h3Core.cellToParentAddress(
                             measurement.key,
                             SimulatedMobileSensingClientsApplication.levelToDetermineNearbyArea.toInt()
-                        )
+                        ))
 
                     // The cell is not located within the clients nearby area
                     if (!getParentCellWithNeighborhood(

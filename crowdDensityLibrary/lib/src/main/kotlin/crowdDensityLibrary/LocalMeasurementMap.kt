@@ -1,7 +1,9 @@
 package crowdDensityLibrary
 
 import crowdDensityLibrary.dataClasses.Measurement
+import kotlinx.serialization.Serializable
 
+@Serializable
 class LocalMeasurementMap : MeasurementMap() {
     // Checked (final)
     /**

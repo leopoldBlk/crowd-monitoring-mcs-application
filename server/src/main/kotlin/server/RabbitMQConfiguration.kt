@@ -3,6 +3,7 @@ package server
 import org.springframework.amqp.core.Binding
 import org.springframework.amqp.core.Queue
 import org.springframework.amqp.core.QueueBuilder
+import org.springframework.amqp.rabbit.connection.SimplePropertyValueConnectionNameStrategy
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -15,6 +16,12 @@ class RabbitMQConfiguration {
 
     // Exchange name to publish updates to the global density data
     val exchangeName: String = "rabbit-mq-exchange-global-density-data"
+
+    // Source: https://docs.spring.io/spring-amqp/reference/amqp/connections.html
+    @Bean
+    fun connectionNameStrategy(): SimplePropertyValueConnectionNameStrategy{
+        return SimplePropertyValueConnectionNameStrategy("server instance ${ServerApplication.serverIdHexString}")
+    }
 
     // Building own queue for receiving global density data from other server instances for synchronization purposes
     // Quorum queue enables replication of the queue across the nodes of the RabbitMQ cluster

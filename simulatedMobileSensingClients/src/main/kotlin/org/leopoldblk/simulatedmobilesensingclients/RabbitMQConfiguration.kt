@@ -3,6 +3,7 @@ package org.leopoldblk.simulatedmobilesensingclients
 import org.springframework.amqp.core.Binding
 import org.springframework.amqp.core.Queue
 import org.springframework.amqp.core.QueueBuilder
+import org.springframework.amqp.rabbit.connection.SimplePropertyValueConnectionNameStrategy
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -16,6 +17,12 @@ class RabbitMQConfiguration {
 
     // Name of the exchange the servers publish the global density data to
     val exchangeName: String = "rabbit-mq-exchange-global-density-data"
+
+    // Source: https://docs.spring.io/spring-amqp/reference/amqp/connections.html
+    @Bean
+    fun connectionNameStrategy(): SimplePropertyValueConnectionNameStrategy {
+        return SimplePropertyValueConnectionNameStrategy("simulated mobile sensing client ${SimulatedMobileSensingClientsApplication.clientIdHexString}")
+    }
 
     // Creation of the queue for receiving global density data from the server instances
     // Quorum queue enables replication of the queue across the nodes of the RabbitMQ cluster

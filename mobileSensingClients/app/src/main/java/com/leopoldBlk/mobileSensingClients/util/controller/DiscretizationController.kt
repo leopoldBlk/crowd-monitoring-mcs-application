@@ -7,6 +7,7 @@ import com.uber.h3core.H3Core
 import crowdDensityLibrary.ForeignAggregatedMeasurementMap
 import crowdDensityLibrary.LocalAggregatedMeasurementMap
 import crowdDensityLibrary.dataClasses.Measurement
+import kotlinx.serialization.json.Json
 
 // Checked (final)
 object DiscretizationController {
@@ -26,10 +27,19 @@ object DiscretizationController {
 
         // Get identifier of the parent cell the client is located in for the specified cell level
         val parentCellId: String =
-            h3Core.cellToParentAddress(clientCellId, levelOfParentCellAndNeighborhood.toInt())
+            addLeadingZerosToCellId(
+                h3Core.cellToParentAddress(
+                    clientCellId,
+                    levelOfParentCellAndNeighborhood.toInt()
+                )
+            )
 
         // Get the identifier of the neighboring cells surrounding the parent cell
-        val neighborhoodCellIds: List<String> = h3Core.gridRing(parentCellId, 1)
+        val neighborhoodCellIds: MutableList<String> = mutableListOf()
+
+        for (neighborCellId in h3Core.gridRing(parentCellId, 1)) {
+            neighborhoodCellIds.add(addLeadingZerosToCellId(neighborCellId))
+        }
 
         return listOf<String>(parentCellId).plus(neighborhoodCellIds)
     }
@@ -42,10 +52,25 @@ object DiscretizationController {
             h3Core = H3Core.newSystemInstance()
         }
 
+        LogController.logGeneralFunctionalityEvaluation(
+            Log.INFO,
+            "DiscretizationController",
+            "[FR1-C5] FAMM to be discretized: ${
+                Json { /*prettyPrint = true*/ }.encodeToString(
+                    receivedFamm
+                )
+            }"
+        )
+
         // The adaption of the measurements discretization level depends on the location of the sensing client.
         // Therefore, a location value is mandatory!
         if (DataStore.clientPosition.value != null) {
-            val adaptedDiscretizationFamm: ForeignAggregatedMeasurementMap = receivedFamm
+            val adaptedDiscretizationFamm: ForeignAggregatedMeasurementMap =
+                ForeignAggregatedMeasurementMap()
+            receivedFamm.getAllMeasurements().forEach { (string, measurement) ->
+                adaptedDiscretizationFamm.setMeasurement(measurement)
+            }
+
             val newMeasurements: MutableMap<String, Measurement> =
                 mutableMapOf<String, Measurement>()
             val measurementsToBeRemoved: MutableMap<String, Measurement> =
@@ -61,9 +86,11 @@ object DiscretizationController {
                     // Get the parent cell where the measurement is located in at the level for determining
                     // the nearby area
                     val parentCellForLevelToDetermineNearbyArea: String =
-                        h3Core.cellToParentAddress(
-                            measurement.key,
-                            DataStore.levelToDetermineNearbyArea.toInt()
+                        addLeadingZerosToCellId(
+                            h3Core.cellToParentAddress(
+                                measurement.key,
+                                DataStore.levelToDetermineNearbyArea.toInt()
+                            )
                         )
 
                     // The cell is not located within the clients nearby area
@@ -75,9 +102,11 @@ object DiscretizationController {
                         // Get the parent cell the measurement is located in for the discretization level used
                         // to discretize distant areas
                         val parentCellForLevelToDiscretizeDistantAreas: String =
-                            h3Core.cellToParentAddress(
-                                measurement.key,
-                                DataStore.distantAreaDiscretizationLevel.toInt()
+                            addLeadingZerosToCellId(
+                                h3Core.cellToParentAddress(
+                                    measurement.key,
+                                    DataStore.distantAreaDiscretizationLevel.toInt()
+                                )
                             )
 
                         // This measurement is the first one processes from this FAMM which belongs to this
@@ -91,12 +120,26 @@ object DiscretizationController {
                             )
                             newMeasurements[parentCellForLevelToDiscretizeDistantAreas] =
                                 newMeasurement
+
+                            LogController.logGeneralFunctionalityEvaluation(
+                                Log.INFO,
+                                "DiscretizationController",
+                                "[FR1-C5] Create new measurement for parent cell ${parentCellForLevelToDiscretizeDistantAreas} derived from child cell ${measurement.key} " +
+                                        "with measurement value ${newMeasurement.measurementValue}"
+                            )
                         }
                         // This measurement is not the first one processed from this FAMM which belongs to this
                         // parentCellForLevelToDiscretizeDistantAreas
                         else {
                             val newMeasurement: Measurement =
                                 newMeasurements[parentCellForLevelToDiscretizeDistantAreas]!!
+
+                            LogController.logGeneralFunctionalityEvaluation(
+                                Log.INFO,
+                                "DiscretizationController",
+                                "[FR1-C5] Summing measurement values of parent cell ${newMeasurement.cellIdHexString} and child cell ${measurement.value.cellIdHexString}: " +
+                                        "${newMeasurement.measurementValue} + ${measurement.value.measurementValue} = ${newMeasurement.measurementValue + measurement.value.measurementValue}"
+                            )
 
                             // Add the measurement value of the already existing new measurement and the currently
                             // discretized measurement
@@ -119,25 +162,35 @@ object DiscretizationController {
                 }
             }
 
-            LogController.log(
+            LogController.logGeneralFunctionalityEvaluation(
                 Log.INFO,
                 "DiscretizationController",
-                "Number of measurements to be removed due to discretization of distant areas: ${measurementsToBeRemoved.size}"
+                "[FR1-C5] Number of measurements to be removed due to discretization of distant areas: ${measurementsToBeRemoved.size}"
             )
 
             // Remove the measurements form which the discretization level has been adapted from the copy of the received FAMM
             adaptedDiscretizationFamm.removeMeasurementsForCellIds(measurementsToBeRemoved.keys.toList())
 
-            LogController.log(
+            LogController.logGeneralFunctionalityEvaluation(
                 Log.INFO,
                 "DiscretizationController",
-                "Number of newly created measurements to be added due to discretization of distant areas: ${measurementsToBeRemoved.size}"
+                "[FR1-C5] Number of newly created measurements to be added due to discretization of distant areas: ${newMeasurements.size}"
             )
 
             // Add all the new measurements resulting from the adaption of the discretization level the copy of the received FAMM
             newMeasurements.values.forEach { newMeasurement ->
                 adaptedDiscretizationFamm.setMeasurement(newMeasurement)
             }
+
+            LogController.logGeneralFunctionalityEvaluation(
+                Log.INFO,
+                "DiscretizationController",
+                "[FR1-C5] FAMM after discretization: ${
+                    Json { /*prettyPrint = true*/ }.encodeToString(
+                        adaptedDiscretizationFamm
+                    )
+                }"
+            )
 
             // Return the FAMM with the discretized measurements
             return adaptedDiscretizationFamm
@@ -156,7 +209,12 @@ object DiscretizationController {
             h3Core = H3Core.newSystemInstance()
         }
 
-        val prioritizedMeasurementsLamm: LocalAggregatedMeasurementMap = lamm
+        val prioritizedMeasurementsLamm: LocalAggregatedMeasurementMap =
+            LocalAggregatedMeasurementMap()
+        lamm.getAllMeasurements().forEach { (string, measurement) ->
+            prioritizedMeasurementsLamm.setMeasurement(measurement)
+        }
+
         val measurementsToBeRemoved: MutableMap<String, Measurement> =
             mutableMapOf<String, Measurement>()
         val measurementsForDistantAreasWithinLamm: MutableMap<String, Measurement> =

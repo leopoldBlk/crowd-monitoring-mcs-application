@@ -17,6 +17,7 @@ import com.rabbitmq.client.ConnectionFactory
 import com.rabbitmq.client.Consumer
 import com.rabbitmq.client.DefaultConsumer
 import com.rabbitmq.client.Envelope
+import com.uber.h3core.H3Core
 import crowdDensityLibrary.ForeignAggregatedMeasurementMap
 import crowdDensityLibrary.MeasurementMap
 import crowdDensityLibrary.serializer.MeasurementMapSerializer
@@ -26,12 +27,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.json.Json
 import kotlin.random.Random
 
 // Checked (final)
 class MessagingService : LifecycleService() {
     // Flag to indicate if the client maintains an active connection to the RabbitMQ cluster
     private var isClientConnectedToRabbitMqCluster: Boolean = false
+
+    private var h3Core: H3Core = H3Core.newSystemInstance()
 
     // Mutex to indicate if there is an ongoing process for establishing connection to the RabbitMQ cluster
     private val runningConnectionEstablishingProcessMutex: Mutex = Mutex(false)
@@ -77,7 +81,7 @@ class MessagingService : LifecycleService() {
                 else if (value != null && !value && isClientConnectedToRabbitMqCluster) {
                     runBlocking {
                         coroutineScope.launch {
-                            disconnectFromGlobalDensityDataExchange()
+                            //disconnectFromGlobalDensityDataExchange()
                             disconnectFromRabbitMqCluster()
                         }
                     }
@@ -146,10 +150,21 @@ class MessagingService : LifecycleService() {
                             )
                         }
 
-                        LogController.log(
+                        LogController.logGeneralFunctionalityEvaluation(
                             Log.INFO,
                             "MessagingService",
-                            "Published following message with the id (${messageId.toHexString()}) as producer with the id (${DataStore.clientIdHexString}): ${serializedLammToJson}"
+                            "[FR1-C2] [FR1-C3] [NFR2-C1] Published message ${messageId.toHexString()} as producer ${DataStore.clientIdHexString} to exchange $localDensityDataExchange"
+                        )
+
+                        LogController.logGeneralFunctionalityEvaluation(
+                            Log.INFO,
+                            "MessagingService",
+                            "[FR1-C8] Published message ${messageId.toHexString()} as producer ${DataStore.clientIdHexString} to exchange $localDensityDataExchange " +
+                                    "containing the LAMM: ${
+                                        Json {
+                                      //      prettyPrint = true
+                                        }.parseToJsonElement(serializedLammToJson)
+                                    }"
                         )
                     }
                 }
@@ -176,7 +191,7 @@ class MessagingService : LifecycleService() {
         runBlocking {
             if (isClientConnectedToRabbitMqCluster) {
                 coroutineScope.launch {
-                    disconnectFromGlobalDensityDataExchange()
+                   // disconnectFromGlobalDensityDataExchange()
                     disconnectFromRabbitMqCluster()
                 }
             }
@@ -218,10 +233,11 @@ class MessagingService : LifecycleService() {
             connectionFactory.port = BuildConfig.RABBIT_MQ_PORT.toInt()
             connectionFactory.username = BuildConfig.RABBIT_MQ_USERNAME
             connectionFactory.password = BuildConfig.RABBIT_MQ_PASSWORD
-            connectionFactory.isAutomaticRecoveryEnabled = true
+            connectionFactory.isAutomaticRecoveryEnabled = false
 
             try {
-                connection = connectionFactory.newConnection()
+                connection =
+                    connectionFactory.newConnection("physical mobile sensing client ${DataStore.clientIdHexString}")
                 channel = connection.createChannel()
                 installGlobalDensityDataConsumer(channel)
 
@@ -310,10 +326,75 @@ class MessagingService : LifecycleService() {
                                 messageBodyAsString
                             )
 
+                        if (DataStore.isGeneralFunctionalityEvaluation) {
+                            LogController.logGeneralFunctionalityEvaluation(
+                                Log.INFO,
+                                "MessagingService",
+                                "[FR1-C2] [FR1-C3] [NFR2-C1] Received message $messageId from producer $messageProducerId from queue $globalDensityDataQueue"
+                            )
+
+
+                            LogController.logGeneralFunctionalityEvaluation(
+                                Log.INFO,
+                                "MessagingService",
+                                "[FR1-C8] [FR2] [NFR3-C1] Received message $messageId from producer $messageProducerId from queue $globalDensityDataQueue" +
+                                        "containing the FAMM: ${
+                                            Json {
+                                                //prettyPrint = true
+                                            }.encodeToString(deserializedMeasurementMapFromJson as ForeignAggregatedMeasurementMap)
+                                        }"
+                            )
+
+                            var allMeasurementsInGlobalDensityDataHaveDiscretizationLevelForNearbyArea: Boolean =
+                                true
+
+                            deserializedMeasurementMapFromJson.getAllMeasurements()
+                                .forEach { (string, measurement) ->
+                                    if (h3Core.getResolution(measurement.cellIdHexString) != DataStore.nearbyAreaDiscretizationLevel.toInt()) {
+                                        allMeasurementsInGlobalDensityDataHaveDiscretizationLevelForNearbyArea =
+                                            false
+                                    }
+                                }
+
+                            LogController.logGeneralFunctionalityEvaluation(
+                                Log.INFO,
+                                "MessagingService",
+                                "[FR1-C4] All measurements contained in global density data" +
+                                        " message ${messageId} have discretization level specified " +
+                                        "for nearby area (${DataStore.nearbyAreaDiscretizationLevel}): $allMeasurementsInGlobalDensityDataHaveDiscretizationLevelForNearbyArea"
+                            )
+                        }
+
                         val discretizedMeasurementMap: ForeignAggregatedMeasurementMap =
                             DiscretizationController.adaptionOfDiscretizationLevel(
                                 deserializedMeasurementMapFromJson as ForeignAggregatedMeasurementMap
                             )
+
+                        if (DataStore.isGeneralFunctionalityEvaluation && DataStore.clientPosition.value != null) {
+                            var allMeasurementsForDistantAreasWereAdaptedInDiscretization: Boolean =
+                                true
+
+                            discretizedMeasurementMap.getAllMeasurements()
+                                .forEach { (string, measurement) ->
+                                    if (h3Core.getResolution(measurement.cellIdHexString) == DataStore.nearbyAreaDiscretizationLevel.toInt()) {
+                                        if (!DiscretizationController.getParentCellWithNeighborhood(
+                                                DataStore.clientPosition.value!!.cellIdHexString,
+                                                DataStore.nearbyAreaDiscretizationLevel
+                                            ).contains(measurement.cellIdHexString)
+                                        ) {
+                                            allMeasurementsForDistantAreasWereAdaptedInDiscretization =
+                                                false
+                                        }
+                                    }
+                                }
+
+                            LogController.logGeneralFunctionalityEvaluation(
+                                Log.INFO,
+                                "MessagingService",
+                                "[FR1-C5] All measurements for distant areas contained in global density data message ${messageId} " +
+                                        "were adapted in terms of discretization level: $allMeasurementsForDistantAreasWereAdaptedInDiscretization"
+                            )
+                        }
 
                         // Handover the servers identifier and the received density data to the measurement manager for further processing
                         DataStore.measurementManager.handleReceivedFamm(
@@ -340,12 +421,6 @@ class MessagingService : LifecycleService() {
                                 durationForProcessingGlobalDensityDataMessage.toULong()
                             )
                         }
-
-                        LogController.log(
-                            Log.INFO,
-                            "MessagingService",
-                            "Received global density data from server (${messageProducerId}) in message (${messageId}): ${messageBodyAsString}"
-                        )
                     }
                 }
             }

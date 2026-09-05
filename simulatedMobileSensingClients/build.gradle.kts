@@ -29,7 +29,7 @@ dependencies {
     // https://www.svix.com/guides/rabbitmq/rabbitmq-springboot-tutorial/
     implementation("org.springframework.boot:spring-boot-starter-amqp")
     // Library for determination of crowd density
-    implementation("crowdDensityLibrary:lib:0.1")
+    api("crowdDensityLibrary:lib:0.1")
     // Uber H3 library for Java
     // Source: https://github.com/uber/h3-java
     implementation("com.uber:h3:4.4.0")
