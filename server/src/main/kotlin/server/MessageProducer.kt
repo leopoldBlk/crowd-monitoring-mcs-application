@@ -27,7 +27,6 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
     //private val logger: Logger = LoggerFactory.getLogger("RabbitMqMessageProducer")
     private val loggerScalabilityAnalysis: Logger =
         LoggerFactory.getLogger("RabbitMqMessageProducer - Scalability Analysis")
-    private val ntpClient: NTPUDPClient = NTPUDPClient()
 
     // CoroutineScope for generating and sending the message containing the LAMM with global density data
     private val coroutineScopeGenerateAndSendLamm: CoroutineScope = CoroutineScope(Dispatchers.IO)
@@ -41,8 +40,6 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
                     "time to to generate the LAMM and the message containing the LAMM with global density data in milliseconds; " +
                     "timestamp after sending the message containing the LAMM with global density data in milliseconds"
         )
-
-        ntpClient.open()
     }
 
     // Checked (final)
@@ -115,10 +112,14 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
      * @param timeSource Address of the NTP server to use for obtaining accurate time.
      */
     private fun getTimestampIncludingNtpOffset(timeSource: String): Long {
+        val ntpClient: NTPUDPClient = NTPUDPClient()
+        ntpClient.open()
+
         val timeInfo: TimeInfo = ntpClient.getTime(InetAddress.getByName(timeSource))
         timeInfo.computeDetails()
         val timestampIncludingNtpOffset: Long = System.currentTimeMillis() + timeInfo.offset
 
+        ntpClient.close()
         return timestampIncludingNtpOffset
     }
 }
