@@ -18,3 +18,6 @@ kubectl delete -f kubernetes/localDensityData/rabbit_mq_exchange_local_density_d
 
 # Delete fanout exchange for transmitting global density data
 kubectl delete -f kubernetes/rabbit_mq_exchange_global_density_data_deployment.yaml
+
+# Output timestamp of shutdown of RabbitMQ cluster
+date +%s
