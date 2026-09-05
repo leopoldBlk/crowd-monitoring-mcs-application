@@ -26,7 +26,7 @@ repositories {
 
 dependencies {
     // Source: https://kotlinlang.org/docs/serialization.html#lgazpg_85
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+    api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 
     // Enables the use of mutex
     // Source: https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/

@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     // Source: https://github.com/google/secrets-gradle-plugin
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
+    // Source: https://github.com/kotlin/kotlinx.serialization
+    kotlin("plugin.serialization") version "1.8.20"
 }
 
 android {
@@ -90,7 +92,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.play.services.location)
     // Library for determination of crowd density
-    implementation("crowdDensityLibrary:lib:0.1")
+    api("crowdDensityLibrary:lib:0.1")
     // Sources: https://h3geo.org/docs/api/indexing,
     // https://mvnrepository.com/artifact/com.uber/h3-android,
     // https://github.com/isaacbrodsky/h3-android-sample
@@ -109,6 +111,8 @@ dependencies {
     // Sources: https://android-developers.googleblog.com/2025/02/trustedtime-api-introducing-reliable-approach-to-time-keeping-for-apps.html
     // https://developers.google.com/location-context/time
     implementation("com.google.android.gms:play-services-time:16.0.1")
+    // Source: https://github.com/kotlin/kotlinx.serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

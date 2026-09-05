@@ -9,13 +9,16 @@ import android.net.wifi.aware.WifiAwareSession
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.Observer
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.WifiAwareService
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.positionalBeacon.callbacks.PublishingPositionalBeaconSessionCallback
 import com.leopoldBlk.mobileSensingClients.util.DataStore
+import com.leopoldBlk.mobileSensingClients.util.controller.LogController
 import com.leopoldBlk.mobileSensingClients.util.converter.PositionalBeaconConverter
 import crowdDensityLibrary.dataClasses.PositionalBeacon
+import kotlinx.serialization.json.Json
 
 // Checked (final)
 class WifiAwarePositionalBeaconPublisherService : WifiAwareService() {
@@ -125,6 +128,22 @@ class WifiAwarePositionalBeaconPublisherService : WifiAwareService() {
                 .setServiceName("MCS-PositionalBeacon")
                 .setServiceSpecificInfo(updatedPositionalBeaconAsPositionalBeaconTO.getPositionalBeaconToAsByteArray())
                 .build()
+
+        LogController.logGeneralFunctionalityEvaluation(
+            Log.INFO,
+            "WifiAwarePositionalBeaconPublisherService",
+            "[FR1-C6] [NFR2-C3] Updated positional beacon to: ${
+                Json { prettyPrint = true }.encodeToString(
+                    updatedPositionalBeaconAsPositionalBeaconTO
+                )
+            }"
+        )
+
+        LogController.logGeneralFunctionalityEvaluation(
+            Log.INFO,
+            "WifiAwarePositionalBeaconPublisherService",
+            "[FR1-C6] Total size of updated positional beacon: ${updatedPositionalBeaconAsPositionalBeaconTO.getPositionalBeaconToAsByteArray().size} "
+        )
 
         publishConfig = updatedPublishConfig
     }

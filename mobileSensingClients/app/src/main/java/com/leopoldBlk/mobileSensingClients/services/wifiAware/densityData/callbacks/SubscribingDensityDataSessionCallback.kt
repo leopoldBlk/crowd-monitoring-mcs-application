@@ -13,10 +13,14 @@ import crowdDensityLibrary.ForeignAggregatedMeasurementMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.json.Json
 
 // Checked (final)
 class SubscribingDensityDataSessionCallback : DiscoverySessionCallback() {
     private val className: String = "SubscribingDensityDataSessionCallback"
+    private val changeOnGoingTransmissionMutex: Mutex = Mutex(false)
 
     // CoroutineScope for handling received local density data
     private val coroutineScopeHandleReceivedDensityData: CoroutineScope =
@@ -63,42 +67,59 @@ class SubscribingDensityDataSessionCallback : DiscoverySessionCallback() {
 
                 // If the DensityDataTO belongs to a new transmission and there was no previous ongoing transmission
                 if (!::ongoingTransmission.isInitialized) {
-                    ongoingTransmission =
-                        Triple(
-                            clientIdAsHexString,
-                            transmissionIdAsHexString,
-                            mutableListOf(densityDataTO)
-                        )
+                    changeOnGoingTransmissionMutex.withLock {
+                        ongoingTransmission =
+                            Triple(
+                                clientIdAsHexString,
+                                transmissionIdAsHexString,
+                                mutableListOf(densityDataTO)
+                            )
+                    }
                 }
                 // If the DensityDataTO belongs to an already ongoing transmission
                 else if (ongoingTransmission.second == transmissionIdAsHexString) {
-                    ongoingTransmission.third.add(densityDataTO)
+                    changeOnGoingTransmissionMutex.withLock {
+                        ongoingTransmission.third.add(densityDataTO)
+                    }
                 }
                 // If the DensityDataTO belongs to a new transmission and there was a previous ongoing transmission
                 // --> Process the buffered DensityDataTOs of the previous ongoing transmission
                 // --> Store the DensityDataTO of the new transmission
                 else {
-                    val foreignAggregatedMeasurementMap: ForeignAggregatedMeasurementMap =
-                        DensityDataConverter.convertDensityDataTOsToDensityData(ongoingTransmission.third)
+                    changeOnGoingTransmissionMutex.withLock {
+                        val foreignAggregatedMeasurementMap: ForeignAggregatedMeasurementMap =
+                            DensityDataConverter.convertDensityDataTOsToDensityData(
+                                ongoingTransmission.third
+                            )
 
-                    val discretizedMeasurementMap: ForeignAggregatedMeasurementMap =
-                        DiscretizationController.adaptionOfDiscretizationLevel(
-                            foreignAggregatedMeasurementMap
+                        val discretizedMeasurementMap: ForeignAggregatedMeasurementMap =
+                            DiscretizationController.adaptionOfDiscretizationLevel(
+                                foreignAggregatedMeasurementMap
+                            )
+
+                        DataStore.measurementManager.handleReceivedFamm(
+                            ongoingTransmission.first,
+                            discretizedMeasurementMap
                         )
 
-                    DataStore.measurementManager.handleReceivedFamm(
-                        ongoingTransmission.first,
-                        discretizedMeasurementMap
-                    )
-
-                    ongoingTransmission =
-                        Triple(
-                            clientIdAsHexString,
-                            transmissionIdAsHexString,
-                            mutableListOf(densityDataTO)
+                        LogController.logGeneralFunctionalityEvaluation(
+                            Log.INFO,
+                            "SubscribingDensityDataSessionCallback",
+                            "[FR1-C7] [NFR2-C3] Handling received FAMM from client ${ongoingTransmission.first}: ${
+                                Json {
+                                //    prettyPrint = true
+                                }.encodeToString(discretizedMeasurementMap)
+                            }"
                         )
+
+                        ongoingTransmission =
+                            Triple(
+                                clientIdAsHexString,
+                                transmissionIdAsHexString,
+                                mutableListOf(densityDataTO)
+                            )
+                    }
                 }
-
                 LogController.log(
                     Log.INFO,
                     className,

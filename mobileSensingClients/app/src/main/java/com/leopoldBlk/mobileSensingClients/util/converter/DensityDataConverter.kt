@@ -1,6 +1,8 @@
 package com.leopoldBlk.mobileSensingClients.util.converter
 
+import android.util.Log
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData.DensityDataTO
+import com.leopoldBlk.mobileSensingClients.util.controller.LogController
 import crowdDensityLibrary.ForeignAggregatedMeasurementMap
 import crowdDensityLibrary.MeasurementMap
 import crowdDensityLibrary.dataClasses.Measurement
@@ -140,6 +142,15 @@ object DensityDataConverter {
 
         val byteArrayForTransmission: ByteArray =
             measurementCellIdByteArray + measurementValueByteArray + measurementCreationTimestampByteArray
+
+        LogController.logGeneralFunctionalityEvaluation(
+            Log.INFO,
+            "DensityDataConverter",
+            "[FR1-C7] Measurement has size ${byteArrayForTransmission.size} and is composed of: " +
+                    "$measurementCellIdByteArray (cellId - ${measurementCellIdByteArray.size} bytes) + " +
+                    "$measurementValueByteArray (measurementValue - ${measurementValueByteArray.size} bytes) + " +
+                    "$measurementCreationTimestampByteArray (timestamp - ${measurementCreationTimestampByteArray.size} bytes)"
+        )
 
         return byteArrayForTransmission
     }
