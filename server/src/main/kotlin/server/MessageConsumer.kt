@@ -6,7 +6,6 @@ import crowdDensityLibrary.serializer.MeasurementMapSerializer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import org.apache.commons.net.ntp.NTPUDPClient
 import org.apache.commons.net.ntp.TimeInfo
 import org.slf4j.Logger
@@ -40,6 +39,8 @@ class MessageConsumer(private val globalDensityDataQueue: Queue) {
                     "timestamp when finishing to process the message containing a FAMM with local density data in milliseconds; " +
                     "duration the message containing a FAMM with local density data took to process in milliseconds"
         )
+
+        ntpClient.open()
     }
 
     // Checked (final)
@@ -133,13 +134,10 @@ class MessageConsumer(private val globalDensityDataQueue: Queue) {
      * @param timeSource Address of the NTP server to use for obtaining accurate time.
      */
     private fun getTimestampIncludingNtpOffset(timeSource: String): Long {
-        ntpClient.open()
-
         val timeInfo: TimeInfo = ntpClient.getTime(InetAddress.getByName(timeSource))
         timeInfo.computeDetails()
         val timestampIncludingNtpOffset: Long = System.currentTimeMillis() + timeInfo.offset
 
-        ntpClient.close()
         return timestampIncludingNtpOffset
     }
 }
