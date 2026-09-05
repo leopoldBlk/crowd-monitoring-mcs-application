@@ -124,7 +124,7 @@ object DiscretizationController {
                             LogController.logGeneralFunctionalityEvaluation(
                                 Log.INFO,
                                 "DiscretizationController",
-                                "[FR1-C5] Create new measurement for parent cell ${newMeasurement.cellIdHexString} derived from child cell ${measurement.value.cellIdHexString} " +
+                                "[FR1-C5] Create new measurement for parent cell ${parentCellForLevelToDiscretizeDistantAreas} derived from child cell ${measurement.key} " +
                                         "with measurement value ${newMeasurement.measurementValue}"
                             )
                         }
