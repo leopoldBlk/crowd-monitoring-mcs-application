@@ -4,7 +4,7 @@
 services:
   simulated_mobile_sensing_client:
     # Pull docker image from the GitHub repository
-    image: ghcr.io/leopoldblk/simulated_mobile_sensing_client:latest
+    image: ghcr.io/leopoldblk/simulated_mobile_sensing_client:v0.1.0
     environment:
       # Specify parameters to connect to the RabbitMQ cluster
       RABBIT_MQ_HOST:
