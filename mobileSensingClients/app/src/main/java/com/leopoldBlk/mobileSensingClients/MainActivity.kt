@@ -24,8 +24,8 @@ import com.leopoldBlk.mobileSensingClients.util.controller.LogController
 
 // Checked (final)
 class MainActivity : ComponentActivity() {
-    private val isGeneralFunctionalityEvaluation: Boolean = true
-    private val isScalabilityAnalysis: Boolean = false
+    private val isGeneralFunctionalityEvaluation: Boolean = false
+    private val isScalabilityAnalysis: Boolean = true
 
     private lateinit var trustedTimeClient: TrustedTimeClient
 
