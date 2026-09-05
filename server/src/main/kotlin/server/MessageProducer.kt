@@ -25,7 +25,7 @@ import kotlin.random.Random
 // https://www.svix.com/guides/rabbitmq/rabbitmq-springboot-tutorial/
 @Service
 class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
-    private val logger: Logger = LoggerFactory.getLogger("RabbitMqMessageProducer")
+    //private val logger: Logger = LoggerFactory.getLogger("RabbitMqMessageProducer")
     private val loggerScalabilityAnalysis: Logger =
         LoggerFactory.getLogger("RabbitMqMessageProducer - Scalability Analysis")
     private val ntpClient: NTPUDPClient = NTPUDPClient()
@@ -101,10 +101,10 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
                         "$timestampAfterGlobalDensityDataMessageSent"
             )
 
-            logger.info(
-                "[FR1-C8] [NFR2-C1] [NFR2-C2] [NFR3-C2] Published message ${messageId.toHexString()} as producer ${ServerApplication.serverIdHexString} to exchange rabbit-mq-exchange-global-density-data " +
-                    "containing the LAMM: ${Json { prettyPrint = true }.parseToJsonElement(serializedLammToJson)}"
-            )
+//            logger.info(
+//                "[FR1-C8] [NFR2-C1] [NFR2-C2] [NFR3-C2] Published message ${messageId.toHexString()} as producer ${ServerApplication.serverIdHexString} to exchange rabbit-mq-exchange-global-density-data " +
+//                    "containing the LAMM: ${Json { prettyPrint = true }.parseToJsonElement(serializedLammToJson)}"
+//            )
         }
     }
 
