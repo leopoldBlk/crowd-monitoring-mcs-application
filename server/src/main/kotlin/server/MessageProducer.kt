@@ -6,7 +6,6 @@ import crowdDensityLibrary.serializer.MeasurementMapSerializer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import org.apache.commons.net.ntp.NTPUDPClient
 import org.apache.commons.net.ntp.TimeInfo
 import org.slf4j.Logger
@@ -42,6 +41,8 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
                     "time to to generate the LAMM and the message containing the LAMM with global density data in milliseconds; " +
                     "timestamp after sending the message containing the LAMM with global density data in milliseconds"
         )
+
+        ntpClient.open()
     }
 
     // Checked (final)
@@ -114,13 +115,10 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
      * @param timeSource Address of the NTP server to use for obtaining accurate time.
      */
     private fun getTimestampIncludingNtpOffset(timeSource: String): Long {
-        ntpClient.open()
-
         val timeInfo: TimeInfo = ntpClient.getTime(InetAddress.getByName(timeSource))
         timeInfo.computeDetails()
         val timestampIncludingNtpOffset: Long = System.currentTimeMillis() + timeInfo.offset
 
-        ntpClient.close()
         return timestampIncludingNtpOffset
     }
 }
