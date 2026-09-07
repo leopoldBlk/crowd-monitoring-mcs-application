@@ -15,8 +15,7 @@ spec:
         app: crowd-monitoring-server
     spec:
       containers:
-        # Use the server image contained in the GitHub repository (always pull the latest image)
-        - image: ghcr.io/leopoldblk/server:latest
+        - image: ghcr.io/leopoldblk/server:v0.2.0
           name: crowd-monitoring-server
           # Define connection parameters to the RabbitMQ cluster as environment variables for the container
           # These are used within the containerized Spring Boot application to connect to the RabbitMQ cluster deployed to Kubernetes

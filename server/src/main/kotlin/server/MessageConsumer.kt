@@ -6,7 +6,6 @@ import crowdDensityLibrary.serializer.MeasurementMapSerializer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import org.apache.commons.net.ntp.NTPUDPClient
 import org.apache.commons.net.ntp.TimeInfo
 import org.slf4j.Logger
@@ -24,10 +23,9 @@ import java.net.InetAddress
 // https://www.svix.com/guides/rabbitmq/rabbitmq-springboot-tutorial/
 @Service
 class MessageConsumer(private val globalDensityDataQueue: Queue) {
-    private val logger: Logger = LoggerFactory.getLogger("RabbitMqMessageConsumer")
+    //private val logger: Logger = LoggerFactory.getLogger("RabbitMqMessageConsumer")
     private val loggerScalabilityAnalysis: Logger =
         LoggerFactory.getLogger("RabbitMqMessageConsumer - Scalability Analysis")
-    private val ntpClient: NTPUDPClient = NTPUDPClient()
 
     // CoroutineScope for handling received global and local density data
     private val coroutineScopeHandleReceivedMessages: CoroutineScope = CoroutineScope(Dispatchers.IO)
@@ -74,10 +72,10 @@ class MessageConsumer(private val globalDensityDataQueue: Queue) {
                         "$durationForProcessingLocalDensityDataMessage"
             )
 
-            logger.info(
-                "[FR1-C8] [NFR2-C1] [NFR2-C2] [NFR3-C2] Received message $messageId from producer $messageProducerId from queue rabbit-mq-queue-local-density-data " +
-                    "containing the FAMM: ${Json { prettyPrint = true }.parseToJsonElement(messageBody)}"
-            )
+//            logger.info(
+//                "[FR1-C8] [NFR2-C1] [NFR2-C2] [NFR3-C2] Received message $messageId from producer $messageProducerId from queue rabbit-mq-queue-local-density-data " +
+//                    "containing the FAMM: ${Json { prettyPrint = true }.parseToJsonElement(messageBody)}"
+//            )
         }
     }
 
@@ -99,10 +97,10 @@ class MessageConsumer(private val globalDensityDataQueue: Queue) {
 
             // Only handle received global density data sent by other server instances
             if (messageProducerId != ServerApplication.serverIdHexString) {
-                logger.info(
-                    "[FR1-C8] [NFR2-C1] [NFR2-C2] [NFR3-C2] Received message $messageId from producer $messageProducerId from queue ${globalDensityDataQueue.name} " +
-                        "containing the FAMM: ${Json { prettyPrint = true }.parseToJsonElement(messageBody)}"
-                )
+//                logger.info(
+//                    "[FR1-C8] [NFR2-C1] [NFR2-C2] [NFR3-C2] Received message $messageId from producer $messageProducerId from queue ${globalDensityDataQueue.name} " +
+//                        "containing the FAMM: ${Json { prettyPrint = true }.parseToJsonElement(messageBody)}"
+//                )
 
                 handleReceivedMessage(messageProducerId, messageBody)
             }
@@ -133,6 +131,7 @@ class MessageConsumer(private val globalDensityDataQueue: Queue) {
      * @param timeSource Address of the NTP server to use for obtaining accurate time.
      */
     private fun getTimestampIncludingNtpOffset(timeSource: String): Long {
+        val ntpClient: NTPUDPClient = NTPUDPClient()
         ntpClient.open()
 
         val timeInfo: TimeInfo = ntpClient.getTime(InetAddress.getByName(timeSource))

@@ -6,7 +6,6 @@ import crowdDensityLibrary.serializer.MeasurementMapSerializer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import org.apache.commons.net.ntp.NTPUDPClient
 import org.apache.commons.net.ntp.TimeInfo
 import org.slf4j.Logger
@@ -25,10 +24,9 @@ import kotlin.random.Random
 // https://www.svix.com/guides/rabbitmq/rabbitmq-springboot-tutorial/
 @Service
 class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
-    private val logger: Logger = LoggerFactory.getLogger("RabbitMqMessageProducer")
+    //private val logger: Logger = LoggerFactory.getLogger("RabbitMqMessageProducer")
     private val loggerScalabilityAnalysis: Logger =
         LoggerFactory.getLogger("RabbitMqMessageProducer - Scalability Analysis")
-    private val ntpClient: NTPUDPClient = NTPUDPClient()
 
     // CoroutineScope for generating and sending the message containing the LAMM with global density data
     private val coroutineScopeGenerateAndSendLamm: CoroutineScope = CoroutineScope(Dispatchers.IO)
@@ -101,10 +99,10 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
                         "$timestampAfterGlobalDensityDataMessageSent"
             )
 
-            logger.info(
-                "[FR1-C8] [NFR2-C1] [NFR2-C2] [NFR3-C2] Published message ${messageId.toHexString()} as producer ${ServerApplication.serverIdHexString} to exchange rabbit-mq-exchange-global-density-data " +
-                    "containing the LAMM: ${Json { prettyPrint = true }.parseToJsonElement(serializedLammToJson)}"
-            )
+//            logger.info(
+//                "[FR1-C8] [NFR2-C1] [NFR2-C2] [NFR3-C2] Published message ${messageId.toHexString()} as producer ${ServerApplication.serverIdHexString} to exchange rabbit-mq-exchange-global-density-data " +
+//                    "containing the LAMM: ${Json { prettyPrint = true }.parseToJsonElement(serializedLammToJson)}"
+//            )
         }
     }
 
@@ -114,6 +112,7 @@ class MessageProducer(private val rabbitTemplate: RabbitTemplate) {
      * @param timeSource Address of the NTP server to use for obtaining accurate time.
      */
     private fun getTimestampIncludingNtpOffset(timeSource: String): Long {
+        val ntpClient: NTPUDPClient = NTPUDPClient()
         ntpClient.open()
 
         val timeInfo: TimeInfo = ntpClient.getTime(InetAddress.getByName(timeSource))
