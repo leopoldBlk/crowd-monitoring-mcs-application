@@ -1,0 +1,139 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.0.6)
+
+2026-09-06T10:48:16.672Z  INFO 1 --- [Server[] [           main[] server.ServerApplicationKt               : Starting ServerApplicationKt v0.0.1-SNAPSHOT using Java 21.0.12 with PID 1 (/server-0.0.1-SNAPSHOT.jar started by root in /)
+2026-09-06T10:48:16.678Z  INFO 1 --- [Server[] [           main[] server.ServerApplicationKt               : No active profile set, falling back to 1 default profile: "default"
+2026-09-06T10:48:18.284Z  INFO 1 --- [Server[] [           main[] MqMessageConsumer - Scalability Analysis : identifier of the server processing the message containing a FAMM with local density data; identifier of processed message containing a FAMM with local density data; timestamp when starting to process the message containing a FAMM with local density data in milliseconds; timestamp when finishing to process the message containing a FAMM with local density data in milliseconds; duration the message containing a FAMM with local density data took to process in milliseconds
+2026-09-06T10:48:18.751Z  INFO 1 --- [Server[] [           main[] MqMessageProducer - Scalability Analysis : identifier of the server sent the message containing the LAMM with global density data; identifier of sent message containing the LAMM with global density data; timestamp when starting to generate the LAMM and the message containing the LAMM with global density data in milliseconds; timestamp when finishing to generate the LAMM and the message containing the LAMM with global density data in milliseconds; time to to generate the LAMM and the message containing the LAMM with global density data in milliseconds; timestamp after sending the message containing the LAMM with global density data in milliseconds
+2026-09-06T10:48:18.935Z  INFO 1 --- [Server[] [           main[] o.s.a.r.c.CachingConnectionFactory       : Attempting to connect to: [rabbit-mq-cluster:5672[]
+2026-09-06T10:48:19.048Z  INFO 1 --- [Server[] [           main[] o.s.a.r.c.CachingConnectionFactory       : Created new connection: server instance 2822f385/SimpleConnection@87d9a01 [delegate=amqp://default_user_2cgDR3VO33T0vRi5VR-@172.31.23.239:5672/, localPort=45216]
+2026-09-06T10:48:19.246Z  INFO 1 --- [Server[] [           main[] server.ServerApplicationKt               : Started ServerApplicationKt in 3.272 seconds (process running for 4.138)
+2026-09-06T10:48:19.416Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; adb59bdc; 1788691699301; 1788691699384; 83; 1788691699410
+2026-09-06T10:48:24.340Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; 19017dc5; 1788691704256; 1788691704322; 66; 1788691704340
+2026-09-06T10:48:28.077Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageConsumer - Scalability Analysis : 2822f385; 56224340; 1788691708055; 1788691708073; 18
+2026-09-06T10:48:29.293Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; e04c225e; 1788691709253; 1788691709276; 23; 1788691709293
+2026-09-06T10:48:34.294Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; 5fda63bd; 1788691714253; 1788691714276; 23; 1788691714294
+2026-09-06T10:48:39.293Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; 62a8b87f; 1788691719253; 1788691719275; 22; 1788691719293
+2026-09-06T10:48:42.854Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageConsumer - Scalability Analysis : 2822f385; a35e550c; 1788691722836; 1788691722855; 19
+2026-09-06T10:48:44.292Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; be3c772a; 1788691724255; 1788691724275; 20; 1788691724293
+2026-09-06T10:48:49.290Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; 79fe6c75; 1788691729253; 1788691729273; 20; 1788691729290
+2026-09-06T10:48:53.079Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageConsumer - Scalability Analysis : 2822f385; ec35269e; 1788691733061; 1788691733079; 18
+2026-09-06T10:48:54.290Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; 130a081c; 1788691734253; 1788691734273; 20; 1788691734290
+2026-09-06T10:48:59.291Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; 12809315; 1788691739254; 1788691739273; 19; 1788691739291
+2026-09-06T10:49:04.289Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; 801da658; 1788691744253; 1788691744273; 20; 1788691744289
+2026-09-06T10:49:07.883Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageConsumer - Scalability Analysis : 2822f385; fdb875de; 1788691747867; 1788691747883; 16
+2026-09-06T10:49:09.290Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; 6065fd85; 1788691749253; 1788691749272; 19; 1788691749290
+2026-09-06T10:49:14.290Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; e8a79a69; 1788691754253; 1788691754272; 19; 1788691754290
+2026-09-06T10:49:17.247Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageConsumer - Scalability Analysis : 2822f385; cb291fe0; 1788691757231; 1788691757247; 16
+2026-09-06T10:49:19.288Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; e1f89fe9; 1788691759253; 1788691759272; 19; 1788691759289
+2026-09-06T10:49:23.095Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageConsumer - Scalability Analysis : 2822f385; f50ebe82; 1788691763077; 1788691763095; 18
+2026-09-06T10:49:24.289Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; ef1bd1e5; 1788691764253; 1788691764272; 19; 1788691764289
+2026-09-06T10:49:29.290Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; 6af1a61d; 1788691769253; 1788691769272; 19; 1788691769290
+2026-09-06T10:49:32.852Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageConsumer - Scalability Analysis : 2822f385; 585de5c5; 1788691772835; 1788691772853; 18
+2026-09-06T10:49:34.296Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; 08288d9b; 1788691774253; 1788691774273; 20; 1788691774293
+2026-09-06T10:49:39.289Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; ff763748; 1788691779253; 1788691779272; 19; 1788691779290
+2026-09-06T10:49:42.315Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageConsumer - Scalability Analysis : 2822f385; 0d39609b; 1788691782298; 1788691782315; 17
+2026-09-06T10:49:44.289Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; 7a7e06f5; 1788691784253; 1788691784272; 19; 1788691784289
+2026-09-06T10:49:48.068Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageConsumer - Scalability Analysis : 2822f385; a5cb8dbf; 1788691788051; 1788691788068; 17
+2026-09-06T10:49:49.293Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; a350ca54; 1788691789254; 1788691789275; 21; 1788691789293
+2026-09-06T10:49:54.294Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; 7524a9c5; 1788691794256; 1788691794275; 19; 1788691794296
+2026-09-06T10:49:57.851Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageConsumer - Scalability Analysis : 2822f385; 6e2ade42; 1788691797834; 1788691797851; 17
+2026-09-06T10:49:59.288Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; 1bad4ab7; 1788691799253; 1788691799271; 18; 1788691799288
+2026-09-06T10:50:04.289Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; 95e1b84c; 1788691804253; 1788691804272; 19; 1788691804289
+2026-09-06T10:50:07.421Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageConsumer - Scalability Analysis : 2822f385; 7267e28b; 1788691807404; 1788691807421; 17
+2026-09-06T10:50:09.288Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; f6115476; 1788691809253; 1788691809271; 18; 1788691809288
+2026-09-06T10:50:13.067Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageConsumer - Scalability Analysis : 2822f385; d8010c39; 1788691813051; 1788691813068; 17
+2026-09-06T10:50:14.289Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; cc29d905; 1788691814253; 1788691814272; 19; 1788691814289
+2026-09-06T10:50:19.291Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; 1a507aad; 1788691819253; 1788691819272; 19; 1788691819291
+2026-09-06T10:50:22.857Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageConsumer - Scalability Analysis : 2822f385; a2ff510d; 1788691822840; 1788691822857; 17
+2026-09-06T10:50:24.294Z  INFO 1 --- [Server[] [atcher-worker-1[] MqMessageProducer - Scalability Analysis : 2822f385; 7c5e924f; 1788691824253; 1788691824276; 23; 1788691824294
+2026-09-06T10:50:32.486Z  INFO 1 --- [Server[] [atcher-worker-2[] MqMessageConsumer - Scalability Analysis : 2822f385; 202de470; 1788691832469; 1788691832486; 17
+2026-09-06T10:50:34.291Z  INFO 1 --- [Server[] [atcher-worker-2[] MqMessageProducer - Scalability Analysis : 2822f385; 03e1a34c; 1788691834255; 1788691834274; 19; 1788691834291
+2026-09-06T10:50:38.069Z  INFO 1 --- [Server[] [atcher-worker-2[] MqMessageConsumer - Scalability Analysis : 2822f385; 2e1d0928; 1788691838052; 1788691838069; 17
+2026-09-06T10:50:39.289Z  INFO 1 --- [Server[] [atcher-worker-2[] MqMessageProducer - Scalability Analysis : 2822f385; afac807c; 1788691839253; 1788691839272; 19; 1788691839289
+2026-09-06T10:50:44.289Z  INFO 1 --- [Server[] [atcher-worker-2[] MqMessageProducer - Scalability Analysis : 2822f385; fca5f351; 1788691844253; 1788691844272; 19; 1788691844289
+2026-09-06T10:50:47.860Z  INFO 1 --- [Server[] [atcher-worker-2[] MqMessageConsumer - Scalability Analysis : 2822f385; c069e7fc; 1788691847841; 1788691847860; 19
+2026-09-06T10:50:49.289Z  INFO 1 --- [Server[] [atcher-worker-2[] MqMessageProducer - Scalability Analysis : 2822f385; f030c611; 1788691849254; 1788691849272; 18; 1788691849289
+2026-09-06T10:50:54.294Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; e159921e; 1788691854253; 1788691854273; 20; 1788691854294
+2026-09-06T10:50:57.566Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; 88ce055e; 1788691857550; 1788691857567; 17
+2026-09-06T10:50:59.290Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 2400160e; 1788691859253; 1788691859273; 20; 1788691859290
+2026-09-06T10:51:03.072Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; 6edfb6bc; 1788691863055; 1788691863072; 17
+2026-09-06T10:51:04.289Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; fccd2981; 1788691864253; 1788691864272; 19; 1788691864289
+2026-09-06T10:51:09.289Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 2f8f2dcf; 1788691869253; 1788691869272; 19; 1788691869290
+2026-09-06T10:51:12.845Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; 8c990df3; 1788691872828; 1788691872845; 17
+2026-09-06T10:51:14.288Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; c6d251e6; 1788691874253; 1788691874271; 18; 1788691874289
+2026-09-06T10:51:19.288Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 00267a98; 1788691879253; 1788691879272; 19; 1788691879288
+2026-09-06T10:51:22.643Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; afff858b; 1788691882626; 1788691882644; 18
+2026-09-06T10:51:24.289Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 72aec540; 1788691884253; 1788691884272; 19; 1788691884289
+2026-09-06T10:51:28.075Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; 3ac0615e; 1788691888058; 1788691888075; 17
+2026-09-06T10:51:29.288Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; f485e14b; 1788691889253; 1788691889271; 18; 1788691889288
+2026-09-06T10:51:34.288Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 1b164f83; 1788691894253; 1788691894272; 19; 1788691894289
+2026-09-06T10:51:37.844Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; 0f011a82; 1788691897828; 1788691897845; 17
+2026-09-06T10:51:39.289Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 8d1ea8e0; 1788691899253; 1788691899272; 19; 1788691899289
+2026-09-06T10:51:44.288Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 51f6b359; 1788691904253; 1788691904272; 19; 1788691904288
+2026-09-06T10:51:47.771Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; 859862d3; 1788691907755; 1788691907772; 17
+2026-09-06T10:51:49.289Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 22e7866e; 1788691909253; 1788691909272; 19; 1788691909289
+2026-09-06T10:51:53.074Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; c43c46b8; 1788691913054; 1788691913073; 19
+2026-09-06T10:51:54.289Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 89164727; 1788691914253; 1788691914271; 18; 1788691914290
+2026-09-06T10:51:59.291Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 21a313e6; 1788691919256; 1788691919275; 19; 1788691919292
+2026-09-06T10:52:02.846Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; 917a957e; 1788691922830; 1788691922847; 17
+2026-09-06T10:52:04.289Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; c9237906; 1788691924253; 1788691924272; 19; 1788691924289
+2026-09-06T10:52:09.290Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; e1497d9f; 1788691929253; 1788691929272; 19; 1788691929290
+2026-09-06T10:52:12.850Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; 736d9a00; 1788691932834; 1788691932851; 17
+2026-09-06T10:52:14.288Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; b56ba217; 1788691934253; 1788691934272; 19; 1788691934288
+2026-09-06T10:52:18.069Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; 2d917c33; 1788691938053; 1788691938069; 16
+2026-09-06T10:52:19.288Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 092efbc6; 1788691939253; 1788691939271; 18; 1788691939288
+2026-09-06T10:52:24.290Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; ebaeea7c; 1788691944253; 1788691944273; 20; 1788691944290
+2026-09-06T10:52:27.849Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; b2fef4a8; 1788691947832; 1788691947849; 17
+2026-09-06T10:52:29.293Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 73eca8ee; 1788691949253; 1788691949276; 23; 1788691949293
+2026-09-06T10:52:34.291Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; cc2e72a1; 1788691954255; 1788691954273; 18; 1788691954292
+2026-09-06T10:52:37.853Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; 1b12140f; 1788691957835; 1788691957855; 20
+2026-09-06T10:52:39.288Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 4eb3ddac; 1788691959253; 1788691959271; 18; 1788691959289
+2026-09-06T10:52:43.075Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; 02ab0ef1; 1788691963057; 1788691963076; 19
+2026-09-06T10:52:44.288Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; dae5e22f; 1788691964253; 1788691964271; 18; 1788691964288
+2026-09-06T10:52:49.288Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 93b8d50c; 1788691969253; 1788691969271; 18; 1788691969288
+2026-09-06T10:52:52.972Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; a887cf1c; 1788691972954; 1788691972973; 19
+2026-09-06T10:52:54.288Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 34220635; 1788691974252; 1788691974271; 19; 1788691974288
+2026-09-06T10:52:59.296Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; d1a0dbe3; 1788691979253; 1788691979272; 19; 1788691979296
+2026-09-06T10:53:02.855Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; 98efc499; 1788691982839; 1788691982855; 16
+2026-09-06T10:53:04.290Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 543d62c4; 1788691984253; 1788691984272; 19; 1788691984291
+2026-09-06T10:53:08.071Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; 59b91dfe; 1788691988053; 1788691988070; 17
+2026-09-06T10:53:09.289Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 391261c8; 1788691989253; 1788691989272; 19; 1788691989290
+2026-09-06T10:53:14.289Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 0dbac2f9; 1788691994253; 1788691994272; 19; 1788691994289
+2026-09-06T10:53:18.016Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; 0ce99437; 1788691998000; 1788691998016; 16
+2026-09-06T10:53:19.288Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; b1620b2c; 1788691999253; 1788691999271; 18; 1788691999288
+2026-09-06T10:53:24.289Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 97bbf6d0; 1788692004253; 1788692004272; 19; 1788692004289
+2026-09-06T10:53:27.935Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; bcda9c3a; 1788692007917; 1788692007935; 18
+2026-09-06T10:53:29.289Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 0e9cb664; 1788692009253; 1788692009272; 19; 1788692009289
+2026-09-06T10:53:33.088Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; b303ba36; 1788692013071; 1788692013088; 17
+2026-09-06T10:53:34.288Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; db9d73fe; 1788692014253; 1788692014271; 18; 1788692014289
+2026-09-06T10:53:39.288Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 2c49a869; 1788692019253; 1788692019271; 18; 1788692019288
+2026-09-06T10:53:43.139Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; 8a9d4b02; 1788692023123; 1788692023139; 16
+2026-09-06T10:53:44.288Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; dbf5f4a3; 1788692024253; 1788692024272; 19; 1788692024289
+2026-09-06T10:53:49.289Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 8bad8072; 1788692029253; 1788692029272; 19; 1788692029289
+2026-09-06T10:53:52.850Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; 3d337d91; 1788692032833; 1788692032850; 17
+2026-09-06T10:53:54.288Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; e92fa678; 1788692034252; 1788692034271; 19; 1788692034288
+2026-09-06T10:53:58.137Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; f12e4983; 1788692038121; 1788692038137; 16
+2026-09-06T10:53:59.289Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 04ded0c9; 1788692039253; 1788692039271; 18; 1788692039289
+2026-09-06T10:54:04.294Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 10d6f20c; 1788692044258; 1788692044277; 19; 1788692044294
+2026-09-06T10:54:08.076Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; 47025fa7; 1788692048059; 1788692048076; 17
+2026-09-06T10:54:09.288Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 3ae73895; 1788692049253; 1788692049271; 18; 1788692049288
+2026-09-06T10:54:14.287Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 0153a21d; 1788692054253; 1788692054270; 17; 1788692054287
+2026-09-06T10:54:17.852Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; 3ae54c14; 1788692057835; 1788692057852; 17
+2026-09-06T10:54:19.288Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 92915f11; 1788692059253; 1788692059271; 18; 1788692059288
+2026-09-06T10:54:23.302Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageConsumer - Scalability Analysis : 2822f385; eb44c02b; 1788692063285; 1788692063302; 17
+2026-09-06T10:54:24.288Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; ed995404; 1788692064253; 1788692064272; 19; 1788692064288
+2026-09-06T10:54:29.288Z  INFO 1 --- [Server[] [atcher-worker-5[] MqMessageProducer - Scalability Analysis : 2822f385; 21a7b059; 1788692069253; 1788692069271; 18; 1788692069288
+2026-09-06T10:54:33.070Z  INFO 1 --- [Server[] [atcher-worker-2[] MqMessageConsumer - Scalability Analysis : 2822f385; dd49e4c2; 1788692073053; 1788692073070; 17
+2026-09-06T10:54:34.292Z  INFO 1 --- [Server[] [atcher-worker-2[] MqMessageProducer - Scalability Analysis : 2822f385; b612f865; 1788692074253; 1788692074275; 22; 1788692074292
+2026-09-06T10:54:39.288Z  INFO 1 --- [Server[] [atcher-worker-2[] MqMessageProducer - Scalability Analysis : 2822f385; 05928041; 1788692079253; 1788692079272; 19; 1788692079289
+2026-09-06T10:54:42.912Z  INFO 1 --- [Server[] [atcher-worker-2[] MqMessageConsumer - Scalability Analysis : 2822f385; f4b60461; 1788692082895; 1788692082912; 17
+2026-09-06T10:54:44.288Z  INFO 1 --- [Server[] [atcher-worker-2[] MqMessageProducer - Scalability Analysis : 2822f385; e013af11; 1788692084253; 1788692084271; 18; 1788692084288
+2026-09-06T10:54:48.315Z  INFO 1 --- [Server[] [atcher-worker-2[] MqMessageConsumer - Scalability Analysis : 2822f385; 81e817bd; 1788692088299; 1788692088316; 17
