@@ -96,7 +96,7 @@ class MessagingService : LifecycleService() {
                 // Only publish the updated LAMM, if the client is an edge client according to its transmission benefit value AND
                 // the LAMM is not empty
                 if (value != null && value.first.getAllMeasurements()
-                        .isNotEmpty() && isClientConnectedToRabbitMqCluster && DataStore.isEdgeClient.value == true
+                        .isNotEmpty() && isClientConnectedToRabbitMqCluster && DataStore.isEdgeClient.value == true && connection.isOpen && channel.isOpen
                 ) {
                     coroutineScope.launch {
                         // Serialize the updated LAMM according to the order of transmission to JSON format
@@ -439,8 +439,14 @@ class MessagingService : LifecycleService() {
 
     // Checked (final)
     private fun disconnectFromRabbitMqCluster() {
-        channel.close()
-        connection.close()
+        if(connection.isOpen){
+            try {
+                connection.close()
+            }
+            catch (exception: Exception){
+                LogController.log(Log.ERROR, "MessagingService", "Connection to RabbitMQ could not be closed: ${exception.message}")
+            }
+        }
 
         isClientConnectedToRabbitMqCluster = false
         LogController.log(Log.INFO, "MessagingService", "Disconnect from RabbitMQ cluster!")
