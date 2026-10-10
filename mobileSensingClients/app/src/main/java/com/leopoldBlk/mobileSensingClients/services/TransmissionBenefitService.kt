@@ -59,6 +59,10 @@ class TransmissionBenefitService : Service() {
 
                     updateTransmissionBenefit()
                 }
+                else if(!hasTransportWifi && !hasTransportCellular && clientConnectionState!=null)
+                    clientConnectionState = null
+
+                updateTransmissionBenefit()
 
                 LogController.log(
                     Log.INFO,
