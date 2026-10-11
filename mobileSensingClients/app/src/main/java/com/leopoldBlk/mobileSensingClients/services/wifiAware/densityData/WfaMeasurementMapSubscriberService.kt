@@ -14,7 +14,7 @@ import com.leopoldBlk.mobileSensingClients.services.wifiAware.WifiAwareService
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData.callbacks.SubscribingDensityDataSessionCallback
 
 // Checked (final)
-class WifiAwareDensityDataSubscriberService : WifiAwareService() {
+class WfaMeasurementMapSubscriberService : WifiAwareService() {
     private var subscribeConfig: SubscribeConfig =
         SubscribeConfig.Builder().setServiceName("MCS-DensityData").build()
     private var wifiAwareSubscriberHandlerThread: HandlerThread =

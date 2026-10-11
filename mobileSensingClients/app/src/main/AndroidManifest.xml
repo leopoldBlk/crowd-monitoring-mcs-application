@@ -37,19 +37,19 @@
             android:enabled="true"
             android:exported="false" />
         <service
-            android:name=".services.wifiAware.positionalBeacon.WifiAwarePositionalBeaconPublisherService"
+            android:name=".services.wifiAware.positionalBeacon.WfaBeaconPublisherService"
             android:enabled="true"
             android:exported="false" />
         <service
-            android:name=".services.wifiAware.positionalBeacon.WifiAwarePositionalBeaconSubscriberService"
+            android:name=".services.wifiAware.positionalBeacon.WfaBeaconSubscriberService"
             android:enabled="true"
             android:exported="false" />
         <service
-            android:name=".services.wifiAware.densityData.WifiAwareDensityDataPublisherService"
+            android:name=".services.wifiAware.densityData.WfaMeasurementMapPublisherService"
             android:enabled="true"
             android:exported="false" />
         <service
-            android:name=".services.wifiAware.densityData.WifiAwareDensityDataSubscriberService"
+            android:name=".services.wifiAware.densityData.WfaMeasurementMapSubscriberService"
             android:enabled="true"
             android:exported="false" />
         <service
