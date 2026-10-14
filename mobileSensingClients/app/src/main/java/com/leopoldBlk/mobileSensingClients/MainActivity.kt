@@ -13,10 +13,10 @@ import com.leopoldBlk.mobileSensingClients.services.LocationService
 import com.leopoldBlk.mobileSensingClients.services.MessagingService
 import com.leopoldBlk.mobileSensingClients.services.PositionalBeaconService
 import com.leopoldBlk.mobileSensingClients.services.TransmissionBenefitService
-import com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData.WifiAwareDensityDataPublisherService
-import com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData.WifiAwareDensityDataSubscriberService
-import com.leopoldBlk.mobileSensingClients.services.wifiAware.positionalBeacon.WifiAwarePositionalBeaconPublisherService
-import com.leopoldBlk.mobileSensingClients.services.wifiAware.positionalBeacon.WifiAwarePositionalBeaconSubscriberService
+import com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData.WfaMeasurementMapPublisherService
+import com.leopoldBlk.mobileSensingClients.services.wifiAware.densityData.WfaMeasurementMapSubscriberService
+import com.leopoldBlk.mobileSensingClients.services.wifiAware.positionalBeacon.WfaBeaconPublisherService
+import com.leopoldBlk.mobileSensingClients.services.wifiAware.positionalBeacon.WfaBeaconSubscriberService
 import com.leopoldBlk.mobileSensingClients.ui.composables.Map
 import com.leopoldBlk.mobileSensingClients.ui.theme.MCSAppTheme
 import com.leopoldBlk.mobileSensingClients.util.DataStore
@@ -104,25 +104,25 @@ class MainActivity : ComponentActivity() {
 
         applicationContext.startService(
             Intent(
-                applicationContext, WifiAwarePositionalBeaconSubscriberService::class.java
+                applicationContext, WfaBeaconSubscriberService::class.java
             )
         )
 
         applicationContext.startService(
             Intent(
-                applicationContext, WifiAwareDensityDataSubscriberService::class.java
+                applicationContext, WfaMeasurementMapSubscriberService::class.java
             )
         )
 
         applicationContext.startService(
             Intent(
-                applicationContext, WifiAwarePositionalBeaconPublisherService::class.java
+                applicationContext, WfaBeaconPublisherService::class.java
             )
         )
 
         applicationContext.startService(
             Intent(
-                applicationContext, WifiAwareDensityDataPublisherService::class.java
+                applicationContext, WfaMeasurementMapPublisherService::class.java
             )
         )
 

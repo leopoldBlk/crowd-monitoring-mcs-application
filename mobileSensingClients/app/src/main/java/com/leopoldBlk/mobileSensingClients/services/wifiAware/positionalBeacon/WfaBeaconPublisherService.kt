@@ -21,7 +21,7 @@ import crowdDensityLibrary.dataClasses.PositionalBeacon
 import kotlinx.serialization.json.Json
 
 // Checked (final)
-class WifiAwarePositionalBeaconPublisherService : WifiAwareService() {
+class WfaBeaconPublisherService : WifiAwareService() {
     private var isWifiAwareSessionInitialized: Boolean = false
     private val wifiAwarePublisherHandlerThread: HandlerThread =
         HandlerThread("WifiAwarePositionalBeaconPublisherHandlerThread")
@@ -131,7 +131,7 @@ class WifiAwarePositionalBeaconPublisherService : WifiAwareService() {
 
         LogController.logGeneralFunctionalityEvaluation(
             Log.INFO,
-            "WifiAwarePositionalBeaconPublisherService",
+            "WfaBeaconPublisherService",
             "[FR1-C6] [NFR2-C3] Updated positional beacon to: ${
                 Json { prettyPrint = true }.encodeToString(
                     updatedPositionalBeaconAsPositionalBeaconTO
@@ -141,7 +141,7 @@ class WifiAwarePositionalBeaconPublisherService : WifiAwareService() {
 
         LogController.logGeneralFunctionalityEvaluation(
             Log.INFO,
-            "WifiAwarePositionalBeaconPublisherService",
+            "WfaBeaconPublisherService",
             "[FR1-C6] Total size of updated positional beacon: ${updatedPositionalBeaconAsPositionalBeaconTO.getPositionalBeaconToAsByteArray().size} "
         )
 

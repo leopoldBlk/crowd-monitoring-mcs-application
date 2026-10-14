@@ -14,7 +14,7 @@ import com.leopoldBlk.mobileSensingClients.services.wifiAware.WifiAwareService
 import com.leopoldBlk.mobileSensingClients.services.wifiAware.positionalBeacon.callbacks.SubscribingPositionalBeaconSessionCallback
 
 // Checked (final)
-class WifiAwarePositionalBeaconSubscriberService : WifiAwareService() {
+class WfaBeaconSubscriberService : WifiAwareService() {
     private var subscribeConfig: SubscribeConfig =
         SubscribeConfig.Builder().setServiceName("MCS-PositionalBeacon").build()
     private var wifiAwareSubscriberHandlerThread: HandlerThread =

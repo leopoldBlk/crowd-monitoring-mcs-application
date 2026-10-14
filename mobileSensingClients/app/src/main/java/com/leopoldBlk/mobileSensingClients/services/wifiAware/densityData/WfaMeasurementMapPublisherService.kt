@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.milliseconds
 
-class WifiAwareDensityDataPublisherService : WifiAwareService() {
+class WfaMeasurementMapPublisherService : WifiAwareService() {
     private var isWifiAwareSessionInitialized: Boolean = false
     private val wifiAwarePublisherHandlerThread: HandlerThread =
         HandlerThread("WifiAwareDensityDataPublisherHandlerThread")
@@ -133,7 +133,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
 
         LogController.logGeneralFunctionalityEvaluation(
             Log.INFO,
-            "WifiAwareDensityDataPublisherService",
+            "WfaMeasurementMapPublisherService",
             "[FR1-C8] [FR3-C1] [FR3-C2] [NFR2-C3] Updated LAMM to the following: ${
                 Json {
                     //prettyPrint = true
@@ -178,7 +178,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
 
                     LogController.logGeneralFunctionalityEvaluation(
                         Log.INFO,
-                        "WifiAwareDensityDataPublisherService",
+                        "WfaMeasurementMapPublisherService",
                         "[FR1-C7] [NFR2-C3] Updated data packet for LAMM"
                     )
 
@@ -196,7 +196,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
 
                             LogController.logGeneralFunctionalityEvaluation(
                                 Log.INFO,
-                                "WifiAwareDensityDataPublisherService",
+                                "WfaMeasurementMapPublisherService",
                                 "[FR1-C7] [NFR2-C3] Updated data packet for LAMM"
                             )
 
@@ -216,7 +216,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
 
                         LogController.logGeneralFunctionalityEvaluation(
                             Log.INFO,
-                            "WifiAwareDensityDataPublisherService",
+                            "WfaMeasurementMapPublisherService",
                             "[FR1-C7] [NFR2-C3] Updated data packet for LAMM"
                         )
 
@@ -247,7 +247,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
 
         LogController.logGeneralFunctionalityEvaluation(
             Log.INFO,
-            "WifiAwareDensityDataPublisherService",
+            "WfaMeasurementMapPublisherService",
             "[FR1-C7] Setup PublishConfigs for the following LAMM: ${
                 Json {
                     //prettyPrint = true
@@ -257,7 +257,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
 
         LogController.logGeneralFunctionalityEvaluation(
             Log.INFO,
-            "WifiAwareDensityDataPublisherService",
+            "WfaMeasurementMapPublisherService",
             "[FR1-C7] Number of measurements in LAMM to be transmitted: ${lammAndOrderForMeasurementTransmission.first.getAllMeasurements().size}"
         )
 
@@ -269,7 +269,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
         if (!lammAsDensityDataTOs.isNullOrEmpty()) {
             LogController.logGeneralFunctionalityEvaluation(
                 Log.INFO,
-                "WifiAwareDensityDataPublisherService",
+                "WfaMeasurementMapPublisherService",
                 "[FR1-C7] Number of data packets needed to transmit LAMM: ${lammAsDensityDataTOs!!.size}"
             )
         }
@@ -293,7 +293,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
                 if (DataStore.isGeneralFunctionalityEvaluation) {
                     LogController.logGeneralFunctionalityEvaluation(
                         Log.INFO,
-                        "WifiAwareDensityDataPublisherService",
+                        "WfaMeasurementMapPublisherService",
                         "[FR1-C7] Created PublishConfig for data packet: ${
                             Json {
                                 //prettyPrint = true
@@ -306,14 +306,14 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
 
                     LogController.logGeneralFunctionalityEvaluation(
                         Log.INFO,
-                        "WifiAwareDensityDataPublisherService",
+                        "WfaMeasurementMapPublisherService",
                         "[FR1-C7] Total size of the data packet in bytes: ${totalSizeOfLammDensityDataTOInBytes}"
                     )
 
                     if (totalSizeOfLammDensityDataTOInBytes > 255) {
                         LogController.logGeneralFunctionalityEvaluation(
                             Log.ERROR,
-                            "WifiAwareDensityDataPublisherService",
+                            "WfaMeasurementMapPublisherService",
                             "[FR1-C7] Total size of the data packet above 255 bytes"
                         )
                     }
@@ -323,14 +323,14 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
 
                     LogController.logGeneralFunctionalityEvaluation(
                         Log.INFO,
-                        "WifiAwareDensityDataPublisherService",
+                        "WfaMeasurementMapPublisherService",
                         "[FR1-C7] Amount of the measurements contained in the data packet: ${amountOfMeasurementsIncludedInLammDensityDataTo}"
                     )
 
                     if (amountOfMeasurementsIncludedInLammDensityDataTo > 24) {
                         LogController.logGeneralFunctionalityEvaluation(
                             Log.ERROR,
-                            "WifiAwareDensityDataPublisherService",
+                            "WfaMeasurementMapPublisherService",
                             "[FR1-C7] More than 24 measurements contained in data packet"
                         )
                     }
@@ -345,7 +345,7 @@ class WifiAwareDensityDataPublisherService : WifiAwareService() {
                     if (!eachMeasurementHasCorrectLength) {
                         LogController.logGeneralFunctionalityEvaluation(
                             Log.ERROR,
-                            "WifiAwareDensityDataPublisherService",
+                            "WfaMeasurementMapPublisherService",
                             "[FR1-C7] One or more measurements do not have the specified length of 10 bytes"
                         )
                     }
